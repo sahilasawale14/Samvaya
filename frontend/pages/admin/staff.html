@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Management — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Maintenance & Security Staff</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Electricians, Plumbers, Gardeners, Cleaners, and Security Guards</p>
+            </div>
+          </div>
+          <div id="admin-staff-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'staff');
+        Navbar.render('navbar-container', 'Staff Management');
+        
+        // Static seed demonstration data for staff management
+        const staffList = [
+          { name: 'Santosh Jadhav', phone: '+91 98670 11111', designation: 'ELECTRICIAN', assignedArea: 'All Wings', salary: 28000, status: 'ACTIVE', todayAttendance: 'PRESENT' },
+          { name: 'Ganesh More', phone: '+91 98670 22222', designation: 'PLUMBER', assignedArea: 'All Wings', salary: 26000, status: 'ACTIVE', todayAttendance: 'PRESENT' },
+          { name: 'Munna Lal', phone: '+91 98670 33333', designation: 'GARDENER', assignedArea: 'Courtyard & Rooftop', salary: 18000, status: 'ACTIVE', todayAttendance: 'PRESENT' },
+          { name: 'Ramesh Kumar', phone: '+91 97111 99887', designation: 'SECURITY_GUARD', assignedArea: 'Main Gate 1', salary: 22000, status: 'ACTIVE', todayAttendance: 'PRESENT' },
+          { name: 'Suresh Shinde', phone: '+91 97222 88776', designation: 'SECURITY_GUARD', assignedArea: 'Gate 2 (Service)', salary: 22000, status: 'ACTIVE', todayAttendance: 'PRESENT' }
+        ];
+
+        Table.render('admin-staff-table', [
+          { label: 'Staff Name', render: r => `<b>${r.name}</b>` },
+          { label: 'Role / Designation', render: r => `<span class="badge badge-info">${r.designation}</span>` },
+          { label: 'Contact Phone', key: 'phone' },
+          { label: 'Assigned Work Area', key: 'assignedArea' },
+          { label: 'Monthly Salary', render: r => `₹${r.salary.toLocaleString('en-IN')}` },
+          { label: "Today's Attendance", render: r => `<span class="badge ${r.todayAttendance === 'PRESENT' ? 'badge-success' : 'badge-danger'}">${r.todayAttendance}</span>` },
+          { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], staffList);
+      }
+    });
+  </script>
+</body>
+</html>

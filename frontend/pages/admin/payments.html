@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintenance & Payments — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Maintenance Invoices & Collections</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Track monthly dues, water charges, parking fees, and receipts</p>
+            </div>
+          </div>
+          <div id="admin-bills-data-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/adminApi.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'payments');
+        Navbar.render('navbar-container', 'Maintenance & Billing');
+        const bills = await AdminApi.getBills();
+        Table.render('admin-bills-data-table', [
+          { label: 'Unit', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b>` },
+          { label: 'Resident', key: 'residentName' },
+          { label: 'Billing Period', key: 'billMonth' },
+          { label: 'Maintenance Fee', render: r => `₹${r.maintenanceCharge}` },
+          { label: 'Water & Parking', render: r => `₹${(parseFloat(r.waterCharge || 0) + parseFloat(r.parkingCharge || 0))}` },
+          { label: 'Total Due', render: r => `<b>₹${r.totalAmount}</b>` },
+          { label: 'Due Date', key: 'dueDate' },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'PAID' ? 'badge-success' : 'badge-danger'}">${r.status}</span>` }
+        ], bills);
+      }
+    });
+  </script>
+</body>
+</html>

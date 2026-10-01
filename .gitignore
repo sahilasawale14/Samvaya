@@ -1,0 +1,15 @@
+# Java build artifacts
+backend/target/
+*.class
+
+# Node / frontend dependencies (if any)
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db

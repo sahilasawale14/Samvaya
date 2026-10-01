@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — SAMVAYA Resident</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/resident.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">My Alerts & Activity Notifications</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Gate check-ins, parcel arrivals, payment receipts, and committee alerts</p>
+            </div>
+          </div>
+          <div id="resident-notifications-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['RESIDENT'])) {
+        Sidebar.render('sidebar-container', 'notifications');
+        Navbar.render('navbar-container', 'Notifications');
+
+        const notifications = [
+          { title: 'Visitor Arrival: Anand Mahindra', type: 'VISITOR_ARRIVAL', message: 'Your expected guest has arrived at Main Gate 1.', time: 'Today at 05:45 PM', isRead: false },
+          { title: 'Parcel Received at Gate: Amazon', type: 'DELIVERY_ARRIVAL', message: 'Delivery agent reached security checkpoint.', time: 'Today at 02:15 PM', isRead: true },
+          { title: 'Maintenance Payment Confirmed', type: 'PAYMENT_SUCCESS', message: 'Payment of ₹4,200 for August 2026 recorded.', time: 'Yesterday', isRead: true }
+        ];
+
+        Table.render('resident-notifications-table', [
+          { label: 'Notification', render: r => `<b>${r.title}</b><br><small style="color:var(--on-surface-variant);">${r.message}</small>` },
+          { label: 'Type', render: r => `<span class="badge badge-info">${r.type}</span>` },
+          { label: 'Timestamp', key: 'time' },
+          { label: 'Status', render: r => r.isRead ? `<span style="color:var(--outline); font-size:12px;">Read</span>` : `<span class="badge badge-warning">New</span>` }
+        ], notifications);
+      }
+    });
+  </script>
+</body>
+</html>

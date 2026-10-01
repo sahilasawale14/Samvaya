@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports & Analytics — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div>
+              <div class="stat-value">94.4%</div>
+              <div class="stat-label">Occupancy Rate</div>
+              <small style="color:var(--success); font-weight:600;">34 / 36 Flats</small>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <div class="stat-value">88.5%</div>
+              <div class="stat-label">On-Time Dues Collection</div>
+              <small style="color:var(--success); font-weight:600;">August 2026</small>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <div class="stat-value">96.2%</div>
+              <div class="stat-label">Complaint Resolution Rate</div>
+              <small style="color:var(--info); font-weight:600;">Avg. 18 hrs</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <div class="card-header-flex">
+            <h2 class="card-title">Society Monthly Financial Summary</h2>
+            <button class="btn btn-secondary" onclick="Toast.info('Exporting financial report spreadsheet...')">
+              <span class="material-symbols-outlined">download</span> Export CSV
+            </button>
+          </div>
+          <p style="font-size:14px; color:var(--on-surface-variant); margin-bottom:16px;">Detailed breakdown of maintenance collections, sinking funds, water supply charges, and parking allocations.</p>
+          <div id="reports-summary-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'reports');
+        Navbar.render('navbar-container', 'Society Reports & Financial Analytics');
+
+        const summary = [
+          { month: 'August 2026', totalBilled: '₹1,62,000', collected: '₹1,43,500', pending: '₹18,500', expenses: '₹92,400', netSurplus: '+ ₹51,100' },
+          { month: 'July 2026', totalBilled: '₹1,62,000', collected: '₹1,58,000', pending: '₹4,000', expenses: '₹1,05,200', netSurplus: '+ ₹52,800' },
+          { month: 'June 2026', totalBilled: '₹1,62,000', collected: '₹1,62,000', pending: '₹0', expenses: '₹88,000', netSurplus: '+ ₹74,000' }
+        ];
+
+        Table.render('reports-summary-table', [
+          { label: 'Month', render: r => `<b>${r.month}</b>` },
+          { label: 'Total Invoiced', key: 'totalBilled' },
+          { label: 'Total Collected', render: r => `<span style="color:var(--success); font-weight:700;">${r.collected}</span>` },
+          { label: 'Pending Dues', render: r => `<span style="color:var(--danger); font-weight:700;">${r.pending}</span>` },
+          { label: 'Operational Expenses', key: 'expenses' },
+          { label: 'Net Society Surplus', render: r => `<b>${r.netSurplus}</b>` }
+        ], summary);
+      }
+    });
+  </script>
+</body>
+</html>

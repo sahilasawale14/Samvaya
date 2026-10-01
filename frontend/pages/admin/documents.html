@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Society Documents — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Reference Documents & Bylaws</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Registered constitution, audit statements, guidelines, and forms</p>
+            </div>
+          </div>
+          <div id="admin-documents-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/adminApi.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'documents');
+        Navbar.render('navbar-container', 'Documents Repository');
+        const docs = await AdminApi.getDocuments();
+        Table.render('admin-documents-table', [
+          { label: 'Document Title', render: r => `<b>${r.title}</b><br><small style="color:var(--on-surface-variant);">${r.description || ''}</small>` },
+          { label: 'Category', key: 'category' },
+          { label: 'File Size', key: 'fileSize' },
+          { label: 'Visibility', render: r => `<span class="badge badge-neutral">${r.visibility}</span>` },
+          { label: 'Action', render: r => `<a href="#" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="Toast.info('Viewing sample document: ' + '${r.title}')">Download PDF</a>` }
+        ], docs);
+      }
+    });
+  </script>
+</body>
+</html>

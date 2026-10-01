@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Verification — SAMVAYA Security</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/security.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Registered Vehicles & FastTag RFID Check</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Resident vehicles authorized for automatic gate barrier opening</p>
+            </div>
+          </div>
+          <div id="security-vehicles-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+        Sidebar.render('sidebar-container', 'vehicles');
+        Navbar.render('navbar-container', 'Vehicle Verification');
+
+        const vehicles = [
+          { number: 'MH 02 CB 4421', owner: 'Vikramaditya Singhania', flat: 'Wing A-101', make: 'Mercedes-Benz E-Class', slot: 'B1-P12', tag: 'RFID-88902', status: 'AUTHORIZED' },
+          { number: 'MH 02 DQ 9081', owner: 'Vikramaditya Singhania', flat: 'Wing A-101', make: 'Vespa Elegante', slot: 'B1-2W-04', tag: 'RFID-11204', status: 'AUTHORIZED' },
+          { number: 'MH 01 AX 7712', owner: 'Ananya Sharma', flat: 'Wing B-202', make: 'Hyundai Creta', slot: 'B2-P04', tag: 'RFID-33901', status: 'AUTHORIZED' }
+        ];
+
+        Table.render('security-vehicles-table', [
+          { label: 'License Plate #', render: r => `<b>${r.number}</b>` },
+          { label: 'Resident Owner', key: 'owner' },
+          { label: 'Unit', render: r => `<b>${r.flat}</b>` },
+          { label: 'Vehicle Details', key: 'make' },
+          { label: 'Designated Bay', key: 'slot' },
+          { label: 'FastTag ID', render: r => `<code>${r.tag}</code>` },
+          { label: 'Barrier Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], vehicles);
+      }
+    });
+  </script>
+</body>
+</html>

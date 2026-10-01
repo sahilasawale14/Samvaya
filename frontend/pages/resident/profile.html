@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile & Household — SAMVAYA Resident</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/resident.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section" style="max-width:800px;">
+          <h2 class="card-title" style="margin-bottom:20px;">Primary Resident Information</h2>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Full Name</label>
+              <input type="text" id="prof-name" readonly style="background:var(--surface-container-low); font-weight:600;">
+            </div>
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Resident Occupancy Type</label>
+              <input type="text" id="prof-type" readonly style="background:var(--surface-container-low); font-weight:600;">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Assigned Flat</label>
+              <input type="text" id="prof-flat" readonly style="background:var(--surface-container-low); font-weight:600;">
+            </div>
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Phone</label>
+              <input type="text" id="prof-phone" readonly style="background:var(--surface-container-low);">
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Emergency Contact</label>
+            <input type="text" id="prof-emergency" readonly style="background:var(--surface-container-low);">
+          </div>
+        </div>
+
+        <div class="card-section">
+          <div class="card-header-flex">
+            <h2 class="card-title">Registered Household Members</h2>
+          </div>
+          <div id="household-members-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/residentApi.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['RESIDENT'])) {
+        Sidebar.render('sidebar-container', 'profile');
+        Navbar.render('navbar-container', 'Profile & Household Members');
+
+        const user = getCurrentUser();
+        const residentId = user ? (user.residentId || 1) : 1;
+        const profile = await ResidentApi.getProfile(residentId);
+
+        document.getElementById('prof-name').value = profile.fullName;
+        document.getElementById('prof-type').value = profile.residentType;
+        document.getElementById('prof-flat').value = `Wing ${profile.wing}-${profile.flatNumber} (${profile.bhkType})`;
+        document.getElementById('prof-phone').value = profile.phone;
+        document.getElementById('prof-emergency').value = `${profile.emergencyContactName || 'None'} (${profile.emergencyContactPhone || '-'})`;
+
+        const household = [
+          { name: 'Pooja Singhania', relation: 'SPOUSE', age: 39, phone: '+91 98111 22334', isEmergencyContact: true },
+          { name: 'Aarav Singhania', relation: 'CHILD', age: 14, phone: '-', isEmergencyContact: false }
+        ];
+
+        Table.render('household-members-table', [
+          { label: 'Member Name', render: r => `<b>${r.name}</b>` },
+          { label: 'Relationship', render: r => `<span class="badge badge-neutral">${r.relation}</span>` },
+          { label: 'Age', key: 'age' },
+          { label: 'Contact Phone', key: 'phone' },
+          { label: 'Emergency Contact', render: r => r.isEmergencyContact ? `<span class="badge badge-success">Yes</span>` : 'No' }
+        ], household);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Gate Command — SAMVAYA</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/security.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- Live Quick Search -->
+        <div class="security-top-search">
+          <span class="material-symbols-outlined" style="font-size:28px; color:var(--secondary);">qr_code_scanner</span>
+          <input type="text" id="gate-quick-search" placeholder="Type Flat # (e.g. 101), Visitor Name, Pass Code or Vehicle Number..." onkeyup="SecurityPage.handleLiveGateSearch(this.value)">
+        </div>
+
+        <!-- 5 Headcount Counters -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">schedule</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-visitors-today">0</div>
+              <div class="stat-label">Expected Today</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">how_to_reg</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-visitors-inside">0</div>
+              <div class="stat-label">Visitors Inside Society</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">local_shipping</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-deliveries-pending">0</div>
+              <div class="stat-label">Deliveries at Gate</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">engineering</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-workers-inside">0</div>
+              <div class="stat-label">Workers Inside</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column: Gate Visitors & Deliveries -->
+        <div class="admin-grid-layout">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <h2 class="card-title">Live Gate Visitor Action Queue</h2>
+              <a href="/pages/security/visitors.html" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">All Passes</a>
+            </div>
+            <div id="gate-visitors-table"></div>
+          </div>
+
+          <div class="card-section">
+            <div class="card-header-flex">
+              <h2 class="card-title">Gate Delivery Action Queue</h2>
+              <a href="/pages/security/deliveries.html" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">All Couriers</a>
+            </div>
+            <div id="gate-deliveries-table"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/securityApi.js"></script>
+  <script src="/js/pages/security.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+        SecurityPage.initDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

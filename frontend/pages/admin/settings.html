@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Society Settings — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section" style="max-width:800px;">
+          <h2 class="card-title" style="margin-bottom:20px;">Society Configuration & System Parameters</h2>
+
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Society Legal Name</label>
+            <input type="text" value="Samvaya Luxury Enclave" readonly style="background:var(--surface-container-low);">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Registration Number</label>
+              <input type="text" value="REG-MH-2024-SAMVAYA-088" readonly style="background:var(--surface-container-low);">
+            </div>
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Total Flats / Units</label>
+              <input type="text" value="36 Units (Wings A, B, C)" readonly style="background:var(--surface-container-low);">
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Base Monthly Maintenance Fee (per unit)</label>
+            <input type="text" value="₹3,500.00" style="font-weight:700;">
+          </div>
+
+          <div style="margin-bottom:20px;">
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Emergency Gate Hotline</label>
+            <input type="text" value="+91 97111 99887">
+          </div>
+
+          <button class="btn btn-primary" onclick="Toast.success('Society parameters updated successfully')">Save Configuration</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'settings');
+        Navbar.render('navbar-container', 'Society Settings & Governance');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domestic Staff — SAMVAYA Resident</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/resident.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">My Registered Domestic Staff & Helpers</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Maids, Drivers, Cooks, and Caretakers with gate access passes</p>
+            </div>
+            <button class="btn btn-primary" onclick="Toast.info('Staff registration modal opened')">
+              <span class="material-symbols-outlined">person_add</span> Register Helper
+            </button>
+          </div>
+          <div id="domestic-staff-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['RESIDENT'])) {
+        Sidebar.render('sidebar-container', 'domestic-staff');
+        Navbar.render('navbar-container', 'Domestic Staff & Helpers');
+
+        const staffList = [
+          { name: 'Sunita Bai', role: 'HOUSE_MAID', phone: '+91 97654 32111', passCode: 'STF-DOM-4091', accessHours: '07:00 AM - 11:00 AM', status: 'ACTIVE' },
+          { name: 'Rajesh Driver', role: 'DRIVER', phone: '+91 97654 32222', passCode: 'STF-DOM-8832', accessHours: '08:30 AM - 08:30 PM', status: 'ACTIVE' }
+        ];
+
+        Table.render('domestic-staff-table', [
+          { label: 'Staff Name', render: r => `<b>${r.name}</b>` },
+          { label: 'Role', render: r => `<span class="badge badge-info">${r.role}</span>` },
+          { label: 'Phone', key: 'phone' },
+          { label: 'Gate Pass Code', render: r => `<code>${r.passCode}</code>` },
+          { label: 'Permitted Access Hours', key: 'accessHours' },
+          { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], staffList);
+      }
+    });
+  </script>
+</body>
+</html>

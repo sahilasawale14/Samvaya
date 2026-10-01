@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Admin Dashboard — SAMVAYA Luxury Living</title>
+  <link rel="stylesheet" href="/css/main.css?v=3">
+  <link rel="stylesheet" href="/css/dashboard.css?v=3">
+  <link rel="stylesheet" href="/css/admin.css?v=3">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- 4 Top Statistics Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">apartment</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-total-flats">0</div>
+              <div class="stat-label">Total Society Flats</div>
+              <small id="stat-occupied-flats" style="color:var(--secondary); font-weight:600; font-size:11px;">0 Occupied</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">groups</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-total-residents">0</div>
+              <div class="stat-label">Active Residents</div>
+              <small id="stat-owners-tenants" style="color:var(--on-surface-variant); font-size:11px;">0 Owners • 0 Tenants</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">report_problem</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-pending-complaints">0</div>
+              <div class="stat-label">Open Complaints</div>
+              <small style="color:var(--tertiary); font-weight:600; font-size:11px;">Requires Attention</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-maint-collected">₹0</div>
+              <div class="stat-label">Maintenance Collected</div>
+              <small style="color:var(--success); font-weight:600; font-size:11px;">Current Billing Cycle</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column Layout: Recent Complaints & Activity Logs -->
+        <div class="admin-grid-layout">
+          <!-- Recent Complaints -->
+          <div class="card-section">
+            <div class="card-header-flex">
+              <h2 class="card-title">Recent Society Complaints</h2>
+              <a href="/pages/admin/complaints.html" class="btn btn-secondary" style="padding:6px 12px; font-size:12px;">View All</a>
+            </div>
+            <div id="recent-complaints-table"></div>
+          </div>
+
+          <!-- Society Activity Feed -->
+          <div class="card-section">
+            <div class="card-header-flex">
+              <h2 class="card-title">Activity Feed</h2>
+              <a href="/pages/admin/activity-logs.html" class="btn btn-ghost" style="padding:4px 8px; font-size:12px;">Logs</a>
+            </div>
+            <div class="activity-feed" id="activity-feed-list"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/config.js?v=3"></script>
+  <script src="/js/components/toast.js?v=3"></script>
+  <script src="/js/components/sidebar.js?v=3"></script>
+  <script src="/js/components/navbar.js?v=3"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js?v=3"></script>
+  <script src="/js/api/adminApi.js?v=3"></script>
+  <script src="/js/pages/admin.js?v=3"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['ADMIN'])) {
+        AdminPage.initDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

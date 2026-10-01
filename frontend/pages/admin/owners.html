@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Property Owners — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Flat Owners</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Ownership registry and primary voting members</p>
+            </div>
+          </div>
+          <div id="owners-data-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/adminApi.js"></script>
+  <script src="/js/pages/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'owners');
+        Navbar.render('navbar-container', 'Property Owners Registry');
+        const owners = await AdminApi.getOwners();
+        Table.render('owners-data-table', [
+          { label: 'Owner Name', render: r => `<b>${r.fullName}</b>` },
+          { label: 'Owned Unit', render: r => `Wing ${r.wing}-${r.flatNumber} (${r.bhkType})` },
+          { label: 'Contact Phone', key: 'phone' },
+          { label: 'Email', key: 'email' },
+          { label: 'Ownership Since', key: 'moveInDate' },
+          { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], owners);
+      }
+    });
+  </script>
+</body>
+</html>

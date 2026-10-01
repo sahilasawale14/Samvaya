@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicles & Parking — SAMVAYA Resident</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/resident.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">My Registered Vehicles & Allocated Parking</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">FastTag RFID gate verification and designated basement bays</p>
+            </div>
+          </div>
+          <div id="resident-vehicles-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['RESIDENT'])) {
+        Sidebar.render('sidebar-container', 'vehicles');
+        Navbar.render('navbar-container', 'Vehicles & Parking');
+
+        const vehicles = [
+          { vehicleNumber: 'MH 02 CB 4421', type: 'FOUR_WHEELER', makeModel: 'Mercedes-Benz E-Class', color: 'Obsidian Black', parkingSlot: 'B1-P12 (Covered Basement 1)', rfid: 'RFID-SAM-88902', status: 'ACTIVE' },
+          { vehicleNumber: 'MH 02 DQ 9081', type: 'TWO_WHEELER', makeModel: 'Vespa Elegante', color: 'White', parkingSlot: 'B1-2W-04', rfid: 'RFID-SAM-11204', status: 'ACTIVE' }
+        ];
+
+        Table.render('resident-vehicles-table', [
+          { label: 'Registration #', render: r => `<b>${r.vehicleNumber}</b>` },
+          { label: 'Vehicle Type', render: r => `<span class="badge badge-info">${r.type}</span>` },
+          { label: 'Make & Model', render: r => `${r.makeModel} (${r.color})` },
+          { label: 'Allocated Bay', render: r => `<b>${r.parkingSlot}</b>` },
+          { label: 'RFID Tag #', render: r => `<code>${r.rfid}</code>` },
+          { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], vehicles);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+/* ==========================================================================
+   SAMVAYA RESIDENT MODULE STYLING
+   ========================================================================== */
+
+.resident-hero-card {
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  color: #ffffff;
+  padding: 28px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-lg);
+}
+
+.resident-hero-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.resident-unit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary-container);
+}
+
+.quick-actions-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.quick-action-btn {
+  background: #ffffff;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--secondary);
+  box-shadow: var(--shadow-md);
+}
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.visitor-pass-card {
+  background: #ffffff;
+  border: 2px dashed var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pass-code-display {
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--surface-container-low);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.1em;
+}

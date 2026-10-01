@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitor Gate Check-In — SAMVAYA Security</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/security.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Gate Visitor Check-In & Verification</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Scan passcodes, verify photo IDs, and record entry/exit timestamps</p>
+            </div>
+          </div>
+          <div id="all-security-visitors-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/securityApi.js"></script>
+  <script src="/js/pages/security.js"></script>
+  <script>
+    async function loadAllVisitors() {
+      const visitors = await SecurityApi.getAllVisitors();
+      Table.render('all-security-visitors-table', [
+        { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
+        { label: 'Destination Flat', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b>` },
+        { label: 'Resident Host', key: 'residentName' },
+        { label: 'Pass Code', render: r => `<code>${r.passCode}</code>` },
+        { label: 'Vehicle Number', render: r => r.vehicleNumber || '-' },
+        { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` },
+        { label: 'Actions', render: r => `
+          ${r.status === 'EXPECTED' ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorArrival(${r.id}); loadAllVisitors();">Arrived</button>` : ''}
+          ${r.status === 'ARRIVED' ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.allowVisitorEntry(${r.id}); loadAllVisitors();">Allow Entry</button>` : ''}
+          ${r.status === 'INSIDE' ? `<button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorExit(${r.id}); loadAllVisitors();">Log Exit</button>` : ''}
+          ${r.status === 'EXITED' ? `<span style="color:var(--outline); font-size:12px;">Completed</span>` : ''}
+        `}
+      ], visitors);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+        Sidebar.render('sidebar-container', 'visitors');
+        Navbar.render('navbar-container', 'Visitor Check-In');
+        loadAllVisitors();
+      }
+    });
+  </script>
+</body>
+</html>

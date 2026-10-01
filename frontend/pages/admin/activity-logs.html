@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Activity Logs — SAMVAYA</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">System Audit & Admin Activity Logs</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Immutable record of administrative operations, updates, and notice dispatches</p>
+            </div>
+          </div>
+          <div id="activity-logs-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/adminApi.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'activity-logs');
+        Navbar.render('navbar-container', 'System Activity Logs');
+        const stats = await AdminApi.getDashboard();
+        Table.render('activity-logs-table', [
+          { label: 'Timestamp', key: 'timestamp' },
+          { label: 'Admin User', render: r => `<b>${r.adminName}</b>` },
+          { label: 'Action', render: r => `<span class="badge badge-info">${r.action}</span>` },
+          { label: 'Module', key: 'module' },
+          { label: 'Description', key: 'description' }
+        ], stats.recentActivities || []);
+      }
+    });
+  </script>
+</body>
+</html>

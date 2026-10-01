@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gate History — SAMVAYA Security</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/security.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Security Checkpoint Historical Logs</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Complete archival records of all visitor passes, entries, and exits</p>
+            </div>
+          </div>
+          <div id="security-history-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/securityApi.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+        Sidebar.render('sidebar-container', 'history');
+        Navbar.render('navbar-container', 'Security History');
+
+        const visitors = await SecurityApi.getAllVisitors();
+        Table.render('security-history-table', [
+          { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
+          { label: 'Destination', render: r => `Wing ${r.wing}-${r.flatNumber}` },
+          { label: 'Host Resident', key: 'residentName' },
+          { label: 'Scheduled Date', key: 'expectedDate' },
+          { label: 'Entry Time', render: r => r.entryTime || '-' },
+          { label: 'Exit Time', render: r => r.exitTime || '-' },
+          { label: 'Pass Code', render: r => `<code>${r.passCode}</code>` },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` }
+        ], visitors);
+      }
+    });
+  </script>
+</body>
+</html>

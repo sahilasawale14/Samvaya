@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Flats & Units Directory — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css?v=3">
+  <link rel="stylesheet" href="/css/dashboard.css?v=3">
+  <link rel="stylesheet" href="/css/admin.css?v=3">
+  <style>
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--surface-container-low);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .kpi-total { background: rgba(0, 106, 99, 0.12); color: var(--primary); }
+    .kpi-occupied { background: rgba(19, 115, 51, 0.12); color: #137333; }
+    .kpi-vacant { background: rgba(176, 96, 0, 0.12); color: #b06000; }
+    .kpi-wings { background: rgba(3, 7, 37, 0.08); color: var(--secondary); }
+
+    .badge-occupied-owner {
+      background: #e6f4ea;
+      color: #137333;
+      font-weight: 700;
+      border: 1px solid #ceead6;
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .badge-occupied-tenant {
+      background: #fef7e0;
+      color: #b06000;
+      font-weight: 700;
+      border: 1px solid #feefc3;
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .badge-vacant {
+      background: #f1f3f4;
+      color: #5f6368;
+      font-weight: 600;
+      border: 1px solid #dadce0;
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- KPI Summary Cards -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-total">
+              <span class="material-symbols-outlined">apartment</span>
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--on-surface-variant); text-transform:uppercase;">Total Society Flats</div>
+              <div style="font-size:24px; font-weight:700; color:var(--on-surface);" id="count-total-flats">0</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-occupied">
+              <span class="material-symbols-outlined">how_to_reg</span>
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--on-surface-variant); text-transform:uppercase;">Occupied Units</div>
+              <div style="font-size:24px; font-weight:700; color:#137333;" id="count-occupied-flats">0</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-vacant">
+              <span class="material-symbols-outlined">door_front</span>
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--on-surface-variant); text-transform:uppercase;">Vacant Units</div>
+              <div style="font-size:24px; font-weight:700; color:#b06000;" id="count-vacant-flats">0</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-wings">
+              <span class="material-wings material-symbols-outlined">domain</span>
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--on-surface-variant); text-transform:uppercase;">Active Wings</div>
+              <div style="font-size:24px; font-weight:700; color:var(--on-surface);">Wings A, B, C</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Units & Floor Map Registry</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Complete registry of flats across Wings A, B, and C with live occupancy status</p>
+            </div>
+            <button class="btn btn-primary" onclick="Modal.open('new-flat-modal')">
+              <span class="material-symbols-outlined">add</span> Add New Flat
+            </button>
+          </div>
+
+          <!-- Wing & Status Filter Tabs -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+            <div class="filter-tabs">
+              <button class="filter-tab active" onclick="filterFlatList('ALL', this)">All Units</button>
+              <button class="filter-tab" onclick="filterFlatList('WING_A', this)">Wing A (Heritage)</button>
+              <button class="filter-tab" onclick="filterFlatList('WING_B', this)">Wing B (Modern)</button>
+              <button class="filter-tab" onclick="filterFlatList('WING_C', this)">Wing C (Penthouses)</button>
+              <button class="filter-tab" onclick="filterFlatList('OCCUPIED', this)">Occupied Only</button>
+              <button class="filter-tab" onclick="filterFlatList('VACANT', this)">Vacant Only</button>
+            </div>
+          </div>
+
+          <div id="flats-data-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Flat Modal -->
+  <div class="modal-backdrop" id="new-flat-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Add Society Unit / Flat</h3>
+        <button onclick="Modal.close('new-flat-modal')" class="btn-ghost">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="handleFlatSubmit(event)">
+        <div class="modal-body">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Wing</label>
+              <select id="flat-wing" required>
+                <option value="A">Wing A (Heritage Luxury)</option>
+                <option value="B">Wing B (Modern Residences)</option>
+                <option value="C">Wing C (Signature Penthouses)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Flat Number</label>
+              <input type="text" id="flat-number" placeholder="e.g. 401" required>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Floor</label>
+              <input type="number" id="flat-floor" value="4" min="1" required>
+            </div>
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Configuration</label>
+              <select id="flat-bhk">
+                <option value="2 BHK">2 BHK</option>
+                <option value="3 BHK">3 BHK</option>
+                <option value="4 BHK">4 BHK</option>
+                <option value="Penthouse">Penthouse</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Area (Sq. Ft)</label>
+            <input type="number" id="flat-sqft" value="1450" min="500" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('new-flat-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Flat in Database</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=3"></script>
+  <script src="/js/components/toast.js?v=3"></script>
+  <script src="/js/components/modal.js?v=3"></script>
+  <script src="/js/components/sidebar.js?v=3"></script>
+  <script src="/js/components/navbar.js?v=3"></script>
+  <script src="/js/components/table.js?v=3"></script>
+  <script src="/js/api/api.js?v=3"></script>
+  <script src="/js/api/adminApi.js?v=3"></script>
+  <script>
+    let allFlatsCache = [];
+    let currentFilter = 'ALL';
+
+    function renderFlatsTable(flats) {
+      Table.render('flats-data-table', [
+        { label: 'Unit', render: r => `<b style="font-size:15px; color:var(--primary);">Wing ${r.wing}-${r.flatNumber}</b>` },
+        { label: 'Floor', render: r => `Floor ${r.floorNumber || 1}` },
+        { label: 'BHK Type', render: r => `<b>${r.bhkType}</b>` },
+        { label: 'Built-up Area', render: r => `${r.squareFeet} sq.ft` },
+        { label: 'Occupancy Status', render: r => {
+          if (r.status === 'OCCUPIED') {
+            if (r.residentType === 'TENANT') {
+              return `<span class="badge-occupied-tenant">🔑 Occupied (Tenant)</span>`;
+            }
+            return `<span class="badge-occupied-owner">🏠 Occupied (Owner)</span>`;
+          }
+          return `<span class="badge-vacant">⚪ VACANT</span>`;
+        }},
+        { label: 'Current Resident', render: r => {
+          if (r.currentResidentName && r.currentResidentName !== 'None') {
+            return `<b>${r.currentResidentName}</b>`;
+          }
+          return `<span style="color:var(--outline); font-size:12px;">Unassigned (Vacant)</span>`;
+        }}
+      ], flats);
+    }
+
+    function updateKpiCounts(flats) {
+      let occupied = 0, vacant = 0;
+      flats.forEach(f => {
+        if (f.status === 'OCCUPIED') occupied++;
+        else vacant++;
+      });
+      document.getElementById('count-total-flats').innerText = flats.length;
+      document.getElementById('count-occupied-flats').innerText = occupied;
+      document.getElementById('count-vacant-flats').innerText = vacant;
+    }
+
+    function filterFlatList(filterType, btn) {
+      currentFilter = filterType;
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      let filtered = allFlatsCache;
+      if (filterType === 'WING_A') {
+        filtered = allFlatsCache.filter(f => f.wing === 'A');
+      } else if (filterType === 'WING_B') {
+        filtered = allFlatsCache.filter(f => f.wing === 'B');
+      } else if (filterType === 'WING_C') {
+        filtered = allFlatsCache.filter(f => f.wing === 'C');
+      } else if (filterType === 'OCCUPIED') {
+        filtered = allFlatsCache.filter(f => f.status === 'OCCUPIED');
+      } else if (filterType === 'VACANT') {
+        filtered = allFlatsCache.filter(f => f.status !== 'OCCUPIED');
+      }
+
+      renderFlatsTable(filtered);
+    }
+
+    async function loadFlats() {
+      try {
+        allFlatsCache = await AdminApi.getFlats();
+        updateKpiCounts(allFlatsCache);
+        filterFlatList(currentFilter);
+      } catch (err) {
+        console.error('Error loading flats:', err);
+      }
+    }
+
+    async function handleFlatSubmit(event) {
+      event.preventDefault();
+      const flatData = {
+        wing: document.getElementById('flat-wing').value,
+        flatNumber: document.getElementById('flat-number').value.trim(),
+        floorNumber: parseInt(document.getElementById('flat-floor').value),
+        bhkType: document.getElementById('flat-bhk').value,
+        squareFeet: parseInt(document.getElementById('flat-sqft').value)
+      };
+
+      try {
+        await AdminApi.createFlat(flatData);
+        Toast.success(`Flat Wing ${flatData.wing}-${flatData.flatNumber} created in database!`);
+        Modal.close('new-flat-modal');
+        loadFlats();
+      } catch (err) {
+        // Handled by toast
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'flats');
+        Navbar.render('navbar-container', 'Flats & Units Directory');
+        loadFlats();
+      }
+    });
+  </script>
+</body>
+</html>

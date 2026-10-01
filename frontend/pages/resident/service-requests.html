@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Requests — SAMVAYA Resident</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/resident.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Special Service Requests</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Renovation permissions, move-in/out elevator bookings, and NOC certificates</p>
+            </div>
+            <button class="btn btn-primary" onclick="Toast.info('Special request submitted for admin review.')">
+              <span class="material-symbols-outlined">add</span> Request Service / NOC
+            </button>
+          </div>
+          <div id="service-requests-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['RESIDENT'])) {
+        Sidebar.render('sidebar-container', 'service-requests');
+        Navbar.render('navbar-container', 'Service Requests & Approvals');
+
+        const requests = [
+          { type: 'FLAT_RENOVATION_PERMISSION', title: 'Living Room Flooring Renovation', requestedOn: '2026-08-15', preferredDate: '2026-09-01', status: 'APPROVED', adminRemarks: 'Approved for weekdays between 10:00 AM - 05:00 PM only' },
+          { type: 'MOVE_IN_ELEVATOR_BLOCK', title: 'Heavy Furniture Delivery Move-In', requestedOn: '2026-08-20', preferredDate: '2026-08-30', status: 'IN_REVIEW', adminRemarks: 'Lift operator will be assigned' }
+        ];
+
+        Table.render('service-requests-table', [
+          { label: 'Request Type', render: r => `<b>${r.type}</b>` },
+          { label: 'Subject', key: 'title' },
+          { label: 'Requested On', key: 'requestedOn' },
+          { label: 'Target Date', key: 'preferredDate' },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'APPROVED' ? 'badge-success' : 'badge-warning'}">${r.status}</span>` },
+          { label: 'Society Remarks', key: 'adminRemarks' }
+        ], requests);
+      }
+    });
+  </script>
+</body>
+</html>

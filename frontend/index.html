@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMVAYA — Society Management System</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      background: radial-gradient(circle at top, #1a1f3d 0%, #030725 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #ffffff;
+    }
+    .gateway-container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .brand-hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .brand-logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--secondary), var(--secondary-container));
+      color: var(--primary);
+      font-size: 32px;
+      font-weight: 800;
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      box-shadow: 0 12px 32px rgba(0, 106, 99, 0.4);
+    }
+    .brand-title {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .brand-tagline {
+      font-size: 18px;
+      color: var(--on-primary-container);
+      margin-top: 8px;
+      font-weight: 400;
+    }
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      width: 100%;
+    }
+    @media (max-width: 900px) {
+      .role-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .role-card {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-xl);
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .role-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .role-card-icon {
+      width: 76px;
+      height: 76px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-md);
+    }
+    .icon-admin { background: #dee0ff; color: #030725; }
+    .icon-resident { background: #8bf1e6; color: #006f67; }
+    .icon-security { background: #ffdbd0; color: #852300; }
+
+    .role-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .role-desc {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+    .login-box {
+      display: none;
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      color: var(--on-surface);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      box-shadow: var(--shadow-xl);
+      animation: fadeIn 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="gateway-container">
+    <!-- Brand Header -->
+    <div class="brand-hero">
+      <div class="brand-logo-badge">S</div>
+      <h1 class="brand-title">SAMVAYA</h1>
+      <p class="brand-tagline">Connected Living. Unified Residential Intelligence.</p>
+    </div>
+
+    <!-- 3 Role Selection Cards -->
+    <div class="role-grid" id="role-selection">
+      <!-- Admin Card -->
+      <div class="role-card" onclick="selectRole('admin')">
+        <div class="role-card-icon icon-admin">
+          <span class="material-symbols-outlined" style="font-size:36px;">admin_panel_settings</span>
+        </div>
+        <h2 class="role-title">Admin</h2>
+        <p class="role-desc">Manage society operations, flats, staff, finances & complaints.</p>
+      </div>
+
+      <!-- Resident Card (Owner & Tenant) -->
+      <div class="role-card" onclick="selectRole('resident')">
+        <div class="role-card-icon icon-resident">
+          <span class="material-symbols-outlined" style="font-size:36px;">real_estate_agent</span>
+        </div>
+        <h2 class="role-title">Resident</h2>
+        <p class="role-desc">Access home services, visitor pre-approvals, dues & amenities.</p>
+      </div>
+
+      <!-- Security Guard Card -->
+      <div class="role-card" onclick="selectRole('security')">
+        <div class="role-card-icon icon-security">
+          <span class="material-symbols-outlined" style="font-size:36px;">security</span>
+        </div>
+        <h2 class="role-title">Security</h2>
+        <p class="role-desc">Gate check-in, live visitor logs, delivery & vehicle entry.</p>
+      </div>
+    </div>
+
+    <!-- Login Modal Box -->
+    <div class="login-box" id="login-container">
+      <button onclick="showRoleSelection()" class="btn-ghost" style="padding:6px 0; margin-bottom:16px; display:inline-flex; align-items:center; gap:6px;">
+        <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span> Back to Portals
+      </button>
+
+      <h2 id="login-title" style="font-size:24px; margin-bottom:6px;">Sign In</h2>
+      <p id="login-subtitle" style="font-size:14px; color:var(--on-surface-variant); margin-bottom:24px;">Please authenticate to proceed.</p>
+
+      <form onsubmit="handleLoginSubmit(event)">
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Username</label>
+          <input type="text" id="userId" placeholder="Enter username" required>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Password</label>
+          <input type="password" id="password" placeholder="Enter password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; font-size:15px;">
+          Authenticate & Enter
+        </button>
+      </form>
+
+      <div style="margin-top:20px; padding:12px; background:var(--surface-container-low); border-radius:var(--radius-md); font-size:12px; color:var(--on-surface-variant);">
+        <b>Demo Quick Logins:</b><br>
+        • Admin: <code>admin</code> / <code>admin123</code><br>
+        • Resident (Owner): <code>owner1</code> / <code>owner123</code><br>
+        • Resident (Tenant): <code>tenant1</code> / <code>tenant123</code><br>
+        • Security Guard: <code>guard1</code> / <code>guard123</code>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/authApi.js"></script>
+  <script src="/js/pages/login.js"></script>
+</body>
+</html>

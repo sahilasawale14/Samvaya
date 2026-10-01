@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resident Portal — SAMVAYA</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/resident.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- Resident Hero Card -->
+        <div class="resident-hero-card">
+          <div>
+            <h1 class="resident-hero-title" id="res-name-title">Welcome Home!</h1>
+            <div class="resident-unit-badge" id="res-unit-badge">
+              <span class="material-symbols-outlined" style="font-size:16px;">apartment</span>
+              <span>Wing A-101 • OWNER</span>
+            </div>
+          </div>
+          <div>
+            <a href="/pages/resident/visitors.html" class="btn btn-accent">
+              <span class="material-symbols-outlined">add</span> Pre-Approve Visitor
+            </a>
+          </div>
+        </div>
+
+        <!-- 4 Quick Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">person_pin_circle</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-visitors-count">0</div>
+              <div class="stat-label">Expected Visitors</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">package_2</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-deliveries-count">0</div>
+              <div class="stat-label">Active Deliveries</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">report_problem</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-complaints-count">0</div>
+              <div class="stat-label">Pending Complaints</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">credit_card</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-dues-amount">₹0</div>
+              <div class="stat-label">Maintenance Dues</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column: Visitors & Deliveries -->
+        <div class="admin-grid-layout">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <h2 class="card-title">Upcoming Visitors & Passes</h2>
+              <a href="/pages/resident/visitors.html" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">Manage Passes</a>
+            </div>
+            <div id="upcoming-visitors-table"></div>
+          </div>
+
+          <div class="card-section">
+            <div class="card-header-flex">
+              <h2 class="card-title">Expected Deliveries & Couriers</h2>
+              <a href="/pages/resident/deliveries.html" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">View All</a>
+            </div>
+            <div id="active-deliveries-table"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/residentApi.js"></script>
+  <script src="/js/pages/resident.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['RESIDENT'])) {
+        ResidentPage.initDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

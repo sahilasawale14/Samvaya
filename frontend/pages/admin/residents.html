@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Residents Directory — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .badge-owner {
+      background: #e6f4ea;
+      color: #137333;
+      font-weight: 700;
+      border: 1px solid #ceead6;
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .badge-tenant {
+      background: #fef7e0;
+      color: #b06000;
+      font-weight: 700;
+      border: 1px solid #feefc3;
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Society Residents Directory</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">All registered property owners and active tenants across Wings A, B, and C</p>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterResidents('', this)">All Residents</button>
+                <button class="filter-tab" onclick="filterResidents('OWNER', this)">🏠 Property Owners</button>
+                <button class="filter-tab" onclick="filterResidents('TENANT', this)">🔑 Registered Tenants</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="residents-data-table"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/api/api.js"></script>
+  <script src="/js/api/adminApi.js"></script>
+  <script>
+    async function loadResidentsTable(type = '') {
+      const residents = await AdminApi.getResidents(type);
+      Table.render('residents-data-table', [
+        { label: 'Resident Name', render: r => `<b>${r.fullName}</b>` },
+        { label: 'Occupancy Type', render: r => {
+          if (r.residentType === 'TENANT') {
+            return `<span class="badge-tenant">🔑 TENANT</span>`;
+          }
+          return `<span class="badge-owner">🏠 PROPERTY OWNER</span>`;
+        }},
+        { label: 'Assigned Flat', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b> (${r.bhkType})` },
+        { label: 'Contact', render: r => `${r.phone}<br><small style="color:var(--outline);">${r.email}</small>` },
+        { label: 'Move In Date', key: 'moveInDate' },
+        { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+      ], residents);
+    }
+
+    function filterResidents(type, btn) {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadResidentsTable(type);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'residents');
+        Navbar.render('navbar-container', 'Resident Management');
+        loadResidentsTable();
+      }
+    });
+  </script>
+</body>
+</html>

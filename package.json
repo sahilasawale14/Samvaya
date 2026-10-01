@@ -1,0 +1,18 @@
+{
+  "name": "samvaya-society-management",
+  "version": "1.0.0",
+  "description": "SAMVAYA - Ultra-Luxury Residential Society & Facility Management Platform",
+  "scripts": {
+    "dev": "npx -y concurrently \"npm run backend\" \"npm run frontend\"",
+    "start": "npm run dev",
+    "frontend": "npx -y serve frontend -l 3000",
+    "backend": "cd backend && mvnw.cmd spring-boot:run"
+  },
+  "keywords": [
+    "society-management",
+    "spring-boot",
+    "javascript"
+  ],
+  "author": "Ameya Dhuri",
+  "license": "ISC"
+}

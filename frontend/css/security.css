@@ -1,0 +1,90 @@
+/* ==========================================================================
+   SAMVAYA SECURITY GATE OPERATIONS STYLING
+   High-contrast, Touch-Friendly, Speed-Optimized Interface
+   ========================================================================== */
+
+.security-top-search {
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--secondary);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.security-top-search input {
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+}
+
+.security-top-search input:focus {
+  box-shadow: none;
+}
+
+.gate-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.gate-action-card {
+  background: var(--primary-container);
+  color: #ffffff;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.gate-action-card:hover {
+  background: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.gate-action-card .icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--secondary-container);
+}
+
+.live-activity-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.live-stream-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+}
+
+.live-stream-item.inside {
+  border-left: 5px solid var(--success);
+}
+
+.live-stream-item.exited {
+  border-left: 5px solid var(--outline);
+}

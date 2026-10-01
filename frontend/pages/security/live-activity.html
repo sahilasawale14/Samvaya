@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Gate Stream — SAMVAYA Security</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/security.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <div class="card-section">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Live Gate Barrier & Checkpoint Stream</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Real-time feed of all pedestrian, vehicle, visitor, and courier movements</p>
+            </div>
+            <span class="badge badge-success" style="padding:6px 12px;">● LIVE STREAM ACTIVE</span>
+          </div>
+
+          <div class="live-activity-stream">
+            <div class="live-stream-item inside">
+              <div>
+                <div style="font-weight:700; color:var(--primary);">Visitor Entry: Anand Mahindra</div>
+                <div style="font-size:13px; color:var(--on-surface-variant);">Main Gate 1 • Destination: Wing A-101 • Pass: VIS-SAM-4091</div>
+              </div>
+              <div style="text-align:right;">
+                <span class="badge badge-success">INSIDE</span>
+                <div style="font-size:12px; color:var(--outline); margin-top:4px;">10 mins ago</div>
+              </div>
+            </div>
+
+            <div class="live-stream-item inside">
+              <div>
+                <div style="font-weight:700; color:var(--primary);">Courier Arrival: Swiggy Instamart</div>
+                <div style="font-size:13px; color:var(--on-surface-variant);">Delivery Boy: Manoj (OTP Verified) • Wing B-202</div>
+              </div>
+              <div style="text-align:right;">
+                <span class="badge badge-warning">AT GATE</span>
+                <div style="font-size:12px; color:var(--outline); margin-top:4px;">18 mins ago</div>
+              </div>
+            </div>
+
+            <div class="live-stream-item exited">
+              <div>
+                <div style="font-weight:700; color:var(--primary);">Vehicle Exit: MH 02 CB 4421</div>
+                <div style="font-size:13px; color:var(--on-surface-variant);">FastTag Barrier Auto-Lifted • Resident: Vikramaditya Singhania</div>
+              </div>
+              <div style="text-align:right;">
+                <span class="badge badge-neutral">EXITED</span>
+                <div style="font-size:12px; color:var(--outline); margin-top:4px;">35 mins ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/components/toast.js"></script>
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/navbar.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+        Sidebar.render('sidebar-container', 'live-activity');
+        Navbar.render('navbar-container', 'Live Gate Stream');
+      }
+    });
+  </script>
+</body>
+</html>
