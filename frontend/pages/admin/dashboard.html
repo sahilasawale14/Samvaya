@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Admin Dashboard — SAMVAYA Luxury Living</title>
-  <link rel="stylesheet" href="/css/main.css?v=3">
-  <link rel="stylesheet" href="/css/dashboard.css?v=3">
-  <link rel="stylesheet" href="/css/admin.css?v=3">
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/admin.css?v=4">
 </head>
 <body>
 
@@ -22,7 +20,14 @@
       <header class="app-topbar" id="navbar-container"></header>
 
       <div class="content-body">
-        <!-- 4 Top Statistics Cards -->
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs">
+          <a href="/pages/admin/dashboard.html">Admin</a>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span class="breadcrumb-current">Executive Overview</span>
+        </nav>
+
+        <!-- Society & Occupancy Statistics Cards -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon-wrapper navy">
@@ -69,13 +74,118 @@
           </div>
         </div>
 
+        <!-- Dynamic Parking Management Metric Cards (Requirement 1) -->
+        <div style="margin:24px 0 12px 0; display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="font-size:16px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="color:var(--secondary);">local_parking</span>
+            Available Parking & Slot Space Management
+          </h2>
+          <div style="display:flex; gap:8px;">
+            <a href="/pages/admin/gate-security.html?tab=parking" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">
+              Manage Slots
+            </a>
+            <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="openAssignModal()">
+              <span class="material-symbols-outlined" style="font-size:16px;">add_link</span> Assign Slot
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">local_parking</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-parking-total">0</div>
+              <div class="stat-label">Total Parking Slots</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Basements B1, B2 & Ground</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">no_crash</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-parking-occupied">0</div>
+              <div class="stat-label">Occupied Slots</div>
+              <small id="stat-parking-occupied-breakdown" style="color:var(--danger); font-weight:600; font-size:11px;">0 (4W) • 0 (2W)</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">check_circle</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-parking-available">0</div>
+              <div class="stat-label">Available Slots</div>
+              <small id="stat-parking-avail-breakdown" style="color:var(--success); font-weight:700; font-size:11px;">0 4-Wheeler • 0 2-Wheeler</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">two_wheeler</span>
+            </div>
+            <div>
+              <div class="stat-value" id="stat-parking-avail-2w">0</div>
+              <div class="stat-label">Available 2-Wheelers</div>
+              <small id="stat-parking-avail-4w" style="color:var(--secondary); font-weight:600; font-size:11px;">0 Available 4-Wheelers</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Streamlined Workspaces Quick Nav -->
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;">
+          <a href="/pages/admin/people-units.html" style="background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-md); padding:16px; display:flex; align-items:center; gap:12px; text-decoration:none; transition:var(--transition);" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--outline-variant)'">
+            <div class="stat-icon-wrapper teal" style="margin-bottom:0; width:40px; height:40px;">
+              <span class="material-symbols-outlined">groups</span>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:14px; color:var(--primary);">People & Units</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Flats, Residents & Owners</small>
+            </div>
+          </a>
+
+          <a href="/pages/admin/gate-security.html" style="background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-md); padding:16px; display:flex; align-items:center; gap:12px; text-decoration:none; transition:var(--transition);" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--outline-variant)'">
+            <div class="stat-icon-wrapper navy" style="margin-bottom:0; width:40px; height:40px;">
+              <span class="material-symbols-outlined">shield_person</span>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:14px; color:var(--primary);">Gate & Security</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Parking, Visitors & Couriers</small>
+            </div>
+          </a>
+
+          <a href="/pages/admin/financials.html" style="background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-md); padding:16px; display:flex; align-items:center; gap:12px; text-decoration:none; transition:var(--transition);" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--outline-variant)'">
+            <div class="stat-icon-wrapper amber" style="margin-bottom:0; width:40px; height:40px;">
+              <span class="material-symbols-outlined">receipt_long</span>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:14px; color:var(--primary);">Financials</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Billing, Dues & Batch Engine</small>
+            </div>
+          </a>
+
+          <a href="/pages/admin/community-desk.html" style="background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-md); padding:16px; display:flex; align-items:center; gap:12px; text-decoration:none; transition:var(--transition);" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--outline-variant)'">
+            <div class="stat-icon-wrapper coral" style="margin-bottom:0; width:40px; height:40px;">
+              <span class="material-symbols-outlined">forum</span>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:14px; color:var(--primary);">Community & Desk</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Complaints, Notices & Amenities</small>
+            </div>
+          </a>
+        </div>
+
         <!-- 2 Column Layout: Recent Complaints & Activity Logs -->
         <div class="admin-grid-layout">
           <!-- Recent Complaints -->
           <div class="card-section">
             <div class="card-header-flex">
               <h2 class="card-title">Recent Society Complaints</h2>
-              <a href="/pages/admin/complaints.html" class="btn btn-secondary" style="padding:6px 12px; font-size:12px;">View All</a>
+              <a href="/pages/admin/community-desk.html?tab=complaints" class="btn btn-secondary" style="padding:6px 12px; font-size:12px;">View All</a>
             </div>
             <div id="recent-complaints-table"></div>
           </div>
@@ -84,7 +194,7 @@
           <div class="card-section">
             <div class="card-header-flex">
               <h2 class="card-title">Activity Feed</h2>
-              <a href="/pages/admin/activity-logs.html" class="btn btn-ghost" style="padding:4px 8px; font-size:12px;">Logs</a>
+              <span style="font-size:12px; color:var(--on-surface-variant);">Live Society Audits</span>
             </div>
             <div class="activity-feed" id="activity-feed-list"></div>
           </div>
@@ -93,21 +203,97 @@
     </main>
   </div>
 
+  <!-- Modal: Assign Parking Slot -->
+  <div class="modal-backdrop" id="assign-parking-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Assign Available Parking Slot</h3>
+        <button class="btn-ghost" onclick="Modal.close('assign-parking-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="submitAssignSlot(event)">
+        <div class="modal-body">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Available Parking Slot</label>
+            <select id="assign-slot-select" required>
+              <option value="">Loading available slots...</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Destination Flat</label>
+            <select id="assign-flat-select" required>
+              <option value="">Loading flats...</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('assign-parking-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Slot Assignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="/js/config.js?v=3"></script>
-  <script src="/js/components/toast.js?v=3"></script>
-  <script src="/js/components/sidebar.js?v=3"></script>
-  <script src="/js/components/navbar.js?v=3"></script>
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
   <script src="/js/components/table.js"></script>
-  <script src="/js/api/api.js?v=3"></script>
-  <script src="/js/api/adminApi.js?v=3"></script>
-  <script src="/js/pages/admin.js?v=3"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/adminApi.js?v=4"></script>
+  <script src="/js/pages/admin.js?v=4"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (checkAuth(['ADMIN'])) {
         AdminPage.initDashboard();
       }
     });
+
+    async function openAssignModal() {
+      const availableSlots = await AdminApi.getAvailableParkingSlots();
+      const flats = await AdminApi.getFlats();
+
+      const slotSelect = document.getElementById('assign-slot-select');
+      if (slotSelect) {
+        slotSelect.innerHTML = '<option value="">-- Choose Available Slot --</option>' +
+          availableSlots.map(s => {
+            const is2W = s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER';
+            return `<option value="${s.id}">${s.slotNumber} (${is2W ? '2-Wheeler' : '4-Wheeler'} - Level ${s.basementLevel})</option>`;
+          }).join('');
+      }
+
+      const flatSelect = document.getElementById('assign-flat-select');
+      if (flatSelect) {
+        flatSelect.innerHTML = '<option value="">-- Choose Flat --</option>' +
+          flats.map(f => `<option value="${f.id}">Wing ${f.wing}-${f.flatNumber} (${f.currentResidentName})</option>`).join('');
+      }
+
+      Modal.open('assign-parking-modal');
+    }
+
+    async function submitAssignSlot(event) {
+      event.preventDefault();
+      const slotId = document.getElementById('assign-slot-select').value;
+      const flatId = document.getElementById('assign-flat-select').value;
+
+      if (!slotId || !flatId) {
+        Toast.warning('Please select both a parking slot and a flat.');
+        return;
+      }
+
+      try {
+        await AdminApi.assignParkingSlot(slotId, flatId);
+        Toast.success('Parking slot assigned successfully!');
+        Modal.close('assign-parking-modal');
+        AdminPage.initDashboard();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to assign slot');
+      }
+    }
   </script>
 </body>
 </html>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Maintenance Invoices — SAMVAYA Resident</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/resident.css">
+  <title>Maintenance Invoices & Itemized Receipts — SAMVAYA Resident</title>
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/resident.css?v=4">
 </head>
 <body>
 
@@ -17,11 +17,33 @@
       <header class="app-topbar" id="navbar-container"></header>
 
       <div class="content-body">
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs">
+          <a href="/pages/resident/dashboard.html">Resident</a>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span class="breadcrumb-current">Maintenance Invoices</span>
+        </nav>
+
+        <!-- Society Maintenance Transparency Card -->
+        <div class="calc-preview-card" style="margin-bottom:20px;">
+          <div style="font-size:15px; font-weight:700; color:var(--primary); margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="color:var(--secondary);">verified_user</span>
+            Transparent Society Maintenance Billing Model
+          </div>
+          <p style="font-size:13px; color:var(--on-surface-variant); line-height:1.5;">
+            Our society uses a standardized billing system:
+            <b>Fixed Charges (₹2,500.00)</b> for Security, Lift & Common Electricity, Sinking Fund, and Administration are completely identical across all flats (1 BHK, 2 BHK, and 3 BHK).
+            The only difference between flat sizes is the <b>Variable Carpet Area Charge</b> calculated at <b>₹3.50/sq.ft</b> based on the unit's exact square footage.
+          </p>
+        </div>
+
         <div class="card-section">
           <div class="card-header-flex">
             <div>
               <h2 class="card-title">My Maintenance Invoices & UPI Payments</h2>
-              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">View monthly maintenance breakdown and pay dues with instant receipt generation</p>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                View monthly maintenance breakdown and pay dues with instant receipt generation
+              </p>
             </div>
           </div>
           <div id="resident-bills-table"></div>
@@ -30,14 +52,31 @@
     </main>
   </div>
 
-  <script src="/js/config.js"></script>
-  <script src="/js/components/toast.js"></script>
-  <script src="/js/components/sidebar.js"></script>
-  <script src="/js/components/navbar.js"></script>
+  <!-- Itemized Receipt Modal -->
+  <div class="modal-backdrop" id="resident-receipt-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Itemized Maintenance Invoice</h3>
+        <button class="btn-ghost" onclick="Modal.close('resident-receipt-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body" id="resident-receipt-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="Modal.close('resident-receipt-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
   <script src="/js/components/table.js"></script>
-  <script src="/js/api/api.js"></script>
-  <script src="/js/api/residentApi.js"></script>
-  <script src="/js/pages/resident.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/residentApi.js?v=4"></script>
+  <script src="/js/pages/resident.js?v=4"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (checkAuth(['RESIDENT'])) {

@@ -1,17 +1,22 @@
 // ============================================================================
-// SAMVAYA JAVASCRIPT CONFIGURATION & RESILIENT AUTHENTICATION
+// SAMVAYA JAVASCRIPT CONFIGURATION & SESSION MANAGEMENT
 // ============================================================================
 
+const API_BASE_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+  ? 'http://localhost:8080/api'
+  : 'https://YOUR-BACKEND.up.railway.app/api';
+
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:8080/api',
+  API_BASE_URL: API_BASE_URL,
   SOCIETY_NAME: 'Samvaya Luxury Enclave',
   AUTH_STORAGE_KEY: 'samvaya_auth_user',
+  CURRENT_USER_KEY: 'currentUser',
   TOKEN_STORAGE_KEY: 'samvaya_auth_token'
 };
 
 // Global Helper to get Current Authenticated User
 function getCurrentUser() {
-  const userJson = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
+  const userJson = localStorage.getItem('currentUser') || localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
   try {
     return userJson ? JSON.parse(userJson) : null;
   } catch (e) {
@@ -19,45 +24,36 @@ function getCurrentUser() {
   }
 }
 
-// Global Helper to check Role Access
+// Global Helper to check Role Access - Strict DB Session Enforced
 function checkAuth(allowedRoles = []) {
-  let user = getCurrentUser();
+  const user = getCurrentUser();
   
-  // If no user found in local storage, automatically initialize demo user for this portal
+  // If no user found in local storage, immediately redirect to login gateway
   if (!user) {
-    let defaultRole = (allowedRoles.length > 0) ? allowedRoles[0] : 'ADMIN';
-    let defaultName = 'Vikramaditya Singhania';
-    let residentType = null;
-    let flatNumber = '101';
-    let wing = 'A';
-    let resId = 1;
-
-    if (defaultRole === 'RESIDENT') {
-      residentType = 'OWNER';
-    } else if (defaultRole === 'SECURITY_GUARD') {
-      defaultName = 'Ramesh Kumar';
-    }
-
-    user = {
-      userId: 1,
-      username: defaultRole.toLowerCase(),
-      fullName: defaultName,
-      email: `${defaultRole.toLowerCase()}@samvaya.com`,
-      role: defaultRole,
-      residentType: residentType,
-      residentId: resId,
-      flatId: 1,
-      flatNumber: flatNumber,
-      wing: wing,
-      token: 'DEMO-TOKEN'
-    };
-    localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(user));
+    window.location.href = '/index.html';
+    return false;
   }
 
-  // If user role doesn't match allowed role, adjust gracefully for seamless previewing
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    user.role = allowedRoles[0];
-    localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(user));
+  // If user role doesn't match allowed role, redirect strictly to their home portal
+  if (allowedRoles.length > 0) {
+    const userRole = (user.role || '').toUpperCase();
+    const isAllowed = allowedRoles.some(r => {
+      const norm = r.toUpperCase();
+      return norm === userRole ||
+             (norm === 'SECURITY' && (userRole === 'SECURITY_GUARD' || userRole === 'SECURITY')) ||
+             (norm === 'SECURITY_GUARD' && (userRole === 'SECURITY_GUARD' || userRole === 'SECURITY'));
+    });
+
+    if (!isAllowed) {
+      if (userRole === 'RESIDENT') {
+        window.location.href = '/pages/resident/dashboard.html';
+      } else if (userRole.includes('SECURITY')) {
+        window.location.href = '/pages/security/dashboard.html';
+      } else {
+        window.location.href = '/pages/admin/dashboard.html';
+      }
+      return false;
+    }
   }
 
   return true;
@@ -65,7 +61,22 @@ function checkAuth(allowedRoles = []) {
 
 // Global Logout
 function logout() {
+  localStorage.removeItem('currentUser');
   localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
   localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
   window.location.href = '/index.html';
+}
+
+// Attach to global window object
+if (typeof window !== 'undefined') {
+  window.API_BASE_URL = API_BASE_URL;
+  window.CONFIG = CONFIG;
+  window.getCurrentUser = getCurrentUser;
+  window.checkAuth = checkAuth;
+  window.logout = logout;
+}
+
+// Support CommonJS/Node environments if needed
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { API_BASE_URL, CONFIG, getCurrentUser, checkAuth, logout };
 }

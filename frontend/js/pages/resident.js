@@ -1,5 +1,5 @@
 // ============================================================================
-// RESIDENT PAGE CONTROLLER
+// RESIDENT PAGE CONTROLLER - REAL DB DATA INTEGRATED
 // ============================================================================
 
 const ResidentPage = {
@@ -8,13 +8,20 @@ const ResidentPage = {
     Navbar.render('navbar-container', 'Resident Home Services');
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    if (!user) {
+      window.location.href = '/index.html';
+      return;
+    }
+    const residentId = user.residentId || user.id || user.userId;
 
     try {
       const stats = await ResidentApi.getDashboard(residentId);
 
-      document.getElementById('res-name-title').innerText = `Welcome, ${stats.residentName || 'Resident'}!`;
-      document.getElementById('res-unit-badge').innerText = `Wing ${stats.wing || 'A'}-${stats.flatNumber || '101'} • ${stats.residentType || 'OWNER'}`;
+      document.getElementById('res-name-title').innerText = `Welcome, ${user.fullName || stats.residentName || 'Resident'}!`;
+      const wingStr = user.wing || stats.wing || 'A';
+      const flatStr = user.flatNumber || stats.flatNumber || '101';
+      const typeStr = user.residentType || stats.residentType || 'OWNER';
+      document.getElementById('res-unit-badge').innerText = `Wing ${wingStr}-${flatStr} • ${typeStr}`;
 
       document.getElementById('stat-visitors-count').innerText = stats.expectedVisitorsCount || 0;
       document.getElementById('stat-deliveries-count').innerText = stats.activeDeliveriesCount || 0;
@@ -39,7 +46,7 @@ const ResidentPage = {
       ], stats.activeDeliveries || []);
 
     } catch (e) {
-      console.error(e);
+      console.error('Error loading resident dashboard:', e);
     }
   },
 
@@ -48,7 +55,7 @@ const ResidentPage = {
     Navbar.render('navbar-container', 'My Expected Visitors & Guest Passes');
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const residentId = user ? (user.residentId || user.id || user.userId) : null;
 
     const visitors = await ResidentApi.getVisitors(residentId);
     Table.render('visitors-data-table', [
@@ -72,10 +79,11 @@ const ResidentPage = {
     if (event) event.preventDefault();
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const residentId = user ? (user.residentId || user.id || user.userId) : null;
 
     const visitorData = {
       residentId: residentId,
+      flatId: user ? user.flatId : null,
       visitorName: document.getElementById('visitor-name').value,
       phone: document.getElementById('visitor-phone').value,
       purpose: document.getElementById('visitor-purpose').value,
@@ -85,10 +93,14 @@ const ResidentPage = {
       numberOfVisitors: parseInt(document.getElementById('visitor-count').value || 1)
     };
 
-    await ResidentApi.createVisitorPass(visitorData);
-    Toast.success('Visitor pre-approval pass generated!');
-    Modal.close('new-visitor-modal');
-    this.initVisitors();
+    try {
+      await ResidentApi.createVisitorPass(visitorData);
+      Toast.success('Visitor pre-approval pass generated!');
+      Modal.close('new-visitor-modal');
+      this.initVisitors();
+    } catch (e) {
+      Toast.error(e.message || 'Failed to create visitor pass');
+    }
   },
 
   async approveVisitor(visitorId, approved) {
@@ -102,9 +114,10 @@ const ResidentPage = {
     Navbar.render('navbar-container', 'My Maintenance Complaints');
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const residentId = user ? user.residentId : null;
+    const userId = user ? (user.id || user.userId) : null;
 
-    const complaints = await ResidentApi.getComplaints(residentId);
+    const complaints = await ResidentApi.getComplaints(residentId, userId);
     Table.render('resident-complaints-table', [
       { label: 'ID', render: r => `#CMP-${r.id}` },
       { label: 'Category', key: 'category' },
@@ -120,20 +133,27 @@ const ResidentPage = {
     if (event) event.preventDefault();
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const residentId = user ? user.residentId : null;
+    const userId = user ? (user.id || user.userId) : null;
 
     const complaintData = {
       residentId: residentId,
+      userId: userId,
+      flatId: user ? user.flatId : null,
       category: document.getElementById('comp-category').value,
       title: document.getElementById('comp-title').value,
       description: document.getElementById('comp-description').value,
       priority: document.getElementById('comp-priority').value
     };
 
-    await ResidentApi.createComplaint(complaintData);
-    Toast.success('Complaint submitted successfully!');
-    Modal.close('new-complaint-modal');
-    this.initComplaints();
+    try {
+      await ResidentApi.createComplaint(complaintData);
+      Toast.success('Complaint submitted successfully!');
+      Modal.close('new-complaint-modal');
+      this.initComplaints();
+    } catch (e) {
+      Toast.error(e.message || 'Failed to submit complaint');
+    }
   },
 
   async initAmenities() {
@@ -141,7 +161,7 @@ const ResidentPage = {
     Navbar.render('navbar-container', 'Society Amenities & Facility Booking');
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const residentId = user ? (user.residentId || user.id || user.userId) : null;
 
     const amenities = await ResidentApi.getAmenities();
     const bookings = await ResidentApi.getBookings(residentId);
@@ -191,7 +211,7 @@ const ResidentPage = {
     if (event) event.preventDefault();
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const residentId = user ? (user.residentId || user.id || user.userId) : null;
 
     const bookingData = {
       amenityId: document.getElementById('booking-amenity-id').value,
@@ -207,7 +227,9 @@ const ResidentPage = {
       Toast.success('Facility booked successfully!');
       Modal.close('amenity-booking-modal');
       this.initAmenities();
-    } catch (e) {}
+    } catch (e) {
+      Toast.error(e.message || 'Failed to book amenity');
+    }
   },
 
   async cancelBooking(bookingId) {
@@ -223,20 +245,101 @@ const ResidentPage = {
     Navbar.render('navbar-container', 'Maintenance Bills & Online Payments');
 
     const user = getCurrentUser();
-    const residentId = user ? (user.residentId || 1) : 1;
+    const flatId = user ? user.flatId : null;
+    const residentId = user ? (user.residentId || user.id || user.userId) : null;
 
-    const bills = await ResidentApi.getBills(residentId);
+    const bills = await ResidentApi.getBills(flatId, residentId);
+    window._residentBills = bills || [];
+
     Table.render('resident-bills-table', [
-      { label: 'Bill Month', key: 'billMonth' },
-      { label: 'Maintenance Fee', render: r => `₹${r.maintenanceCharge}` },
-      { label: 'Water & Parking', render: r => `₹${(parseFloat(r.waterCharge || 0) + parseFloat(r.parkingCharge || 0))}` },
-      { label: 'Total Amount', render: r => `<b>₹${r.totalAmount}</b>` },
+      { label: 'Billing Period', key: 'billMonth' },
+      { label: 'Unit Type', render: r => `<span class="badge badge-info">${r.flatType || '2BHK'}</span>` },
+      { label: 'Carpet Area', render: r => `${r.carpetAreaSqFt || 900} sq.ft` },
+      { label: 'Fixed Fees', render: r => `₹${parseFloat(r.totalFixedCharges || 2500).toFixed(2)}` },
+      { label: 'Area Charge', render: r => `₹${parseFloat(r.variableAreaCharge || r.maintenanceCharge).toFixed(2)}` },
+      { label: 'Total Payable', render: r => `<b style="font-size:15px; color:var(--primary);">₹${r.totalAmount}</b>` },
       { label: 'Due Date', key: 'dueDate' },
       { label: 'Status', render: r => `<span class="badge ${r.status === 'PAID' ? 'badge-success' : 'badge-danger'}">${r.status}</span>` },
-      { label: 'Action', render: r => r.status !== 'PAID' ? `
-        <button class="btn btn-accent" style="padding:4px 12px; font-size:12px;" onclick="ResidentPage.payMaintenanceBill(${r.id})">Pay Now</button>
-      ` : `<span style="color:var(--success); font-weight:700; font-size:13px;">✓ Paid</span>` }
+      { label: 'Actions', render: r => `
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="ResidentPage.viewReceipt(${r.id})">Receipt</button>
+          ${r.status !== 'PAID' ? `
+            <button class="btn btn-accent" style="padding:4px 10px; font-size:11px;" onclick="ResidentPage.payMaintenanceBill(${r.id})">Pay UPI</button>
+          ` : `<span style="color:var(--success); font-weight:700; font-size:12px; align-self:center;">Paid</span>`}
+        </div>
+      `}
     ], bills);
+  },
+
+  viewReceipt(billId) {
+    const bill = (window._residentBills || []).find(b => b.id === billId);
+    if (!bill) return;
+
+    const rate = bill.ratePerSqFt || 3.50;
+    const carpet = bill.carpetAreaSqFt || 900.0;
+    const sec = bill.securityCharge || 1000.00;
+    const lift = bill.liftElectricityCharge || 800.00;
+    const sink = bill.sinkingFund || 500.00;
+    const admin = bill.administrativeFee || 200.00;
+    const totalFixed = bill.totalFixedCharges || 2500.00;
+    const variable = bill.variableAreaCharge || (rate * carpet);
+
+    const html = `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:16px; font-weight:700; color:var(--primary);">
+          Wing ${bill.wing}-${bill.flatNumber} (${bill.flatType || '2BHK'})
+        </div>
+        <div style="font-size:13px; color:var(--on-surface-variant);">
+          Resident: <b>${bill.residentName}</b> | Period: <b>${bill.billMonth}</b>
+        </div>
+      </div>
+
+      <div class="itemized-receipt-box">
+        <div style="font-size:12px; font-weight:700; color:var(--secondary); text-transform:uppercase; margin-bottom:8px;">
+          1. Standard Fixed Charges (Identical Across All Society Flats)
+        </div>
+        <div class="receipt-row">
+          <span>Security Personnel & Perimeter Tech</span>
+          <span>₹${parseFloat(sec).toFixed(2)}</span>
+        </div>
+        <div class="receipt-row">
+          <span>Lift Operations & Common Electricity</span>
+          <span>₹${parseFloat(lift).toFixed(2)}</span>
+        </div>
+        <div class="receipt-row">
+          <span>Sinking Fund Reserves</span>
+          <span>₹${parseFloat(sink).toFixed(2)}</span>
+        </div>
+        <div class="receipt-row">
+          <span>Administrative Society Fee</span>
+          <span>₹${parseFloat(admin).toFixed(2)}</span>
+        </div>
+        <div class="receipt-row" style="font-weight:700; background:rgba(0,106,99,0.06); padding:6px 8px; border-radius:4px;">
+          <span>Subtotal Fixed Charges</span>
+          <span style="color:var(--secondary);">₹${parseFloat(totalFixed).toFixed(2)}</span>
+        </div>
+
+        <div style="font-size:12px; font-weight:700; color:var(--primary); text-transform:uppercase; margin-top:16px; margin-bottom:8px;">
+          2. Variable Area Charge (Proportional to Carpet Area)
+        </div>
+        <div class="receipt-row">
+          <span>Carpet Area: <b>${carpet} sq.ft</b> × Rate <b>₹${rate}/sq.ft</b></span>
+          <span style="font-weight:700;">₹${parseFloat(variable).toFixed(2)}</span>
+        </div>
+
+        <div class="receipt-row total-row">
+          <span>Total Maintenance Payable</span>
+          <span>₹${parseFloat(bill.totalAmount).toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; font-size:12px; color:var(--outline); line-height:1.4;">
+        Due Date: <b>${bill.dueDate}</b> • Status: <span class="badge ${bill.status === 'PAID' ? 'badge-success' : 'badge-danger'}">${bill.status}</span>
+      </div>
+    `;
+
+    document.getElementById('resident-receipt-body').innerHTML = html;
+    Modal.open('resident-receipt-modal');
   },
 
   async payMaintenanceBill(billId) {

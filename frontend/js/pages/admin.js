@@ -18,6 +18,19 @@ const AdminPage = {
       document.getElementById('stat-pending-complaints').innerText = stats.pendingComplaints || 0;
       document.getElementById('stat-maint-collected').innerText = `₹${(stats.collectedMaintenance || 0).toLocaleString('en-IN')}`;
 
+      // Update Parking Metrics
+      if (document.getElementById('stat-parking-total')) {
+        document.getElementById('stat-parking-total').innerText = stats.totalParkingSlots || 0;
+        document.getElementById('stat-parking-occupied').innerText = stats.occupiedParkingSlots || 0;
+        document.getElementById('stat-parking-occupied-breakdown').innerText = 
+          `${stats.occupiedFourWheelerSlots || 0} (4W) • ${stats.occupiedTwoWheelerSlots || 0} (2W)`;
+        document.getElementById('stat-parking-available').innerText = stats.availableParkingSlots || 0;
+        document.getElementById('stat-parking-avail-breakdown').innerText = 
+          `${stats.availableFourWheelerSlots || 0} 4-Wheeler • ${stats.availableTwoWheelerSlots || 0} 2-Wheeler`;
+        document.getElementById('stat-parking-avail-2w').innerText = stats.availableTwoWheelerSlots || 0;
+        document.getElementById('stat-parking-avail-4w').innerText = `${stats.availableFourWheelerSlots || 0} Available 4-Wheelers`;
+      }
+
       // Render Recent Activity Logs
       const activityContainer = document.getElementById('activity-feed-list');
       if (activityContainer && stats.recentActivities) {

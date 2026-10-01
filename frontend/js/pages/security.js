@@ -14,7 +14,19 @@ const SecurityPage = {
       document.getElementById('stat-visitors-inside').innerText = stats.visitorsCurrentlyInside || 0;
       document.getElementById('stat-deliveries-pending').innerText = stats.deliveriesPendingAtGate || 0;
       document.getElementById('stat-workers-inside').innerText = stats.temporaryWorkersInside || 0;
-      document.getElementById('stat-incidents-active').innerText = stats.activeIncidentsCount || 0;
+
+      // Dynamic Parking Metrics for Security Command
+      if (document.getElementById('sec-parking-total')) {
+        document.getElementById('sec-parking-total').innerText = stats.totalParkingSlots || 0;
+        document.getElementById('sec-parking-occupied').innerText = stats.occupiedParkingSlots || 0;
+        document.getElementById('sec-parking-occupied-breakdown').innerText = 
+          `${stats.occupiedFourWheelerSlots || 0} (4W) • ${stats.occupiedTwoWheelerSlots || 0} (2W)`;
+        document.getElementById('sec-parking-available').innerText = stats.availableParkingSlots || 0;
+        document.getElementById('sec-parking-avail-breakdown').innerText = 
+          `${stats.availableFourWheelerSlots || 0} 4-Wheeler • ${stats.availableTwoWheelerSlots || 0} 2-Wheeler`;
+        document.getElementById('sec-parking-avail-2w').innerText = stats.availableTwoWheelerSlots || 0;
+        document.getElementById('sec-parking-avail-4w').innerText = `${stats.availableFourWheelerSlots || 0} Available 4-Wheelers`;
+      }
 
       // Render Visitors Table
       Table.render('gate-visitors-table', [
@@ -95,6 +107,48 @@ const SecurityPage = {
         { label: 'Pass Code', render: r => `<code>${r.passCode || '-'}</code>` },
         { label: 'Status', render: r => `<span class="badge badge-info">${r.status}</span>` }
       ], results.visitors);
+    }
+  },
+
+  async checkInVisitorSubmit(event) {
+    if (event) event.preventDefault();
+
+    const payload = {
+      visitorName: document.getElementById('sec-vis-name').value.trim(),
+      phone: document.getElementById('sec-vis-phone').value.trim(),
+      wing: document.getElementById('sec-vis-wing').value,
+      flatNumber: document.getElementById('sec-vis-flat').value.trim(),
+      vehicleNo: document.getElementById('sec-vis-vehicle').value.trim(),
+      purpose: document.getElementById('sec-vis-purpose').value.trim()
+    };
+
+    try {
+      await SecurityApi.checkInVisitor(payload);
+      Toast.success(`Visitor ${payload.visitorName} checked in (INSIDE society).`);
+      document.getElementById('sec-checkin-form').reset();
+      if (typeof loadActiveVisitors === 'function') {
+        await loadActiveVisitors();
+      }
+      if (typeof loadAllVisitors === 'function') {
+        await loadAllVisitors();
+      }
+    } catch (e) {
+      Toast.error(e.message || 'Failed to check in visitor');
+    }
+  },
+
+  async markVisitorCheckOut(visitorId) {
+    try {
+      await SecurityApi.checkOutVisitor(visitorId);
+      Toast.success('Visitor marked as EXITED');
+      if (typeof loadActiveVisitors === 'function') {
+        await loadActiveVisitors();
+      }
+      if (typeof loadAllVisitors === 'function') {
+        await loadAllVisitors();
+      }
+    } catch (e) {
+      Toast.error(e.message || 'Failed to record visitor exit');
     }
   }
 };

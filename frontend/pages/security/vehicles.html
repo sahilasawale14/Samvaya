@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vehicle Verification — SAMVAYA Security</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/security.css">
+  <title>Parking Management & Vehicles — SAMVAYA Security</title>
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/security.css?v=4">
 </head>
 <body>
 
@@ -17,47 +17,303 @@
       <header class="app-topbar" id="navbar-container"></header>
 
       <div class="content-body">
-        <div class="card-section">
-          <div class="card-header-flex">
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs">
+          <a href="/pages/security/dashboard.html">Security</a>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span class="breadcrumb-current">Parking & Vehicles</span>
+        </nav>
+
+        <!-- Dynamic Parking Metrics Row -->
+        <div class="stats-grid" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">local_parking</span>
+            </div>
             <div>
-              <h2 class="card-title">Society Registered Vehicles & FastTag RFID Check</h2>
-              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Resident vehicles authorized for automatic gate barrier opening</p>
+              <div class="stat-value" id="sec-slot-total">0</div>
+              <div class="stat-label">Total Parking Slots</div>
             </div>
           </div>
-          <div id="security-vehicles-table"></div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">no_crash</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-slot-occupied">0</div>
+              <div class="stat-label">Occupied Slots</div>
+              <small id="sec-slot-occ-breakdown" style="color:var(--danger); font-weight:600; font-size:11px;">0 (4W) • 0 (2W)</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">check_circle</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-slot-avail">0</div>
+              <div class="stat-label">Available Slots</div>
+              <small id="sec-slot-avail-breakdown" style="color:var(--success); font-weight:700; font-size:11px;">0 4W • 0 2W</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">two_wheeler</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-slot-avail-2w">0</div>
+              <div class="stat-label">Available 2-Wheelers</div>
+              <small id="sec-slot-avail-4w" style="color:var(--secondary); font-weight:600; font-size:11px;">0 Available 4-Wheelers</small>
+            </div>
+          </div>
         </div>
+
+        <!-- Workspace Tabs -->
+        <div class="workspace-tabs">
+          <button class="workspace-tab active" onclick="switchSecTab('slots', this)">
+            <span class="material-symbols-outlined">local_parking</span>
+            <span>Parking Slot Allocation</span>
+          </button>
+          <button class="workspace-tab" onclick="switchSecTab('vehicles', this)">
+            <span class="material-symbols-outlined">directions_car</span>
+            <span>Registered Vehicles</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Slots Management -->
+        <div id="tab-sec-slots" class="tab-content-panel">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Live Society Parking Bay Allocation</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Assign available parking spots to incoming residents; vacate slots on move-out
+                </p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <select id="slot-type-filter" style="width:160px;" onchange="filterSecSlots()">
+                  <option value="">All Vehicle Types</option>
+                  <option value="4_WHEELER">4-Wheeler Slots</option>
+                  <option value="2_WHEELER">2-Wheeler Slots</option>
+                </select>
+                <button class="btn btn-primary" onclick="openAssignModal()">
+                  <span class="material-symbols-outlined">add_link</span> Assign Slot
+                </button>
+              </div>
+            </div>
+            <div id="security-slots-table"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Vehicles -->
+        <div id="tab-sec-vehicles" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Society Registered Vehicles & FastTag Check</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Authorized resident vehicles for barrier gate opening
+                </p>
+              </div>
+            </div>
+            <div id="security-vehicles-table"></div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
 
-  <script src="/js/config.js"></script>
-  <script src="/js/components/toast.js"></script>
-  <script src="/js/components/sidebar.js"></script>
-  <script src="/js/components/navbar.js"></script>
+  <!-- Modal: Assign Parking Slot -->
+  <div class="modal-backdrop" id="sec-slot-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Allocate Available Parking Slot</h3>
+        <button class="btn-ghost" onclick="Modal.close('sec-slot-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="submitSlotAssignment(event)">
+        <div class="modal-body">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Available Slot</label>
+            <select id="sec-modal-slot" required>
+              <option value="">Loading available slots...</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Flat</label>
+            <select id="sec-modal-flat" required>
+              <option value="">Loading flats...</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('sec-slot-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Allocation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
   <script src="/js/components/table.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/securityApi.js?v=4"></script>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    let allSlots = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
       if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
         Sidebar.render('sidebar-container', 'vehicles');
-        Navbar.render('navbar-container', 'Vehicle Verification');
+        Navbar.render('navbar-container', 'Parking & Vehicle Verification');
 
-        const vehicles = [
-          { number: 'MH 02 CB 4421', owner: 'Vikramaditya Singhania', flat: 'Wing A-101', make: 'Mercedes-Benz E-Class', slot: 'B1-P12', tag: 'RFID-88902', status: 'AUTHORIZED' },
-          { number: 'MH 02 DQ 9081', owner: 'Vikramaditya Singhania', flat: 'Wing A-101', make: 'Vespa Elegante', slot: 'B1-2W-04', tag: 'RFID-11204', status: 'AUTHORIZED' },
-          { number: 'MH 01 AX 7712', owner: 'Ananya Sharma', flat: 'Wing B-202', make: 'Hyundai Creta', slot: 'B2-P04', tag: 'RFID-33901', status: 'AUTHORIZED' }
-        ];
-
-        Table.render('security-vehicles-table', [
-          { label: 'License Plate #', render: r => `<b>${r.number}</b>` },
-          { label: 'Resident Owner', key: 'owner' },
-          { label: 'Unit', render: r => `<b>${r.flat}</b>` },
-          { label: 'Vehicle Details', key: 'make' },
-          { label: 'Designated Bay', key: 'slot' },
-          { label: 'FastTag ID', render: r => `<code>${r.tag}</code>` },
-          { label: 'Barrier Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
-        ], vehicles);
+        await loadStats();
+        await loadSlots();
+        loadVehiclesSample();
       }
     });
+
+    function switchSecTab(tabKey, btn) {
+      document.querySelectorAll('.workspace-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('.tab-content-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById(`tab-sec-${tabKey}`);
+      if (panel) panel.style.display = 'block';
+    }
+
+    async function loadStats() {
+      try {
+        const stats = await SecurityApi.getParkingStats();
+        document.getElementById('sec-slot-total').innerText = stats.totalSlots || 0;
+        document.getElementById('sec-slot-occupied').innerText = stats.occupiedSlots || 0;
+        document.getElementById('sec-slot-occ-breakdown').innerText = 
+          `${stats.occupiedFourWheeler || 0} (4W) • ${stats.occupiedTwoWheeler || 0} (2W)`;
+
+        document.getElementById('sec-slot-avail').innerText = stats.availableSlots || 0;
+        document.getElementById('sec-slot-avail-breakdown').innerText = 
+          `${stats.availableFourWheeler || 0} 4W • ${stats.availableTwoWheeler || 0} 2W`;
+
+        document.getElementById('sec-slot-avail-2w').innerText = stats.availableTwoWheeler || 0;
+        document.getElementById('sec-slot-avail-4w').innerText = `${stats.availableFourWheeler || 0} Available 4-Wheelers`;
+      } catch (e) {}
+    }
+
+    async function loadSlots() {
+      allSlots = await SecurityApi.getParkingSlots();
+      renderSlotsTable(allSlots);
+    }
+
+    function renderSlotsTable(slots) {
+      Table.render('security-slots-table', [
+        { label: 'Slot Bay', render: r => `<b>${r.slotNumber}</b>` },
+        { label: 'Type', render: r => {
+          const is2W = r.slotType === '2_WHEELER' || r.slotType === 'TWO_WHEELER';
+          return `<span class="slot-chip ${is2W ? 'slot-chip-2w' : 'slot-chip-4w'}">
+            <span class="material-symbols-outlined" style="font-size:14px;">${is2W ? 'two_wheeler' : 'directions_car'}</span>
+            ${is2W ? '2-Wheeler' : '4-Wheeler'}
+          </span>`;
+        }},
+        { label: 'Level', key: 'basementLevel' },
+        { label: 'Status', render: r => `
+          <span class="slot-chip ${r.isOccupied ? 'slot-status-occ' : 'slot-status-avail'}">
+            ${r.isOccupied ? 'OCCUPIED' : 'AVAILABLE'}
+          </span>
+        `},
+        { label: 'Allocated Flat', render: r => r.assignedFlatId ? `<b>Wing ${r.wing || ''}-${r.flatNumber || ''}</b>` : '-' },
+        { label: 'Resident', key: 'residentName' },
+        { label: 'Actions', render: r => r.isOccupied ? `
+          <button class="btn btn-ghost" style="color:var(--danger); font-size:12px; padding:4px 8px;" onclick="vacateSlot(${r.id}, '${r.slotNumber}')">
+            Vacate Slot
+          </button>
+        ` : `
+          <button class="btn btn-secondary" style="font-size:12px; padding:4px 8px;" onclick="openAssignModal(${r.id})">
+            Allocate
+          </button>
+        `}
+      ], slots);
+    }
+
+    function filterSecSlots() {
+      const type = document.getElementById('slot-type-filter').value;
+      let filtered = allSlots;
+      if (type) {
+        filtered = filtered.filter(s => s.slotType === type || (type === '2_WHEELER' && s.slotType === 'TWO_WHEELER') || (type === '4_WHEELER' && s.slotType === 'FOUR_WHEELER'));
+      }
+      renderSlotsTable(filtered);
+    }
+
+    async function openAssignModal(preselectedId = null) {
+      const avail = await SecurityApi.getAvailableParkingSlots();
+      const flats = await Api.get('/admin/flats');
+
+      const slotSelect = document.getElementById('sec-modal-slot');
+      slotSelect.innerHTML = '<option value="">-- Select Slot --</option>' +
+        avail.map(s => {
+          const is2W = s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER';
+          return `<option value="${s.id}" ${preselectedId == s.id ? 'selected' : ''}>${s.slotNumber} (${is2W ? '2W' : '4W'})</option>`;
+        }).join('');
+
+      const flatSelect = document.getElementById('sec-modal-flat');
+      flatSelect.innerHTML = '<option value="">-- Select Flat --</option>' +
+        (flats || []).map(f => `<option value="${f.id}">Wing ${f.wing}-${f.flatNumber} (${f.currentResidentName})</option>`).join('');
+
+      Modal.open('sec-slot-modal');
+    }
+
+    async function submitSlotAssignment(event) {
+      event.preventDefault();
+      const slotId = document.getElementById('sec-modal-slot').value;
+      const flatId = document.getElementById('sec-modal-flat').value;
+
+      try {
+        await SecurityApi.assignParkingSlot(slotId, flatId);
+        Toast.success('Parking slot allocated successfully!');
+        Modal.close('sec-slot-modal');
+        await loadStats();
+        await loadSlots();
+      } catch (e) {
+        Toast.error(e.message || 'Allocation failed');
+      }
+    }
+
+    async function vacateSlot(slotId, slotNumber) {
+      if (confirm(`Vacate parking slot ${slotNumber} upon resident exit?`)) {
+        try {
+          await SecurityApi.vacateParkingSlot(slotId);
+          Toast.success(`Slot ${slotNumber} is now Available.`);
+          await loadStats();
+          await loadSlots();
+        } catch (e) {
+          Toast.error(e.message || 'Vacate failed');
+        }
+      }
+    }
+
+    function loadVehiclesSample() {
+      const vehicles = [
+        { number: 'MH 02 CB 4421', owner: 'Rahul Sharma', flat: 'Wing A-101', make: 'Honda City (White)', slot: 'P-A101', status: 'AUTHORIZED' },
+        { number: 'MH 02 EQ 4421', owner: 'Rahul Sharma', flat: 'Wing A-101', make: 'Ather 450X (Grey)', slot: 'P-2W-01', status: 'AUTHORIZED' },
+        { number: 'MH 03 BZ 1920', owner: 'Priya Patel', flat: 'Wing B-202', make: 'Hyundai Creta (Black)', slot: 'P-B202', status: 'AUTHORIZED' }
+      ];
+
+      Table.render('security-vehicles-table', [
+        { label: 'License Plate #', render: r => `<b>${r.number}</b>` },
+        { label: 'Resident Owner', key: 'owner' },
+        { label: 'Unit', render: r => `<b>${r.flat}</b>` },
+        { label: 'Vehicle Details', key: 'make' },
+        { label: 'Designated Bay', render: r => `<span class="badge badge-info">${r.slot}</span>` },
+        { label: 'Barrier FastTag', render: () => `<span class="badge badge-success">ACTIVE</span>` }
+      ], vehicles);
+    }
   </script>
 </body>
 </html>

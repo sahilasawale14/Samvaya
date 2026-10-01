@@ -1,5 +1,5 @@
 // ============================================================================
-// ADMIN API CLIENT
+// ADMIN API CLIENT (Samvaya Unified Portal)
 // ============================================================================
 
 const AdminApi = {
@@ -9,6 +9,10 @@ const AdminApi = {
 
   getResidents(type = '') {
     return Api.get(`/admin/residents${type ? `?type=${type}` : ''}`);
+  },
+
+  createResident(residentData) {
+    return Api.post('/admin/residents', residentData);
   },
 
   getOwners() {
@@ -27,6 +31,45 @@ const AdminApi = {
     return Api.get('/admin/users');
   },
 
+  // Parking Management
+  getParkingSlots() {
+    return Api.get('/parking');
+  },
+
+  getAvailableParkingSlots() {
+    return Api.get('/parking/available');
+  },
+
+  getParkingStats() {
+    return Api.get('/parking/stats');
+  },
+
+  assignParkingSlot(slotId, flatId) {
+    return Api.post(`/parking/assign?slotId=${slotId}&flatId=${flatId}`);
+  },
+
+  vacateParkingSlot(slotId) {
+    return Api.post(`/parking/vacate?slotId=${slotId}`);
+  },
+
+  vacateParkingForFlat(flatId) {
+    return Api.post(`/parking/vacate-flat/${flatId}`);
+  },
+
+  // Maintenance Billing & Financials
+  getBills() {
+    return Api.get('/payments/bills');
+  },
+
+  getPayments() {
+    return Api.get('/payments');
+  },
+
+  generateMonthlyBills(month, ratePerSqFt = 3.50) {
+    return Api.post(`/admin/bills/generate-monthly?month=${encodeURIComponent(month)}&ratePerSqFt=${ratePerSqFt}`);
+  },
+
+  // Complaints Desk
   getComplaints() {
     return Api.get('/complaints');
   },
@@ -42,10 +85,7 @@ const AdminApi = {
     return Api.delete(`/complaints/${id}`);
   },
 
-  getBills() {
-    return Api.get('/payments/bills');
-  },
-
+  // Notices
   getNotices() {
     return Api.get('/notices');
   },
@@ -62,6 +102,7 @@ const AdminApi = {
     return Api.get('/notices/documents');
   },
 
+  // Amenities
   getAmenities() {
     return Api.get('/amenities');
   },
@@ -76,6 +117,15 @@ const AdminApi = {
 
   getBookings() {
     return Api.get('/amenities/bookings');
+  },
+
+  // Security & Incidents
+  getVisitors() {
+    return Api.get('/visitors');
+  },
+
+  getDeliveries() {
+    return Api.get('/deliveries');
   },
 
   getIncidents() {

@@ -31,16 +31,24 @@ const ResidentApi = {
     return Api.post('/deliveries', deliveryData);
   },
 
-  getComplaints(residentId) {
-    return Api.get(`/complaints?residentId=${residentId}`);
+  getComplaints(residentId, userId) {
+    const params = new URLSearchParams();
+    if (userId) params.append('userId', userId);
+    if (residentId) params.append('residentId', residentId);
+    const qs = params.toString();
+    return Api.get(`/resident/complaints${qs ? `?${qs}` : ''}`);
   },
 
   createComplaint(complaintData) {
-    return Api.post('/complaints', complaintData);
+    return Api.post('/resident/complaints', complaintData);
   },
 
-  getBills(residentId) {
-    return Api.get(`/payments/bills?residentId=${residentId}`);
+  getBills(flatId, residentId) {
+    const params = new URLSearchParams();
+    if (flatId) params.append('flatId', flatId);
+    if (residentId) params.append('residentId', residentId);
+    const qs = params.toString();
+    return Api.get(`/resident/bills/my-bills${qs ? `?${qs}` : ''}`);
   },
 
   payBill(billId, residentId, paymentMode = 'UPI') {

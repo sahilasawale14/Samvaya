@@ -33,8 +33,8 @@ function selectRole(role) {
   } else if (role === 'resident') {
     if (titleElem) titleElem.innerText = 'Resident Sign In';
     if (subElem) subElem.innerText = 'Owner & Tenant home services portal';
-    if (usernameInput) usernameInput.value = 'owner1';
-    if (passwordInput) passwordInput.value = 'owner123';
+    if (usernameInput) { usernameInput.value = ''; usernameInput.placeholder = 'Enter resident username'; }
+    if (passwordInput) { passwordInput.value = ''; passwordInput.placeholder = 'Enter resident password'; }
   } else if (role === 'security') {
     if (titleElem) titleElem.innerText = 'Security Gate Sign In';
     if (subElem) subElem.innerText = 'Gate operations & visitor entry portal';
@@ -65,21 +65,34 @@ async function handleLoginSubmit(event) {
   const usernameInput = document.getElementById('userId') || document.getElementById('username');
   const passwordInput = document.getElementById('password');
 
-  const username = usernameInput ? usernameInput.value.trim() : 'admin';
-  const password = passwordInput ? passwordInput.value : 'admin123';
+  const username = usernameInput ? usernameInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
 
-  Toast.info('Authenticating...');
+  if (!username || !password) {
+    Toast.error('Please enter both username and password.');
+    return;
+  }
+
+  Toast.info('Authenticating credentials...');
 
   try {
     const user = await AuthApi.login(username, password);
 
+    // Save session data to localStorage as requested
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(user));
+
     Toast.success(`Welcome, ${user.fullName}! Entering portal...`);
 
+    const roleUpper = (user.role || '').toUpperCase();
     let targetUrl = '/pages/admin/dashboard.html';
-    if (user.role === 'RESIDENT') {
+
+    if (roleUpper === 'RESIDENT') {
       targetUrl = '/pages/resident/dashboard.html';
-    } else if (user.role === 'SECURITY_GUARD') {
+    } else if (roleUpper === 'SECURITY' || roleUpper === 'SECURITY_GUARD') {
       targetUrl = '/pages/security/dashboard.html';
+    } else if (roleUpper === 'ADMIN') {
+      targetUrl = '/pages/admin/dashboard.html';
     }
 
     setTimeout(() => {
@@ -88,10 +101,6 @@ async function handleLoginSubmit(event) {
 
   } catch (err) {
     console.error('Login error:', err);
-    // Direct navigation fallback based on selected role
-    let targetUrl = '/pages/admin/dashboard.html';
-    if (currentSelectedRole === 'resident') targetUrl = '/pages/resident/dashboard.html';
-    if (currentSelectedRole === 'security') targetUrl = '/pages/security/dashboard.html';
-    window.location.href = targetUrl;
+    Toast.error(err.message || 'Invalid username or password. Please try again.');
   }
 }

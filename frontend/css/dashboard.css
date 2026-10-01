@@ -418,3 +418,198 @@
   justify-content: flex-end;
   gap: 12px;
 }
+
+/* ==========================================================================
+   WORKSPACE TABS, BREADCRUMBS, FAB & ITEMIZATION ENHANCEMENTS
+   ========================================================================== */
+
+/* Breadcrumbs */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  margin-bottom: 16px;
+}
+
+.breadcrumbs a {
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.breadcrumbs a:hover {
+  color: var(--secondary);
+}
+
+.breadcrumbs .breadcrumb-separator {
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.breadcrumbs .breadcrumb-current {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Workspace Tabs */
+.workspace-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--outline-variant);
+  padding-bottom: 2px;
+  overflow-x: auto;
+}
+
+.workspace-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  white-space: nowrap;
+}
+
+.workspace-tab:hover {
+  color: var(--primary);
+  background: var(--surface-container-high);
+}
+
+.workspace-tab.active {
+  color: var(--secondary);
+  background: #ffffff;
+  border-bottom: 3px solid var(--secondary);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.workspace-tab-badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--surface-container-highest);
+  color: var(--on-surface-variant);
+}
+
+.workspace-tab.active .workspace-tab-badge {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+/* Floating Action Button (FAB) */
+.fab-container {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.fab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--secondary), #004d47);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.fab-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  background: linear-gradient(135deg, #008077, var(--secondary));
+}
+
+/* Parking Slot Badges & Chips */
+.slot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.slot-chip-2w {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.slot-chip-4w {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.slot-status-avail {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.slot-status-occ {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Itemized Billing Breakdown */
+.itemized-receipt-box {
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed var(--outline-variant);
+}
+
+.receipt-row:last-child {
+  border-bottom: none;
+}
+
+.receipt-row.total-row {
+  border-top: 2px solid var(--primary);
+  border-bottom: none;
+  padding-top: 14px;
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.calc-preview-card {
+  background: linear-gradient(135deg, rgba(3, 7, 37, 0.04), rgba(0, 106, 99, 0.05));
+  border: 1.5px solid var(--secondary-container);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  margin-bottom: 20px;
+}
+

@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Security Gate Command — SAMVAYA</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/security.css">
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/security.css?v=4">
 </head>
 <body>
 
@@ -23,8 +23,8 @@
           <input type="text" id="gate-quick-search" placeholder="Type Flat # (e.g. 101), Visitor Name, Pass Code or Vehicle Number..." onkeyup="SecurityPage.handleLiveGateSearch(this.value)">
         </div>
 
-        <!-- 5 Headcount Counters -->
-        <div class="stats-grid">
+        <!-- 4 Headcount Counters -->
+        <div class="stats-grid" style="margin-bottom:20px;">
           <div class="stat-card">
             <div class="stat-icon-wrapper teal">
               <span class="material-symbols-outlined">schedule</span>
@@ -66,6 +66,66 @@
           </div>
         </div>
 
+        <!-- Dynamic Parking Management Metric Cards for Security (Requirement 1) -->
+        <div style="margin:20px 0 12px 0; display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="font-size:16px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="color:var(--secondary);">local_parking</span>
+            Available Parking & Gate Slot Allocation
+          </h2>
+          <div style="display:flex; gap:8px;">
+            <a href="/pages/security/vehicles.html" class="btn btn-secondary" style="padding:4px 10px; font-size:12px;">All Slots</a>
+            <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="openSecurityAssignModal()">
+              <span class="material-symbols-outlined" style="font-size:16px;">add_link</span> Assign Slot
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">local_parking</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-parking-total">0</div>
+              <div class="stat-label">Total Parking Slots</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Basements B1, B2 & Ground</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">no_crash</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-parking-occupied">0</div>
+              <div class="stat-label">Occupied Slots</div>
+              <small id="sec-parking-occupied-breakdown" style="color:var(--danger); font-weight:600; font-size:11px;">0 (4W) • 0 (2W)</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">check_circle</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-parking-available">0</div>
+              <div class="stat-label">Available Slots</div>
+              <small id="sec-parking-avail-breakdown" style="color:var(--success); font-weight:700; font-size:11px;">0 4-Wheeler • 0 2-Wheeler</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">two_wheeler</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-parking-avail-2w">0</div>
+              <div class="stat-label">Available 2-Wheelers</div>
+              <small id="sec-parking-avail-4w" style="color:var(--secondary); font-weight:600; font-size:11px;">0 Available 4-Wheelers</small>
+            </div>
+          </div>
+        </div>
+
         <!-- 2 Column: Gate Visitors & Deliveries -->
         <div class="admin-grid-layout">
           <div class="card-section">
@@ -88,20 +148,96 @@
     </main>
   </div>
 
-  <script src="/js/config.js"></script>
-  <script src="/js/components/toast.js"></script>
-  <script src="/js/components/sidebar.js"></script>
-  <script src="/js/components/navbar.js"></script>
+  <!-- Security Assign Parking Slot Modal -->
+  <div class="modal-backdrop" id="sec-assign-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Gate Allocation: Assign Parking Slot</h3>
+        <button class="btn-ghost" onclick="Modal.close('sec-assign-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="submitSecurityAssignSlot(event)">
+        <div class="modal-body">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Available Parking Slot</label>
+            <select id="sec-slot-select" required>
+              <option value="">Loading available slots...</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Destination Flat</label>
+            <select id="sec-flat-select" required>
+              <option value="">Loading flats...</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('sec-assign-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Allocate Slot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
   <script src="/js/components/table.js"></script>
-  <script src="/js/api/api.js"></script>
-  <script src="/js/api/securityApi.js"></script>
-  <script src="/js/pages/security.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/securityApi.js?v=4"></script>
+  <script src="/js/pages/security.js?v=4"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
         SecurityPage.initDashboard();
       }
     });
+
+    async function openSecurityAssignModal() {
+      const available = await SecurityApi.getAvailableParkingSlots();
+      const slotSelect = document.getElementById('sec-slot-select');
+      if (slotSelect) {
+        slotSelect.innerHTML = '<option value="">-- Choose Available Slot --</option>' +
+          available.map(s => {
+            const is2W = s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER';
+            return `<option value="${s.id}">${s.slotNumber} (${is2W ? '2-Wheeler' : '4-Wheeler'} - Level ${s.basementLevel})</option>`;
+          }).join('');
+      }
+
+      // Fetch flats
+      const flats = await Api.get('/admin/flats');
+      const flatSelect = document.getElementById('sec-flat-select');
+      if (flatSelect) {
+        flatSelect.innerHTML = '<option value="">-- Choose Flat --</option>' +
+          (flats || []).map(f => `<option value="${f.id}">Wing ${f.wing}-${f.flatNumber} (${f.currentResidentName || 'Resident'})</option>`).join('');
+      }
+
+      Modal.open('sec-assign-modal');
+    }
+
+    async function submitSecurityAssignSlot(event) {
+      event.preventDefault();
+      const slotId = document.getElementById('sec-slot-select').value;
+      const flatId = document.getElementById('sec-flat-select').value;
+
+      if (!slotId || !flatId) {
+        Toast.warning('Please select both slot and flat.');
+        return;
+      }
+
+      try {
+        await SecurityApi.assignParkingSlot(slotId, flatId);
+        Toast.success('Slot allocated successfully!');
+        Modal.close('sec-assign-modal');
+        SecurityPage.initDashboard();
+      } catch (e) {
+        Toast.error(e.message || 'Failed to allocate slot');
+      }
+    }
   </script>
 </body>
 </html>

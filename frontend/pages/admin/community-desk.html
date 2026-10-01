@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community & Desk Workspace — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/admin.css?v=4">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs">
+          <a href="/pages/admin/dashboard.html">Admin</a>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span>Workspaces</span>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span class="breadcrumb-current">Community & Desk</span>
+        </nav>
+
+        <!-- Workspace Tabs -->
+        <div class="workspace-tabs">
+          <button class="workspace-tab active" onclick="switchTab('complaints', this)">
+            <span class="material-symbols-outlined">report_problem</span>
+            <span>Complaints Desk</span>
+            <span class="workspace-tab-badge" id="tab-count-complaints">0</span>
+          </button>
+          <button class="workspace-tab" onclick="switchTab('notices', this)">
+            <span class="material-symbols-outlined">campaign</span>
+            <span>Notice Board</span>
+            <span class="workspace-tab-badge" id="tab-count-notices">0</span>
+          </button>
+          <button class="workspace-tab" onclick="switchTab('amenities', this)">
+            <span class="material-symbols-outlined">pool</span>
+            <span>Amenity Bookings</span>
+            <span class="workspace-tab-badge" id="tab-count-amenities">0</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: Complaints Desk -->
+        <div id="tab-complaints-view" class="tab-content-panel">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Society Complaints Desk & Redressal</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Track maintenance tickets, assign plumbers/electricians, and resolve resident issues
+                </p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <select id="complaint-status-filter" style="width:150px;" onchange="filterComplaints()">
+                  <option value="">All Statuses</option>
+                  <option value="NEW">New</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="RESOLVED">Resolved</option>
+                </select>
+              </div>
+            </div>
+            <div id="complaints-data-table"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Notice Board -->
+        <div id="tab-notices-view" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Society Notice Board</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Broadcast maintenance announcements, AGM meetings, and water shutdown advisories
+                </p>
+              </div>
+              <button class="btn btn-primary" onclick="Modal.open('new-notice-modal')">
+                <span class="material-symbols-outlined">add</span> Publish Notice
+              </button>
+            </div>
+            <div id="notices-data-table"></div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Amenities & Bookings -->
+        <div id="tab-amenities-view" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Facility Bookings & Reservations</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Clubhouse Lounge, Banquet Hall, Swimming Pool, and Rooftop Garden schedule
+                </p>
+              </div>
+            </div>
+            <div id="amenity-bookings-table"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Update Complaint Modal -->
+  <div class="modal-backdrop" id="update-complaint-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Update Complaint Ticket</h3>
+        <button class="btn-ghost" onclick="Modal.close('update-complaint-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="submitComplaintUpdate(event)">
+        <div class="modal-body">
+          <input type="hidden" id="complaint-id-input">
+          
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Status</label>
+            <select id="complaint-status-select">
+              <option value="NEW">NEW</option>
+              <option value="ASSIGNED">ASSIGNED</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Assigned Staff Member</label>
+            <select id="complaint-staff-select">
+              <option value="">-- None / Unassigned --</option>
+              <option value="1">Santosh Jadhav (Electrician)</option>
+              <option value="2">Ganesh More (Plumber)</option>
+              <option value="3">Vikas Shinde (Maintenance)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Admin Remarks / Action Taken</label>
+            <textarea id="complaint-remarks-input" rows="3" placeholder="Notes for resident and ticket logs..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('update-complaint-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Status</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Publish Notice Modal -->
+  <div class="modal-backdrop" id="new-notice-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Publish Society Notice</h3>
+        <button class="btn-ghost" onclick="Modal.close('new-notice-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="submitNewNotice(event)">
+        <div class="modal-body">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Notice Title</label>
+            <input type="text" id="notice-title" placeholder="e.g. Annual General Body Meeting 2026" required>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Category</label>
+              <select id="notice-category">
+                <option value="GENERAL">General Announcement</option>
+                <option value="MAINTENANCE">Maintenance</option>
+                <option value="WATER_SUPPLY">Water Supply</option>
+                <option value="SECURITY">Security Advisory</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Priority</label>
+              <select id="notice-priority">
+                <option value="NORMAL">Normal</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High / Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Notice Details</label>
+            <textarea id="notice-content" rows="4" placeholder="Type notice description here..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('new-notice-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Broadcast Notice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/adminApi.js?v=4"></script>
+
+  <script>
+    let allComplaints = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'community-desk');
+        Navbar.render('navbar-container', 'Community & Desk Workspace');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedTab = urlParams.get('tab') || 'complaints';
+
+        await loadComplaints();
+        await loadNotices();
+        await loadBookings();
+
+        const tabBtn = document.querySelector(`.workspace-tab[onclick*="${requestedTab}"]`);
+        if (tabBtn) switchTab(requestedTab, tabBtn);
+      }
+    });
+
+    function switchTab(tabKey, btn) {
+      document.querySelectorAll('.workspace-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('.tab-content-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById(`tab-${tabKey}-view`);
+      if (panel) panel.style.display = 'block';
+    }
+
+    async function loadComplaints() {
+      allComplaints = await AdminApi.getComplaints();
+      document.getElementById('tab-count-complaints').innerText = allComplaints.length;
+      renderComplaintsTable(allComplaints);
+    }
+
+    function renderComplaintsTable(complaints) {
+      Table.render('complaints-data-table', [
+        { label: 'Ticket', render: r => `<b>#CMP-${r.id}</b>` },
+        { label: 'Unit', render: r => `Wing ${r.wing}-${r.flatNumber}` },
+        { label: 'Resident', key: 'residentName' },
+        { label: 'Category', key: 'category' },
+        { label: 'Title & Issue', render: r => `<b>${r.title}</b><br><small style="color:var(--on-surface-variant);">${r.description}</small>` },
+        { label: 'Priority', render: r => `<span class="badge ${r.priority === 'HIGH' ? 'badge-danger' : 'badge-warning'}">${r.priority}</span>` },
+        { label: 'Status', render: r => {
+          if (r.status === 'RESOLVED' || r.status === 'CLOSED') {
+            return `<span class="badge badge-success">${r.status}</span>`;
+          } else if (r.status === 'IN_PROGRESS' || r.status === 'ASSIGNED') {
+            return `<span class="badge badge-warning">${r.status}</span>`;
+          }
+          return `<span class="badge badge-info">${r.status}</span>`;
+        }},
+        { label: 'Staff Assigned', key: 'assignedStaffName' },
+        { label: 'Actions', render: r => `
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="openComplaintModal(${r.id}, '${r.status}', '${r.assignedStaffId || ''}', '${r.adminRemarks || ''}')">Update</button>
+            <button class="btn btn-ghost" style="color:var(--danger); padding:4px 6px;" onclick="deleteComplaint(${r.id})">
+              <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+            </button>
+          </div>
+        `}
+      ], complaints);
+    }
+
+    function filterComplaints() {
+      const st = document.getElementById('complaint-status-filter').value;
+      let filtered = allComplaints;
+      if (st) filtered = filtered.filter(c => c.status === st);
+      renderComplaintsTable(filtered);
+    }
+
+    function openComplaintModal(id, status, staffId, remarks) {
+      document.getElementById('complaint-id-input').value = id;
+      document.getElementById('complaint-status-select').value = status || 'NEW';
+      document.getElementById('complaint-staff-select').value = staffId || '';
+      document.getElementById('complaint-remarks-input').value = remarks || '';
+      Modal.open('update-complaint-modal');
+    }
+
+    async function submitComplaintUpdate(event) {
+      event.preventDefault();
+      const id = document.getElementById('complaint-id-input').value;
+      const status = document.getElementById('complaint-status-select').value;
+      const staffId = document.getElementById('complaint-staff-select').value;
+      const remarks = document.getElementById('complaint-remarks-input').value;
+
+      try {
+        await AdminApi.updateComplaintStatus(id, status, staffId, remarks);
+        Toast.success('Complaint status updated successfully!');
+        Modal.close('update-complaint-modal');
+        await loadComplaints();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to update complaint');
+      }
+    }
+
+    function deleteComplaint(id) {
+      Modal.confirm({
+        title: 'Delete Complaint Ticket?',
+        message: `Ticket #CMP-${id} will be permanently removed.`,
+        confirmText: 'Delete Ticket',
+        danger: true,
+        onConfirm: async () => {
+          try {
+            await AdminApi.deleteComplaint(id);
+            Toast.success('Ticket deleted successfully');
+            await loadComplaints();
+          } catch (e) {
+            Toast.error('Failed to delete complaint');
+          }
+        }
+      });
+    }
+
+    async function loadNotices() {
+      try {
+        const notices = await AdminApi.getNotices();
+        document.getElementById('tab-count-notices').innerText = notices.length;
+        Table.render('notices-data-table', [
+          { label: 'Notice Title', render: r => `<b>${r.title}</b><br><small style="color:var(--on-surface-variant);">${r.content}</small>` },
+          { label: 'Category', key: 'category' },
+          { label: 'Priority', render: r => `<span class="badge ${r.priority === 'HIGH' ? 'badge-danger' : 'badge-info'}">${r.priority}</span>` },
+          { label: 'Published Date', key: 'publishedDate' },
+          { label: 'Actions', render: r => `
+            <button class="btn btn-ghost" style="color:var(--danger); padding:4px 6px;" onclick="deleteNotice(${r.id})">
+              <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+            </button>
+          `}
+        ], notices);
+      } catch (e) {}
+    }
+
+    async function submitNewNotice(event) {
+      event.preventDefault();
+      const noticeData = {
+        title: document.getElementById('notice-title').value,
+        category: document.getElementById('notice-category').value,
+        priority: document.getElementById('notice-priority').value,
+        content: document.getElementById('notice-content').value,
+        publishedDate: new Date().toISOString().split('T')[0],
+        isActive: true
+      };
+
+      try {
+        await AdminApi.createNotice(noticeData);
+        Toast.success('Notice published to resident board!');
+        Modal.close('new-notice-modal');
+        await loadNotices();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to publish notice');
+      }
+    }
+
+    async function deleteNotice(id) {
+      if (confirm('Delete this notice?')) {
+        await AdminApi.deleteNotice(id);
+        Toast.success('Notice deleted');
+        await loadNotices();
+      }
+    }
+
+    async function loadBookings() {
+      try {
+        const bookings = await AdminApi.getBookings();
+        document.getElementById('tab-count-amenities').innerText = bookings.length;
+        Table.render('amenity-bookings-table', [
+          { label: 'Facility', render: r => `<b>${r.amenityName}</b>` },
+          { label: 'Booked By', key: 'residentName' },
+          { label: 'Unit', render: r => `Wing ${r.wing || ''}-${r.flatNumber || ''}` },
+          { label: 'Date', key: 'bookingDate' },
+          { label: 'Time Slot', render: r => `${r.startTime} - ${r.endTime}` },
+          { label: 'Guests', key: 'numberOfGuests' },
+          { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], bookings);
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>

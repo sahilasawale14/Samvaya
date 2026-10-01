@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visitor Gate Check-In — SAMVAYA Security</title>
+  <title>Visitor Gate Check-In & Control — SAMVAYA Security</title>
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/security.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
 <body>
 
@@ -17,15 +18,106 @@
       <header class="app-topbar" id="navbar-container"></header>
 
       <div class="content-body">
+        
+        <!-- Top Section: 2 Columns for Gate Check-In Form and Active Visitors Summary -->
+        <div style="display: grid; grid-template-columns: 380px 1fr; gap: 24px; margin-bottom: 24px;">
+          
+          <!-- Gate Check-In Form -->
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
+                  <span class="material-symbols-outlined" style="color:var(--secondary);">person_add</span>
+                  Gate Visitor Check-In
+                </h2>
+                <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">Record walk-in guest or service personnel entry</p>
+              </div>
+            </div>
+
+            <form id="sec-checkin-form" onsubmit="SecurityPage.checkInVisitorSubmit(event)">
+              <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Visitor Full Name *</label>
+                <input type="text" id="sec-vis-name" required placeholder="e.g. Rahul Sharma" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Phone Number *</label>
+                <input type="tel" id="sec-vis-phone" required placeholder="e.g. 9876543210" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div>
+                  <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Visiting Wing *</label>
+                  <select id="sec-vis-wing" required style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+                    <option value="A">Wing A</option>
+                    <option value="B">Wing B</option>
+                    <option value="C">Wing C</option>
+                    <option value="D">Wing D</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Flat Number *</label>
+                  <input type="text" id="sec-vis-flat" required placeholder="e.g. 101" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+                </div>
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Vehicle Number (Optional)</label>
+                <input type="text" id="sec-vis-vehicle" placeholder="e.g. MH 02 AB 1234" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+              </div>
+
+              <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Purpose of Visit</label>
+                <select id="sec-vis-purpose" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+                  <option value="Guest">Guest / Friend / Family</option>
+                  <option value="Delivery">Delivery / Courier</option>
+                  <option value="Maintenance / Repair">Maintenance / Electrician / Plumber</option>
+                  <option value="Cab / Transport">Cab Pickup / Drop</option>
+                  <option value="Other">Other Official Visit</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size:18px;">login</span>
+                Record Gate Entry (INSIDE)
+              </button>
+            </form>
+          </div>
+
+          <!-- Active Visitors Inside Campus -->
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
+                  <span class="material-symbols-outlined" style="color:var(--success);">verified_user</span>
+                  Active Visitors (Inside Campus)
+                  <span id="active-visitors-count" class="badge badge-success" style="font-size:12px; margin-left:6px;">0</span>
+                </h2>
+                <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">Currently inside society premises. Click 'Mark Exit' when leaving gate.</p>
+              </div>
+              <button class="btn btn-ghost" onclick="loadActiveVisitors()" style="padding:4px 8px;" title="Refresh list">
+                <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
+              </button>
+            </div>
+            <div id="active-security-visitors-table"></div>
+          </div>
+
+        </div>
+
+        <!-- All Visitors Log -->
         <div class="card-section">
           <div class="card-header-flex">
             <div>
-              <h2 class="card-title">Society Gate Visitor Check-In & Verification</h2>
-              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Scan passcodes, verify photo IDs, and record entry/exit timestamps</p>
+              <h2 class="card-title">Society Gate Passcode & Complete Visitor History</h2>
+              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Scan passcodes, verify pre-approved guest entries, and review past visits</p>
             </div>
+            <button class="btn btn-ghost" onclick="loadAllVisitors()" style="padding:4px 8px;" title="Refresh log">
+              <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
+            </button>
           </div>
           <div id="all-security-visitors-table"></div>
         </div>
+
       </div>
     </main>
   </div>
@@ -39,28 +131,58 @@
   <script src="/js/api/securityApi.js"></script>
   <script src="/js/pages/security.js"></script>
   <script>
+    async function loadActiveVisitors() {
+      try {
+        const active = await SecurityApi.getActiveVisitors();
+        const countBadge = document.getElementById('active-visitors-count');
+        if (countBadge) countBadge.textContent = (active && active.length) || 0;
+
+        Table.render('active-security-visitors-table', [
+          { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
+          { label: 'Phone', render: r => r.phone || '-' },
+          { label: 'Destination Unit', render: r => `<b>Wing ${r.wing || (r.flat ? r.flat.wing : '')}-${r.flatNumber || (r.flat ? r.flat.flatNumber : '')}</b>` },
+          { label: 'Vehicle No', render: r => r.vehicleNumber || '-' },
+          { label: 'Purpose', render: r => `<span class="badge badge-info">${r.purpose || 'Visit'}</span>` },
+          { label: 'Entry Time', render: r => r.entryTime ? new Date(r.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now' },
+          { label: 'Status', render: () => `<span class="badge badge-success">INSIDE</span>` },
+          { label: 'Action', render: r => `
+            <button class="btn btn-ghost" style="color:var(--danger); border:1px solid var(--danger); padding:4px 10px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px;" onclick="SecurityPage.markVisitorCheckOut(${r.id})">
+              <span class="material-symbols-outlined" style="font-size:14px;">logout</span> Mark Exit
+            </button>
+          `}
+        ], active || []);
+      } catch (err) {
+        console.error('Failed to load active visitors', err);
+      }
+    }
+
     async function loadAllVisitors() {
-      const visitors = await SecurityApi.getAllVisitors();
-      Table.render('all-security-visitors-table', [
-        { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
-        { label: 'Destination Flat', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b>` },
-        { label: 'Resident Host', key: 'residentName' },
-        { label: 'Pass Code', render: r => `<code>${r.passCode}</code>` },
-        { label: 'Vehicle Number', render: r => r.vehicleNumber || '-' },
-        { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` },
-        { label: 'Actions', render: r => `
-          ${r.status === 'EXPECTED' ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorArrival(${r.id}); loadAllVisitors();">Arrived</button>` : ''}
-          ${r.status === 'ARRIVED' ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.allowVisitorEntry(${r.id}); loadAllVisitors();">Allow Entry</button>` : ''}
-          ${r.status === 'INSIDE' ? `<button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorExit(${r.id}); loadAllVisitors();">Log Exit</button>` : ''}
-          ${r.status === 'EXITED' ? `<span style="color:var(--outline); font-size:12px;">Completed</span>` : ''}
-        `}
-      ], visitors);
+      try {
+        const visitors = await SecurityApi.getAllVisitors();
+        Table.render('all-security-visitors-table', [
+          { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
+          { label: 'Destination Flat', render: r => `<b>Wing ${r.wing || (r.flat ? r.flat.wing : '')}-${r.flatNumber || (r.flat ? r.flat.flatNumber : '')}</b>` },
+          { label: 'Resident Host', render: r => r.residentName || (r.flat && r.flat.currentResidentName) || '-' },
+          { label: 'Pass Code', render: r => r.passCode ? `<code>${r.passCode}</code>` : '-' },
+          { label: 'Vehicle Number', render: r => r.vehicleNumber || '-' },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` },
+          { label: 'Actions', render: r => `
+            ${r.status === 'EXPECTED' ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorArrival(${r.id}); loadAllVisitors();">Arrived</button>` : ''}
+            ${r.status === 'ARRIVED' ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.allowVisitorEntry(${r.id}); loadAllVisitors(); loadActiveVisitors();">Allow Entry</button>` : ''}
+            ${r.status === 'INSIDE' ? `<button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorCheckOut(${r.id})">Log Exit</button>` : ''}
+            ${r.status === 'EXITED' ? `<span style="color:var(--outline); font-size:12px;">Completed</span>` : ''}
+          `}
+        ], visitors || []);
+      } catch (err) {
+        console.error('Failed to load all visitors', err);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+      if (checkAuth(['SECURITY_GUARD', 'ADMIN', 'SECURITY'])) {
         Sidebar.render('sidebar-container', 'visitors');
-        Navbar.render('navbar-container', 'Visitor Check-In');
+        Navbar.render('navbar-container', 'Visitor Gate Operations');
+        loadActiveVisitors();
         loadAllVisitors();
       }
     });

@@ -7,12 +7,13 @@ const Api = {
     const url = `${CONFIG.API_BASE_URL}${endpoint}`;
     const user = getCurrentUser();
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...(user ? { 'X-User-Id': user.userId, 'X-User-Role': user.role } : {}),
-      ...(options.headers || {})
-    };
+      const userHeaderId = user ? (user.userId || user.id) : null;
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...(userHeaderId ? { 'X-User-Id': userHeaderId, 'X-User-Role': user.role } : {}),
+        ...(options.headers || {})
+      };
 
     try {
       const response = await fetch(url, {
@@ -39,9 +40,8 @@ const Api = {
         throw err;
       }
 
-      // For GET requests only, return fallback if server is unreachable
-      console.warn(`[API Notice] Falling back for GET ${endpoint}`);
-      return this.getMockFallback(endpoint);
+      // Return empty array/null instead of fake mock fallbacks
+      return Array.isArray(err) ? [] : (endpoint.includes('dashboard') ? {} : []);
     }
   },
 
@@ -72,23 +72,5 @@ const Api = {
 
   delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });
-  },
-
-  getMockFallback(endpoint) {
-    if (endpoint.includes('/admin/dashboard')) {
-      return {
-        totalFlats: 36,
-        occupiedFlats: 34,
-        vacantFlats: 2,
-        totalResidents: 86,
-        totalOwners: 28,
-        totalTenants: 8,
-        pendingComplaints: 3,
-        collectedMaintenance: 143500,
-        recentActivities: [],
-        recentComplaints: []
-      };
-    }
-    return [];
   }
 };

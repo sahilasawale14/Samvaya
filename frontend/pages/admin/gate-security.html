@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gate & Security Workspace — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/admin.css?v=4">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs">
+          <a href="/pages/admin/dashboard.html">Admin</a>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span>Workspaces</span>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span class="breadcrumb-current">Gate & Security</span>
+        </nav>
+
+        <!-- Dynamic Parking Metric Cards -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">local_parking</span>
+            </div>
+            <div>
+              <div class="stat-value" id="metric-total-parking">0</div>
+              <div class="stat-label">Total Parking Slots</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Basements B1, B2 & Ground</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">no_crash</span>
+            </div>
+            <div>
+              <div class="stat-value" id="metric-occupied-parking">0</div>
+              <div class="stat-label">Occupied Slots</div>
+              <small id="metric-occupied-breakdown" style="color:var(--danger); font-weight:600; font-size:11px;">
+                0 (4W) • 0 (2W)
+              </small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">check_circle</span>
+            </div>
+            <div>
+              <div class="stat-value" id="metric-available-parking">0</div>
+              <div class="stat-label">Available Slots</div>
+              <small id="metric-available-breakdown" style="color:var(--success); font-weight:700; font-size:11px;">
+                0 4-Wheeler • 0 2-Wheeler
+              </small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">two_wheeler</span>
+            </div>
+            <div>
+              <div class="stat-value" id="metric-available-2w">0</div>
+              <div class="stat-label">Available 2-Wheelers</div>
+              <small id="metric-available-4w" style="color:var(--secondary); font-weight:600; font-size:11px;">
+                0 Available 4-Wheelers
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workspace Tabs -->
+        <div class="workspace-tabs">
+          <button class="workspace-tab active" onclick="switchTab('parking', this)">
+            <span class="material-symbols-outlined">local_parking</span>
+            <span>Parking Slots & Allocation</span>
+            <span class="workspace-tab-badge" id="tab-count-parking">0</span>
+          </button>
+          <button class="workspace-tab" onclick="switchTab('visitors', this)">
+            <span class="material-symbols-outlined">person_pin_circle</span>
+            <span>Live Visitors</span>
+            <span class="workspace-tab-badge" id="tab-count-visitors">0</span>
+          </button>
+          <button class="workspace-tab" onclick="switchTab('deliveries', this)">
+            <span class="material-symbols-outlined">local_shipping</span>
+            <span>Package Deliveries</span>
+            <span class="workspace-tab-badge" id="tab-count-deliveries">0</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: Parking Slots & Allocation -->
+        <div id="tab-parking-view" class="tab-content-panel">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Society Parking Slots & Space Allocation</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Real-time slot occupancy, vehicle slot assignment, and resident exit vacation
+                </p>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <select id="parking-type-filter" style="width:160px;" onchange="filterParkingSlots()">
+                  <option value="">All Vehicle Types</option>
+                  <option value="4_WHEELER">4-Wheeler Slots</option>
+                  <option value="2_WHEELER">2-Wheeler Slots</option>
+                </select>
+                <select id="parking-status-filter" style="width:150px;" onchange="filterParkingSlots()">
+                  <option value="">All Statuses</option>
+                  <option value="AVAILABLE">Available Only</option>
+                  <option value="OCCUPIED">Occupied / Assigned</option>
+                </select>
+                <button class="btn btn-primary" onclick="openAssignModal()">
+                  <span class="material-symbols-outlined">add_link</span> Assign Slot
+                </button>
+              </div>
+            </div>
+            <div id="parking-slots-table"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Live Visitors -->
+        <div id="tab-visitors-view" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Live Gate Visitor Passes & Log</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Active visitor passes, entry verification, and duration inside society
+                </p>
+              </div>
+            </div>
+            <div id="admin-visitors-table"></div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Deliveries -->
+        <div id="tab-deliveries-view" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Package & Courier Deliveries</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Swiggy, Zomato, Amazon, Blinkit gate verification queue
+                </p>
+              </div>
+            </div>
+            <div id="admin-deliveries-table"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="fab-container">
+    <button class="fab-btn" onclick="openAssignModal()">
+      <span class="material-symbols-outlined">directions_car</span>
+      <span>Assign Slot</span>
+    </button>
+  </div>
+
+  <!-- Modal: Assign Parking Slot -->
+  <div class="modal-backdrop" id="assign-parking-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Assign Available Parking Slot</h3>
+        <button class="btn-ghost" onclick="Modal.close('assign-parking-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form onsubmit="submitAssignSlot(event)">
+        <div class="modal-body">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Available Parking Slot</label>
+            <select id="assign-slot-select" required>
+              <option value="">Loading available slots...</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Select Destination Flat</label>
+            <select id="assign-flat-select" required>
+              <option value="">Loading flats...</option>
+            </select>
+          </div>
+
+          <div class="calc-preview-card" style="margin-bottom:0;">
+            <div style="font-size:13px; font-weight:700; color:var(--primary); margin-bottom:4px;">
+              <span class="material-symbols-outlined" style="font-size:18px; vertical-align:text-bottom;">info</span>
+              Automatic Occupancy Synchronization
+            </div>
+            <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.4;">
+              Assigning will set <code>isOccupied = true</code> and link the flat. When a resident vacates or exits the society, the slot can be vacated instantly to return to the available pool.
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('assign-parking-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Slot Assignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/adminApi.js?v=4"></script>
+
+  <script>
+    let allSlots = [];
+    let allFlatsList = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'gate-security');
+        Navbar.render('navbar-container', 'Gate & Security Workspace');
+
+        await loadParkingStats();
+        await loadParkingSlots();
+        await loadFlatsForDropdown();
+        await loadVisitors();
+        await loadDeliveries();
+      }
+    });
+
+    function switchTab(tabKey, btn) {
+      document.querySelectorAll('.workspace-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('.tab-content-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById(`tab-${tabKey}-view`);
+      if (panel) panel.style.display = 'block';
+    }
+
+    async function loadParkingStats() {
+      try {
+        const stats = await AdminApi.getParkingStats();
+        document.getElementById('metric-total-parking').innerText = stats.totalSlots || 0;
+        document.getElementById('metric-occupied-parking').innerText = stats.occupiedSlots || 0;
+        document.getElementById('metric-occupied-breakdown').innerText = 
+          `${stats.occupiedFourWheeler || 0} (4W) • ${stats.occupiedTwoWheeler || 0} (2W)`;
+
+        document.getElementById('metric-available-parking').innerText = stats.availableSlots || 0;
+        document.getElementById('metric-available-breakdown').innerText = 
+          `${stats.availableFourWheeler || 0} 4-Wheeler • ${stats.availableTwoWheeler || 0} 2-Wheeler`;
+
+        document.getElementById('metric-available-2w').innerText = stats.availableTwoWheeler || 0;
+        document.getElementById('metric-available-4w').innerText = 
+          `${stats.availableFourWheeler || 0} Available 4-Wheelers`;
+      } catch (e) {
+        console.error("Failed to load parking stats:", e);
+      }
+    }
+
+    async function loadParkingSlots() {
+      allSlots = await AdminApi.getParkingSlots();
+      document.getElementById('tab-count-parking').innerText = allSlots.length;
+      renderParkingTable(allSlots);
+    }
+
+    function renderParkingTable(slots) {
+      Table.render('parking-slots-table', [
+        { label: 'Slot No.', render: r => `<b>${r.slotNumber}</b>` },
+        { label: 'Type', render: r => {
+          const is2W = r.slotType === '2_WHEELER' || r.slotType === 'TWO_WHEELER';
+          return `<span class="slot-chip ${is2W ? 'slot-chip-2w' : 'slot-chip-4w'}">
+            <span class="material-symbols-outlined" style="font-size:14px;">${is2W ? 'two_wheeler' : 'directions_car'}</span>
+            ${is2W ? '2-Wheeler' : '4-Wheeler'}
+          </span>`;
+        }},
+        { label: 'Basement / Level', key: 'basementLevel' },
+        { label: 'Status', render: r => `
+          <span class="slot-chip ${r.isOccupied ? 'slot-status-occ' : 'slot-status-avail'}">
+            ${r.isOccupied ? 'OCCUPIED' : 'AVAILABLE'}
+          </span>
+        `},
+        { label: 'Assigned Flat', render: r => r.assignedFlatId ? `<b>Wing ${r.wing || ''}-${r.flatNumber || ''}</b>` : '<span style="color:var(--outline);">-</span>' },
+        { label: 'Resident', key: 'residentName' },
+        { label: 'Action', render: r => r.isOccupied ? `
+          <button class="btn btn-ghost" style="color:var(--danger); font-size:12px; padding:4px 8px;" onclick="vacateSlot(${r.id}, '${r.slotNumber}')">
+            <span class="material-symbols-outlined" style="font-size:16px;">logout</span> Vacate
+          </button>
+        ` : `
+          <button class="btn btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="quickAssignSlot(${r.id})">
+            Assign Flat
+          </button>
+        `}
+      ], slots);
+    }
+
+    function filterParkingSlots() {
+      const type = document.getElementById('parking-type-filter').value;
+      const status = document.getElementById('parking-status-filter').value;
+
+      let filtered = allSlots;
+      if (type) {
+        filtered = filtered.filter(s => s.slotType === type || (type === '2_WHEELER' && s.slotType === 'TWO_WHEELER') || (type === '4_WHEELER' && s.slotType === 'FOUR_WHEELER'));
+      }
+      if (status) {
+        if (status === 'AVAILABLE') filtered = filtered.filter(s => !s.isOccupied);
+        else if (status === 'OCCUPIED') filtered = filtered.filter(s => s.isOccupied);
+      }
+      renderParkingTable(filtered);
+    }
+
+    async function loadFlatsForDropdown() {
+      allFlatsList = await AdminApi.getFlats();
+      const select = document.getElementById('assign-flat-select');
+      if (select) {
+        select.innerHTML = '<option value="">-- Choose Flat --</option>' +
+          allFlatsList.map(f => `<option value="${f.id}">Wing ${f.wing}-${f.flatNumber} (${f.currentResidentName})</option>`).join('');
+      }
+    }
+
+    async function openAssignModal(preselectedSlotId = null) {
+      const availableSlots = await AdminApi.getAvailableParkingSlots();
+      const select = document.getElementById('assign-slot-select');
+      if (select) {
+        select.innerHTML = '<option value="">-- Choose Available Slot --</option>' +
+          availableSlots.map(s => {
+            const is2W = s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER';
+            return `<option value="${s.id}" ${preselectedSlotId == s.id ? 'selected' : ''}>${s.slotNumber} (${is2W ? '2-Wheeler' : '4-Wheeler'} - Level ${s.basementLevel})</option>`;
+          }).join('');
+      }
+      Modal.open('assign-parking-modal');
+    }
+
+    function quickAssignSlot(slotId) {
+      openAssignModal(slotId);
+    }
+
+    async function submitAssignSlot(event) {
+      event.preventDefault();
+      const slotId = document.getElementById('assign-slot-select').value;
+      const flatId = document.getElementById('assign-flat-select').value;
+
+      if (!slotId || !flatId) {
+        Toast.warning('Please select both a parking slot and a flat.');
+        return;
+      }
+
+      try {
+        await AdminApi.assignParkingSlot(slotId, flatId);
+        Toast.success('Parking slot assigned successfully!');
+        Modal.close('assign-parking-modal');
+        await loadParkingStats();
+        await loadParkingSlots();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to assign slot');
+      }
+    }
+
+    async function vacateSlot(slotId, slotNumber) {
+      Modal.confirm({
+        title: `Vacate Parking Slot ${slotNumber}?`,
+        message: 'This will disassociate the slot from its current flat and increment society available slot metrics.',
+        confirmText: 'Vacate Slot',
+        danger: true,
+        onConfirm: async () => {
+          try {
+            await AdminApi.vacateParkingSlot(slotId);
+            Toast.success(`Parking slot ${slotNumber} is now Available.`);
+            await loadParkingStats();
+            await loadParkingSlots();
+          } catch (err) {
+            Toast.error(err.message || 'Failed to vacate slot');
+          }
+        }
+      });
+    }
+
+    async function loadVisitors() {
+      try {
+        const visitors = await AdminApi.getVisitors();
+        document.getElementById('tab-count-visitors').innerText = visitors.length;
+        Table.render('admin-visitors-table', [
+          { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
+          { label: 'Phone', key: 'phone' },
+          { label: 'Destination', render: r => `Wing ${r.wing || ''}-${r.flatNumber || ''}` },
+          { label: 'Host Resident', key: 'residentName' },
+          { label: 'Purpose', key: 'purpose' },
+          { label: 'Pass Code', render: r => `<code>${r.passCode || '-'}</code>` },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : 'badge-warning'}">${r.status}</span>` }
+        ], visitors);
+      } catch (e) {}
+    }
+
+    async function loadDeliveries() {
+      try {
+        const deliveries = await AdminApi.getDeliveries();
+        document.getElementById('tab-count-deliveries').innerText = deliveries.length;
+        Table.render('admin-deliveries-table', [
+          { label: 'Company', render: r => `<b>${r.company}</b>` },
+          { label: 'Delivery Person', render: r => `${r.deliveryPersonName || '-'} (${r.phone || '-'})` },
+          { label: 'Destination', render: r => `Wing ${r.wing || ''}-${r.flatNumber || ''}` },
+          { label: 'Reference / OTP', render: r => `<code>${r.referenceNumber || '-'}</code>` },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'COMPLETED' ? 'badge-success' : 'badge-warning'}">${r.status}</span>` }
+        ], deliveries);
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>

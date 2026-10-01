@@ -7,13 +7,20 @@ const Navbar = {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const user = getCurrentUser() || { fullName: 'User', role: 'ADMIN' };
+    const user = getCurrentUser() || {};
+    const unitInfo = user.flatNumber ? `(Wing ${user.wing || 'A'}-${user.flatNumber})` : (user.role ? `(${user.role.replace('_', ' ')})` : '');
 
     container.innerHTML = `
       <div class="topbar-left">
         <h1 class="topbar-title">${title}</h1>
       </div>
       <div class="topbar-actions">
+        ${user.fullName ? `
+          <div class="topbar-user-pill" style="display:inline-flex; align-items:center; gap:8px; padding:6px 12px; background:var(--surface-container-low); border-radius:20px; font-size:13px; font-weight:600; color:var(--on-surface);">
+            <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary);">account_circle</span>
+            <span>${user.fullName} <span style="font-weight:400; color:var(--outline);">${unitInfo}</span></span>
+          </div>
+        ` : ''}
         <div class="global-search-container">
           <span class="material-symbols-outlined search-icon">search</span>
           <input type="text" id="global-search-input" placeholder="Search residents, units, visitors..." onkeyup="if(event.key==='Enter')handleGlobalSearch(this.value)">

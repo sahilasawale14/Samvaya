@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financials & Maintenance Billing — SAMVAYA Admin</title>
+  <link rel="stylesheet" href="/css/main.css?v=4">
+  <link rel="stylesheet" href="/css/dashboard.css?v=4">
+  <link rel="stylesheet" href="/css/admin.css?v=4">
+</head>
+<body>
+
+  <div class="app-container">
+    <aside class="app-sidebar" id="sidebar-container"></aside>
+
+    <main class="app-main">
+      <header class="app-topbar" id="navbar-container"></header>
+
+      <div class="content-body">
+        <!-- Breadcrumbs -->
+        <nav class="breadcrumbs">
+          <a href="/pages/admin/dashboard.html">Admin</a>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span>Workspaces</span>
+          <span class="breadcrumb-separator material-symbols-outlined">chevron_right</span>
+          <span class="breadcrumb-current">Financials</span>
+        </nav>
+
+        <!-- Dynamic Financial Metric Cards -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper amber">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <div>
+              <div class="stat-value" id="fin-collected">₹0</div>
+              <div class="stat-label">Collected Maintenance</div>
+              <small style="color:var(--success); font-weight:600; font-size:11px;">Verified UPI & Bank Receipts</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral">
+              <span class="material-symbols-outlined">pending_actions</span>
+            </div>
+            <div>
+              <div class="stat-value" id="fin-pending">₹0</div>
+              <div class="stat-label">Outstanding Dues</div>
+              <small style="color:var(--tertiary); font-weight:600; font-size:11px;">Pending Collection</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">calculate</span>
+            </div>
+            <div>
+              <div class="stat-value">₹2,500</div>
+              <div class="stat-label">Standard Fixed Charges</div>
+              <small style="color:var(--on-surface-variant); font-size:11px;">Equal across all 1 BHK, 2 BHK, 3 BHK</small>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal">
+              <span class="material-symbols-outlined">straighten</span>
+            </div>
+            <div>
+              <div class="stat-value" id="fin-rate-card">₹3.50</div>
+              <div class="stat-label">Variable Area Rate</div>
+              <small style="color:var(--secondary); font-weight:600; font-size:11px;">per sq.ft Carpet Area</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workspace Tabs -->
+        <div class="workspace-tabs">
+          <button class="workspace-tab active" onclick="switchTab('invoices', this)">
+            <span class="material-symbols-outlined">receipt_long</span>
+            <span>Maintenance Dues & Invoices</span>
+            <span class="workspace-tab-badge" id="tab-count-bills">0</span>
+          </button>
+          <button class="workspace-tab" onclick="switchTab('generator', this)">
+            <span class="material-symbols-outlined">auto_fix_high</span>
+            <span>Automated Bill Generator</span>
+          </button>
+          <button class="workspace-tab" onclick="switchTab('transactions', this)">
+            <span class="material-symbols-outlined">history</span>
+            <span>Payment History</span>
+            <span class="workspace-tab-badge" id="tab-count-payments">0</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: Maintenance Dues & Invoices -->
+        <div id="tab-invoices-view" class="tab-content-panel">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Society Maintenance Invoices (1 BHK vs 2 BHK Itemized)</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  All flats pay identical fixed security & amenity fees; variable area charge reflects individual carpet area
+                </p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <select id="bill-month-filter" style="width:160px;" onchange="filterBills()">
+                  <option value="">All Billing Periods</option>
+                  <option value="2026-10">October 2026 (2026-10)</option>
+                  <option value="August 2026">August 2026</option>
+                </select>
+                <select id="bill-status-filter" style="width:140px;" onchange="filterBills()">
+                  <option value="">All Statuses</option>
+                  <option value="PENDING">Pending Dues</option>
+                  <option value="PAID">Paid</option>
+                </select>
+                <button class="btn btn-secondary" onclick="switchTab('generator', document.querySelectorAll('.workspace-tab')[1])">
+                  <span class="material-symbols-outlined">bolt</span> Generate Bills
+                </button>
+              </div>
+            </div>
+            <div id="admin-bills-table"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Automated Bill Generator Engine -->
+        <div id="tab-generator-view" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <h2 class="card-title" style="margin-bottom:6px;">Standardized Maintenance Billing Calculation Engine</h2>
+            <p style="font-size:14px; color:var(--on-surface-variant); margin-bottom:20px;">
+              Automated monthly batch generator using standardized pricing rules:
+              <code>Total Bill = (Rate/SqFt * CarpetArea) + FixedCharges (Security ₹1000 + Lift/Elec ₹800 + Sinking ₹500 + Admin ₹200)</code>
+            </p>
+
+            <!-- Interactive 1 BHK vs 2 BHK Comparison Card -->
+            <div class="calc-preview-card">
+              <div style="font-size:15px; font-weight:700; color:var(--primary); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="color:var(--secondary);">balance</span>
+                Standardized Calculation Preview (1 BHK vs. 2 BHK Parity)
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                <div style="background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-md); padding:16px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span class="badge badge-info" style="font-size:13px;">1 BHK Unit</span>
+                    <span style="font-size:13px; font-weight:700; color:var(--primary);">550 Sq.Ft Carpet Area</span>
+                  </div>
+                  <div style="font-size:13px; color:var(--on-surface-variant); line-height:1.6;">
+                    <div>• Fixed Charges: <b>₹2,500.00</b> <small>(Identical)</small></div>
+                    <div>• Variable Charge: <span id="calc-var-1bhk">₹1,925.00</span> <small>(₹3.50 × 550 sq.ft)</small></div>
+                    <div style="border-top:1px dashed var(--outline-variant); margin-top:8px; padding-top:6px; font-size:15px; font-weight:800; color:var(--primary);">
+                      Total Bill: <span id="calc-total-1bhk" style="color:var(--secondary);">₹4,425.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-md); padding:16px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span class="badge badge-info" style="font-size:13px;">2 BHK Unit</span>
+                    <span style="font-size:13px; font-weight:700; color:var(--primary);">900 Sq.Ft Carpet Area</span>
+                  </div>
+                  <div style="font-size:13px; color:var(--on-surface-variant); line-height:1.6;">
+                    <div>• Fixed Charges: <b>₹2,500.00</b> <small>(Identical)</small></div>
+                    <div>• Variable Charge: <span id="calc-var-2bhk">₹3,150.00</span> <small>(₹3.50 × 900 sq.ft)</small></div>
+                    <div style="border-top:1px dashed var(--outline-variant); margin-top:8px; padding-top:6px; font-size:15px; font-weight:800; color:var(--primary);">
+                      Total Bill: <span id="calc-total-2bhk" style="color:var(--secondary);">₹5,650.00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px; font-size:12px; color:var(--on-surface-variant);">
+                <b>Why this model?</b> Security, lift maintenance, sinking funds, and administrative overheads remain completely flat across all society flats, while differences are mathematically proportional to square footage.
+              </div>
+            </div>
+
+            <!-- Batch Generation Form -->
+            <form onsubmit="runMonthlyBatchGeneration(event)" style="max-width:550px; background:#ffffff; border:1px solid var(--outline-variant); border-radius:var(--radius-lg); padding:24px;">
+              <h3 style="font-size:16px; margin-bottom:16px;">Run Automated Monthly Batch Invoicing</h3>
+
+              <div style="margin-bottom:16px;">
+                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Billing Month (YYYY-MM)</label>
+                <input type="month" id="batch-month-input" value="2026-10" required>
+              </div>
+
+              <div style="margin-bottom:20px;">
+                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Rate per Sq.Ft (₹)</label>
+                <input type="number" id="batch-rate-input" value="3.50" step="0.25" min="1.0" max="25.0" oninput="updateLiveComparison(this.value)" required>
+              </div>
+
+              <button type="submit" class="btn btn-accent" style="width:100%; padding:14px; font-size:15px; font-weight:700;">
+                <span class="material-symbols-outlined">bolt</span> Generate Society Monthly Bills
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- TAB 3: Payment History -->
+        <div id="tab-transactions-view" class="tab-content-panel" style="display:none;">
+          <div class="card-section">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-title">Real-Time Payment Receipts & UPI Ledger</h2>
+                <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">
+                  Audited transaction references, timestamps, and payment gateway confirmations
+                </p>
+              </div>
+            </div>
+            <div id="admin-payments-table"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="fab-container">
+    <button class="fab-btn" onclick="switchTab('generator', document.querySelectorAll('.workspace-tab')[1])">
+      <span class="material-symbols-outlined">bolt</span>
+      <span>Generate Bills</span>
+    </button>
+  </div>
+
+  <!-- Itemized Bill Breakdown Modal -->
+  <div class="modal-backdrop" id="bill-breakdown-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Itemized Maintenance Invoice Breakdown</h3>
+        <button class="btn-ghost" onclick="Modal.close('bill-breakdown-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body" id="bill-breakdown-content">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="Modal.close('bill-breakdown-modal')">Close Breakdown</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=4"></script>
+  <script src="/js/components/toast.js?v=4"></script>
+  <script src="/js/components/sidebar.js?v=4"></script>
+  <script src="/js/components/navbar.js?v=4"></script>
+  <script src="/js/components/table.js"></script>
+  <script src="/js/components/modal.js"></script>
+  <script src="/js/api/api.js?v=4"></script>
+  <script src="/js/api/adminApi.js?v=4"></script>
+
+  <script>
+    let allBillsList = [];
+    let allPaymentsList = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (checkAuth(['ADMIN'])) {
+        Sidebar.render('sidebar-container', 'financials');
+        Navbar.render('navbar-container', 'Financials & Maintenance Billing Workspace');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedTab = urlParams.get('tab') || 'invoices';
+
+        await loadBills();
+        await loadPayments();
+        await loadFinancialStats();
+
+        const tabBtn = document.querySelector(`.workspace-tab[onclick*="${requestedTab}"]`);
+        if (tabBtn) switchTab(requestedTab, tabBtn);
+      }
+    });
+
+    function switchTab(tabKey, btn) {
+      document.querySelectorAll('.workspace-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('.tab-content-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById(`tab-${tabKey}-view`);
+      if (panel) panel.style.display = 'block';
+    }
+
+    async function loadFinancialStats() {
+      try {
+        const stats = await AdminApi.getDashboard();
+        document.getElementById('fin-collected').innerText = `₹${(stats.collectedMaintenance || 0).toLocaleString('en-IN')}`;
+        document.getElementById('fin-pending').innerText = `₹${(stats.pendingMaintenance || 0).toLocaleString('en-IN')}`;
+      } catch (e) {}
+    }
+
+    async function loadBills() {
+      allBillsList = await AdminApi.getBills();
+      document.getElementById('tab-count-bills').innerText = allBillsList.length;
+      renderBillsTable(allBillsList);
+    }
+
+    function renderBillsTable(bills) {
+      Table.render('admin-bills-table', [
+        { label: 'Unit', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b>` },
+        { label: 'Type', render: r => `<span class="badge badge-info">${r.flatType || '-'}</span>` },
+        { label: 'Carpet Area', render: r => `${r.carpetAreaSqFt || '-'} sq.ft` },
+        { label: 'Resident', key: 'residentName' },
+        { label: 'Billing Period', key: 'billMonth' },
+        { label: 'Variable Charge', render: r => `₹${r.variableAreaCharge || r.maintenanceCharge}` },
+        { label: 'Fixed Fees', render: r => `₹${r.totalFixedCharges || 2500}` },
+        { label: 'Total Due', render: r => `<b style="font-size:15px; color:var(--primary);">₹${r.totalAmount}</b>` },
+        { label: 'Status', render: r => `<span class="badge ${r.status === 'PAID' ? 'badge-success' : 'badge-danger'}">${r.status}</span>` },
+        { label: 'Breakdown', render: r => `
+          <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="viewBreakdown(${r.id})">
+            Itemized
+          </button>
+        `}
+      ], bills);
+    }
+
+    function filterBills() {
+      const month = document.getElementById('bill-month-filter').value;
+      const status = document.getElementById('bill-status-filter').value;
+
+      let filtered = allBillsList;
+      if (month) filtered = filtered.filter(b => b.billMonth === month);
+      if (status) filtered = filtered.filter(b => b.status === status);
+      renderBillsTable(filtered);
+    }
+
+    async function loadPayments() {
+      try {
+        allPaymentsList = await AdminApi.getPayments();
+        document.getElementById('tab-count-payments').innerText = allPaymentsList.length;
+        Table.render('admin-payments-table', [
+          { label: 'Receipt ID', render: r => `#RCP-${r.id}` },
+          { label: 'Flat Unit', render: r => `<b>${r.flatNumber ? `Flat ${r.flatNumber}` : '-'}</b>` },
+          { label: 'Resident', key: 'residentName' },
+          { label: 'Amount Paid', render: r => `<b style="color:var(--success);">₹${r.amountPaid}</b>` },
+          { label: 'Payment Mode', key: 'paymentMode' },
+          { label: 'Transaction Reference', render: r => `<code>${r.transactionReference}</code>` },
+          { label: 'Date', render: r => r.paymentDate ? r.paymentDate.replace('T', ' ') : '-' },
+          { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        ], allPaymentsList);
+      } catch (e) {}
+    }
+
+    function updateLiveComparison(rateVal) {
+      const rate = parseFloat(rateVal) || 3.50;
+      document.getElementById('fin-rate-card').innerText = `₹${rate.toFixed(2)}`;
+
+      const var1 = rate * 550;
+      const total1 = var1 + 2500;
+      document.getElementById('calc-var-1bhk').innerText = `₹${var1.toFixed(2)}`;
+      document.getElementById('calc-total-1bhk').innerText = `₹${total1.toFixed(2)}`;
+
+      const var2 = rate * 900;
+      const total2 = var2 + 2500;
+      document.getElementById('calc-var-2bhk').innerText = `₹${var2.toFixed(2)}`;
+      document.getElementById('calc-total-2bhk').innerText = `₹${total2.toFixed(2)}`;
+    }
+
+    async function runMonthlyBatchGeneration(event) {
+      event.preventDefault();
+      const month = document.getElementById('batch-month-input').value;
+      const rate = parseFloat(document.getElementById('batch-rate-input').value) || 3.50;
+
+      try {
+        Toast.info(`Generating bills for ${month} at ₹${rate}/sq.ft...`);
+        const res = await AdminApi.generateMonthlyBills(month, rate);
+        Toast.success(`Successfully generated monthly bills!`);
+        await loadBills();
+        await loadFinancialStats();
+        switchTab('invoices', document.querySelectorAll('.workspace-tab')[0]);
+      } catch (err) {
+        Toast.error(err.message || 'Failed to generate monthly bills');
+      }
+    }
+
+    function viewBreakdown(billId) {
+      const bill = allBillsList.find(b => b.id === billId);
+      if (!bill) return;
+
+      const rate = bill.ratePerSqFt || 3.50;
+      const carpet = bill.carpetAreaSqFt || 900.0;
+      const sec = bill.securityCharge || 1000.00;
+      const lift = bill.liftElectricityCharge || 800.00;
+      const sink = bill.sinkingFund || 500.00;
+      const admin = bill.administrativeFee || 200.00;
+      const totalFixed = bill.totalFixedCharges || 2500.00;
+      const variable = bill.variableAreaCharge || (rate * carpet);
+
+      const html = `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:16px; font-weight:700; color:var(--primary);">
+            Wing ${bill.wing}-${bill.flatNumber} (${bill.flatType || '2BHK'})
+          </div>
+          <div style="font-size:13px; color:var(--on-surface-variant);">
+            Resident: <b>${bill.residentName}</b> | Period: <b>${bill.billMonth}</b>
+          </div>
+        </div>
+
+        <div class="itemized-receipt-box">
+          <div style="font-size:12px; font-weight:700; color:var(--secondary); text-transform:uppercase; margin-bottom:8px;">
+            1. Standard Fixed Charges (Equal Across All Flats)
+          </div>
+          <div class="receipt-row">
+            <span>Security Personnel & Gate Tech</span>
+            <span>₹${parseFloat(sec).toFixed(2)}</span>
+          </div>
+          <div class="receipt-row">
+            <span>Lift Maintenance & Common Electricity</span>
+            <span>₹${parseFloat(lift).toFixed(2)}</span>
+          </div>
+          <div class="receipt-row">
+            <span>Sinking Fund (Capital Reserves)</span>
+            <span>₹${parseFloat(sink).toFixed(2)}</span>
+          </div>
+          <div class="receipt-row">
+            <span>Society Administrative Fee</span>
+            <span>₹${parseFloat(admin).toFixed(2)}</span>
+          </div>
+          <div class="receipt-row" style="font-weight:700; background:rgba(0,106,99,0.06); padding:6px 8px; border-radius:4px;">
+            <span>Total Fixed Charges</span>
+            <span style="color:var(--secondary);">₹${parseFloat(totalFixed).toFixed(2)}</span>
+          </div>
+
+          <div style="font-size:12px; font-weight:700; color:var(--primary); text-transform:uppercase; margin-top:16px; margin-bottom:8px;">
+            2. Variable Carpet Area Maintenance Charge
+          </div>
+          <div class="receipt-row">
+            <span>Carpet Area: <b>${carpet} sq.ft</b> × Rate <b>₹${rate}/sq.ft</b></span>
+            <span style="font-weight:700;">₹${parseFloat(variable).toFixed(2)}</span>
+          </div>
+
+          <div class="receipt-row total-row">
+            <span>Total Bill Payable</span>
+            <span>₹${parseFloat(bill.totalAmount).toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; font-size:12px; color:var(--outline); line-height:1.4;">
+          Due Date: <b>${bill.dueDate}</b> • Status: <span class="badge ${bill.status === 'PAID' ? 'badge-success' : 'badge-danger'}">${bill.status}</span>
+        </div>
+      `;
+
+      document.getElementById('bill-breakdown-content').innerHTML = html;
+      Modal.open('bill-breakdown-modal');
+    }
+  </script>
+</body>
+</html>

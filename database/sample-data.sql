@@ -33,18 +33,19 @@ INSERT INTO `users` (`id`, `username`, `password`, `email`, `full_name`, `phone`
 ON DUPLICATE KEY UPDATE `username`=VALUES(`username`);
 
 -- 4. Insert Flats (Wing A, B, C)
-INSERT INTO `flats` (`id`, `society_id`, `wing`, `flat_number`, `floor_number`, `bhk_type`, `square_feet`, `status`) VALUES
-(1, 1, 'A', '101', 1, '3BHK', 1450.0, 'OCCUPIED'),
-(2, 1, 'A', '102', 1, '2BHK', 1100.0, 'OCCUPIED'),
-(3, 1, 'A', '201', 2, '3BHK', 1450.0, 'VACANT'),
-(4, 1, 'A', '202', 2, '2BHK', 1100.0, 'OCCUPIED'),
-(5, 1, 'B', '101', 1, '2BHK', 1150.0, 'OCCUPIED'),
-(6, 1, 'B', '202', 2, '3BHK', 1500.0, 'OCCUPIED'),
-(7, 1, 'B', '301', 3, '4BHK', 2200.0, 'OCCUPIED'),
-(8, 1, 'B', '302', 3, '2BHK', 1150.0, 'VACANT'),
-(9, 1, 'C', '101', 1, 'PENTHOUSE', 3200.0, 'OCCUPIED'),
-(10, 1, 'C', '102', 1, '3BHK', 1600.0, 'OCCUPIED')
-ON DUPLICATE KEY UPDATE `flat_number`=VALUES(`flat_number`);
+INSERT INTO `flats` (`id`, `society_id`, `wing`, `flat_number`, `floor_number`, `bhk_type`, `flat_type`, `square_feet`, `carpet_area_sq_ft`, `resident_id`, `status`) VALUES
+(1, 1, 'A', '101', 1, '3BHK', '3BHK', 1450.0, 1450.0, 1, 'OCCUPIED'),
+(2, 1, 'A', '102', 1, '2BHK', '2BHK', 900.0, 900.0, NULL, 'OCCUPIED'),
+(3, 1, 'A', '201', 2, '3BHK', '3BHK', 1450.0, 1450.0, NULL, 'VACANT'),
+(4, 1, 'A', '202', 2, '2BHK', '2BHK', 900.0, 900.0, 3, 'OCCUPIED'),
+(5, 1, 'B', '101', 1, '2BHK', '2BHK', 900.0, 900.0, NULL, 'OCCUPIED'),
+(6, 1, 'B', '202', 2, '3BHK', '3BHK', 1500.0, 1450.0, 2, 'OCCUPIED'),
+(7, 1, 'B', '301', 3, '4BHK', '4BHK', 2200.0, 2200.0, NULL, 'OCCUPIED'),
+(8, 1, 'B', '302', 3, '2BHK', '2BHK', 900.0, 900.0, NULL, 'VACANT'),
+(9, 1, 'C', '101', 1, 'PENTHOUSE', 'PENTHOUSE', 3200.0, 3200.0, NULL, 'OCCUPIED'),
+(10, 1, 'C', '102', 1, '3BHK', '3BHK', 1600.0, 1450.0, NULL, 'OCCUPIED'),
+(11, 1, 'A', '103', 1, '1BHK', '1BHK', 550.0, 550.0, NULL, 'OCCUPIED')
+ON DUPLICATE KEY UPDATE `flat_number`=VALUES(`flat_number`), `carpet_area_sq_ft`=VALUES(`carpet_area_sq_ft`), `resident_id`=VALUES(`resident_id`);
 
 -- 5. Insert Residents (Owners and Tenants)
 INSERT INTO `residents` (`id`, `user_id`, `flat_id`, `resident_type`, `emergency_contact_name`, `emergency_contact_phone`, `move_in_date`, `status`) VALUES
@@ -60,15 +61,19 @@ INSERT INTO `household_members` (`id`, `resident_id`, `full_name`, `relation`, `
 (3, 2, 'Sameer Patel', 'SPOUSE', '+91 98333 44557', 29)
 ON DUPLICATE KEY UPDATE `full_name`=VALUES(`full_name`);
 
--- 7. Insert Parking Slots
-INSERT INTO `parking_slots` (`id`, `slot_number`, `slot_type`, `basement_level`, `flat_id`, `status`) VALUES
-(1, 'P-A101', 'FOUR_WHEELER', 'B1', 1, 'ASSIGNED'),
-(2, 'P-A102', 'FOUR_WHEELER', 'B1', 2, 'ASSIGNED'),
-(3, 'P-B202', 'FOUR_WHEELER', 'B2', 6, 'ASSIGNED'),
-(4, 'P-A202', 'FOUR_WHEELER', 'B1', 4, 'ASSIGNED'),
-(5, 'P-V01', 'FOUR_WHEELER', 'Ground', NULL, 'AVAILABLE'),
-(6, 'P-V02', 'FOUR_WHEELER', 'Ground', NULL, 'AVAILABLE')
-ON DUPLICATE KEY UPDATE `slot_number`=VALUES(`slot_number`);
+-- 7. Insert Parking Slots (2-Wheeler and 4-Wheeler)
+INSERT INTO `parking_slots` (`id`, `slot_number`, `slot_type`, `is_occupied`, `basement_level`, `flat_id`, `assigned_flat_id`, `status`) VALUES
+(1, 'P-A101', '4_WHEELER', TRUE, 'B1', 1, 1, 'ASSIGNED'),
+(2, 'P-A102', '4_WHEELER', TRUE, 'B1', 2, 2, 'ASSIGNED'),
+(3, 'P-B202', '4_WHEELER', TRUE, 'B2', 6, 6, 'ASSIGNED'),
+(4, 'P-A202', '4_WHEELER', TRUE, 'B1', 4, 4, 'ASSIGNED'),
+(5, 'P-V01', '4_WHEELER', FALSE, 'Ground', NULL, NULL, 'AVAILABLE'),
+(6, 'P-V02', '4_WHEELER', FALSE, 'Ground', NULL, NULL, 'AVAILABLE'),
+(7, 'P-2W-01', '2_WHEELER', TRUE, 'B1', 1, 1, 'ASSIGNED'),
+(8, 'P-2W-02', '2_WHEELER', FALSE, 'B1', NULL, NULL, 'AVAILABLE'),
+(9, 'P-2W-03', '2_WHEELER', FALSE, 'B2', NULL, NULL, 'AVAILABLE'),
+(10, 'P-2W-04', '2_WHEELER', FALSE, 'B2', NULL, NULL, 'AVAILABLE')
+ON DUPLICATE KEY UPDATE `slot_number`=VALUES(`slot_number`), `is_occupied`=VALUES(`is_occupied`), `assigned_flat_id`=VALUES(`assigned_flat_id`);
 
 -- 8. Insert Vehicles
 INSERT INTO `vehicles` (`id`, `resident_id`, `flat_id`, `vehicle_number`, `vehicle_type`, `make_model`, `parking_slot_id`, `status`) VALUES
@@ -165,12 +170,17 @@ INSERT INTO `amenity_bookings` (`id`, `amenity_id`, `resident_id`, `flat_id`, `b
 (3, 2, 3, 4, DATE_ADD(CURDATE(), INTERVAL 1 DAY), '07:00:00', '08:30:00', 2, 0.00, 'CONFIRMED')
 ON DUPLICATE KEY UPDATE `booking_date`=VALUES(`booking_date`);
 
--- 21. Insert Maintenance Bills
-INSERT INTO `maintenance_bills` (`id`, `flat_id`, `resident_id`, `bill_month`, `maintenance_charge`, `water_charge`, `parking_charge`, `penalty_charge`, `total_amount`, `due_date`, `status`) VALUES
-(1, 1, 1, 'August 2026', 3500.00, 500.00, 500.00, 0.00, 4500.00, '2026-08-31', 'PAID'),
-(2, 6, 2, 'August 2026', 3500.00, 500.00, 500.00, 0.00, 4500.00, '2026-08-31', 'PENDING'),
-(3, 4, 3, 'August 2026', 3500.00, 500.00, 500.00, 0.00, 4500.00, '2026-08-31', 'PENDING')
-ON DUPLICATE KEY UPDATE `bill_month`=VALUES(`bill_month`);
+-- 21. Insert Maintenance Bills (Itemized Fixed vs Variable Area Charges)
+-- Flat 1: 3 BHK (1450 sqft) -> Var = 3.50 * 1450 = 5075.00, Fixed = 2500.00, Total = 7575.00
+-- Flat 6: 3 BHK (1450 sqft) -> Var = 3.50 * 1450 = 5075.00, Fixed = 2500.00, Total = 7575.00
+-- Flat 4: 2 BHK (900 sqft)  -> Var = 3.50 * 900  = 3150.00, Fixed = 2500.00, Total = 5650.00
+-- Flat 11: 1 BHK (550 sqft) -> Var = 3.50 * 550  = 1925.00, Fixed = 2500.00, Total = 4425.00
+INSERT INTO `maintenance_bills` (`id`, `flat_id`, `resident_id`, `bill_month`, `flat_type`, `carpet_area_sq_ft`, `rate_per_sq_ft`, `variable_area_charge`, `security_charge`, `lift_electricity_charge`, `sinking_fund`, `administrative_fee`, `total_fixed_charges`, `maintenance_charge`, `water_charge`, `parking_charge`, `penalty_charge`, `total_amount`, `due_date`, `status`) VALUES
+(1, 1, 1, 'August 2026', '3BHK', 1450.0, 3.50, 5075.00, 1000.00, 800.00, 500.00, 200.00, 2500.00, 5075.00, 0.00, 0.00, 0.00, 7575.00, '2026-08-31', 'PAID'),
+(2, 6, 2, 'August 2026', '3BHK', 1450.0, 3.50, 5075.00, 1000.00, 800.00, 500.00, 200.00, 2500.00, 5075.00, 0.00, 0.00, 0.00, 7575.00, '2026-08-31', 'PENDING'),
+(3, 4, 3, 'August 2026', '2BHK', 900.0,  3.50, 3150.00, 1000.00, 800.00, 500.00, 200.00, 2500.00, 3150.00, 0.00, 0.00, 0.00, 5650.00, '2026-08-31', 'PENDING'),
+(4, 11, 1, 'August 2026', '1BHK', 550.0,  3.50, 1925.00, 1000.00, 800.00, 500.00, 200.00, 2500.00, 1925.00, 0.00, 0.00, 0.00, 4425.00, '2026-08-31', 'PENDING')
+ON DUPLICATE KEY UPDATE `bill_month`=VALUES(`bill_month`), `total_amount`=VALUES(`total_amount`);
 
 -- 22. Insert Payments
 INSERT INTO `payments` (`id`, `bill_id`, `resident_id`, `amount_paid`, `payment_mode`, `transaction_reference`, `payment_date`, `status`) VALUES

@@ -11,8 +11,42 @@ const SecurityApi = {
     return Api.get(`/security/search?q=${encodeURIComponent(query)}`);
   },
 
+  // Parking Management
+  getParkingSlots() {
+    return Api.get('/parking');
+  },
+
+  getAvailableParkingSlots() {
+    return Api.get('/parking/available');
+  },
+
+  getParkingStats() {
+    return Api.get('/parking/stats');
+  },
+
+  assignParkingSlot(slotId, flatId) {
+    return Api.post(`/parking/assign?slotId=${slotId}&flatId=${flatId}`);
+  },
+
+  vacateParkingSlot(slotId) {
+    return Api.post(`/parking/vacate?slotId=${slotId}`);
+  },
+
+  // Gate Visitors
   getAllVisitors() {
     return Api.get('/visitors');
+  },
+
+  getActiveVisitors() {
+    return Api.get('/security/visitors/active');
+  },
+
+  checkInVisitor(visitorData) {
+    return Api.post('/security/visitors/check-in', visitorData);
+  },
+
+  checkOutVisitor(visitorId) {
+    return Api.put(`/security/visitors/${visitorId}/check-out`);
   },
 
   getExpectedVisitors() {
@@ -20,7 +54,7 @@ const SecurityApi = {
   },
 
   getVisitorsInside() {
-    return Api.get('/visitors/inside');
+    return Api.get('/security/visitors/active');
   },
 
   recordVisitorArrival(visitorId) {
@@ -34,9 +68,10 @@ const SecurityApi = {
   },
 
   recordVisitorExit(visitorId) {
-    return Api.post(`/visitors/${visitorId}/exit`);
+    return Api.put(`/security/visitors/${visitorId}/check-out`);
   },
 
+  // Gate Deliveries
   getAllDeliveries() {
     return Api.get('/deliveries');
   },

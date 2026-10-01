@@ -60,7 +60,10 @@ CREATE TABLE `flats` (
     `flat_number` VARCHAR(30) NOT NULL,
     `floor_number` INT NOT NULL,
     `bhk_type` VARCHAR(20) DEFAULT '2BHK', -- '1BHK', '2BHK', '3BHK', '4BHK', 'PENTHOUSE'
+    `flat_type` VARCHAR(20) DEFAULT '2BHK',
     `square_feet` DOUBLE DEFAULT 1000.0,
+    `carpet_area_sq_ft` DOUBLE DEFAULT 900.0,
+    `resident_id` BIGINT NULL,
     `status` VARCHAR(30) DEFAULT 'OCCUPIED', -- 'OCCUPIED', 'VACANT', 'UNDER_MAINTENANCE'
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -104,12 +107,15 @@ DROP TABLE IF EXISTS `parking_slots`;
 CREATE TABLE `parking_slots` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `slot_number` VARCHAR(50) UNIQUE NOT NULL,
-    `slot_type` VARCHAR(30) DEFAULT 'FOUR_WHEELER', -- 'TWO_WHEELER', 'FOUR_WHEELER'
+    `slot_type` VARCHAR(30) DEFAULT '4_WHEELER', -- '2_WHEELER', '4_WHEELER'
+    `is_occupied` BOOLEAN NOT NULL DEFAULT FALSE,
     `basement_level` VARCHAR(20) DEFAULT 'B1',
     `flat_id` BIGINT NULL,
+    `assigned_flat_id` BIGINT NULL,
     `status` VARCHAR(30) DEFAULT 'AVAILABLE', -- 'ASSIGNED', 'AVAILABLE', 'RESERVED'
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_parking_flat` FOREIGN KEY (`flat_id`) REFERENCES `flats` (`id`) ON DELETE SET NULL
+    CONSTRAINT `fk_parking_flat` FOREIGN KEY (`flat_id`) REFERENCES `flats` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_parking_assigned_flat` FOREIGN KEY (`assigned_flat_id`) REFERENCES `flats` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- 8. Vehicles Table
@@ -346,10 +352,19 @@ CREATE TABLE `maintenance_bills` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `flat_id` BIGINT NOT NULL,
     `resident_id` BIGINT NOT NULL,
-    `bill_month` VARCHAR(20) NOT NULL, -- 'August 2026'
+    `bill_month` VARCHAR(20) NOT NULL, -- 'August 2026' or '2026-10'
+    `flat_type` VARCHAR(20) DEFAULT '2BHK',
+    `carpet_area_sq_ft` DOUBLE DEFAULT 900.0,
+    `rate_per_sq_ft` DECIMAL(10,2) DEFAULT 3.50,
+    `variable_area_charge` DECIMAL(10,2) DEFAULT 3150.00,
+    `security_charge` DECIMAL(10,2) DEFAULT 1000.00,
+    `lift_electricity_charge` DECIMAL(10,2) DEFAULT 800.00,
+    `sinking_fund` DECIMAL(10,2) DEFAULT 500.00,
+    `administrative_fee` DECIMAL(10,2) DEFAULT 200.00,
+    `total_fixed_charges` DECIMAL(10,2) DEFAULT 2500.00,
     `maintenance_charge` DECIMAL(10,2) NOT NULL DEFAULT 3500.00,
-    `water_charge` DECIMAL(10,2) DEFAULT 500.00,
-    `parking_charge` DECIMAL(10,2) DEFAULT 500.00,
+    `water_charge` DECIMAL(10,2) DEFAULT 0.00,
+    `parking_charge` DECIMAL(10,2) DEFAULT 0.00,
     `penalty_charge` DECIMAL(10,2) DEFAULT 0.00,
     `total_amount` DECIMAL(10,2) NOT NULL,
     `due_date` DATE NOT NULL,
