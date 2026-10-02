@@ -26,7 +26,7 @@ const SecurityPage = {
         let bikeAvail = 20, bikeTotal = 70, bikeOcc = 50;
         let totalOcc = 84, totalSlots = 114, totalAvail = 30;
 
-        if (pMetrics && pMetrics.cars && pMetrics.bikes) {
+        if (pMetrics && pMetrics.cars && pMetrics.bikes && pMetrics.totalSlots > 0 && pMetrics.cars.total > 0) {
           carAvail = pMetrics.cars.available != null ? pMetrics.cars.available : 10;
           carTotal = pMetrics.cars.total != null ? pMetrics.cars.total : 44;
           carOcc = pMetrics.cars.occupied != null ? pMetrics.cars.occupied : (carTotal - carAvail);
@@ -38,7 +38,8 @@ const SecurityPage = {
           totalOcc = pMetrics.totalOccupied != null ? pMetrics.totalOccupied : (carOcc + bikeOcc);
           totalSlots = pMetrics.totalSlots != null ? pMetrics.totalSlots : (carTotal + bikeTotal);
           totalAvail = pMetrics.totalAvailable != null ? pMetrics.totalAvailable : (totalSlots - totalOcc);
-        } else if (stats.totalParkingSlots) {
+        } else if (stats.totalParkingSlots && stats.totalParkingSlots > 0) {
+
           carAvail = stats.availableFourWheelerSlots ?? 10;
           carOcc = stats.occupiedFourWheelerSlots ?? 34;
           carTotal = carAvail + carOcc;

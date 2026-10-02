@@ -29,7 +29,28 @@ const AdminPage = {
         let bikeAvail = 20, bikeTotal = 70, bikeOcc = 50;
         let totalOcc = 84, totalSlots = 114, totalAvail = 30;
 
-        if (pMetrics && pMetrics.cars && pMetrics.bikes) {
+        // Sync with local state if populated
+        try {
+          const stored = localStorage.getItem('samvaya_parking_slots');
+          if (stored) {
+            const localSlots = JSON.parse(stored);
+            if (Array.isArray(localSlots) && localSlots.length > 0) {
+              const cars = localSlots.filter(s => s.slotType === '4_WHEELER' || s.slotType === 'FOUR_WHEELER');
+              const bikes = localSlots.filter(s => s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER');
+              carTotal = cars.length || 44;
+              carOcc = cars.filter(s => s.isOccupied).length;
+              carAvail = carTotal - carOcc;
+              bikeTotal = bikes.length || 70;
+              bikeOcc = bikes.filter(s => s.isOccupied).length;
+              bikeAvail = bikeTotal - bikeOcc;
+              totalSlots = localSlots.length || 114;
+              totalOcc = carOcc + bikeOcc;
+              totalAvail = totalSlots - totalOcc;
+            }
+          }
+        } catch (e) {}
+
+        if (pMetrics && pMetrics.cars && pMetrics.bikes && pMetrics.totalSlots > 0 && pMetrics.cars.total > 0) {
           carAvail = pMetrics.cars.available != null ? pMetrics.cars.available : 10;
           carTotal = pMetrics.cars.total != null ? pMetrics.cars.total : 44;
           carOcc = pMetrics.cars.occupied != null ? pMetrics.cars.occupied : (carTotal - carAvail);
@@ -41,10 +62,11 @@ const AdminPage = {
           totalOcc = pMetrics.totalOccupied != null ? pMetrics.totalOccupied : (carOcc + bikeOcc);
           totalSlots = pMetrics.totalSlots != null ? pMetrics.totalSlots : (carTotal + bikeTotal);
           totalAvail = pMetrics.totalAvailable != null ? pMetrics.totalAvailable : (totalSlots - totalOcc);
-        } else if (stats.totalParkingSlots) {
+        } else if (stats.totalParkingSlots && stats.totalParkingSlots > 0) {
           carAvail = stats.availableFourWheelerSlots ?? 10;
           carOcc = stats.occupiedFourWheelerSlots ?? 34;
           carTotal = carAvail + carOcc;
+
 
           bikeAvail = stats.availableTwoWheelerSlots ?? 20;
           bikeOcc = stats.occupiedTwoWheelerSlots ?? 50;

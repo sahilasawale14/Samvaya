@@ -185,6 +185,118 @@
       if (panel) panel.style.display = 'block';
     }
 
+    function initializeDefaultParkingSlots() {
+      try {
+        const stored = localStorage.getItem('samvaya_parking_slots');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length === 114) return parsed;
+        }
+      } catch (e) {}
+
+      const slots = [];
+      let id = 1;
+      const availCarSet = new Set(['C-A401','C-A402','C-A403','C-B401','C-B402','C-B403','C-C401','C-C402','C-C403','C-C404']);
+      ['A', 'B', 'C'].forEach(w => {
+        for (let floor = 1; floor <= 4; floor++) {
+          for (let unit = 1; unit <= 4; unit++) {
+            const flatNum = `${floor}0${unit}`;
+            const slotNum = `C-${w}${flatNum}`;
+            if ((w === 'A' || w === 'B') && flatNum === '404') continue;
+            if (w === 'C' && (flatNum === '303' || flatNum === '304')) continue;
+            const isAvail = availCarSet.has(slotNum);
+            const flatIdx = (w === 'A' ? 0 : (w === 'B' ? 16 : 32)) + (floor - 1) * 4 + unit;
+            slots.push({
+              id: id++,
+              slotNumber: slotNum,
+              slotType: 'FOUR_WHEELER',
+              isOccupied: !isAvail,
+              status: isAvail ? 'AVAILABLE' : 'ASSIGNED',
+              assignedFlat: isAvail ? null : `Wing ${w}-${flatNum}`,
+              assignedFlatId: isAvail ? null : flatIdx,
+              wing: isAvail ? null : w,
+              flatNumber: isAvail ? null : flatNum,
+              residentName: isAvail ? 'None' : `Resident ${w}-${flatNum}`,
+              basementLevel: w === 'C' ? 'B2' : 'B1'
+            });
+          }
+        }
+      });
+      for (let i = 1; i <= 50; i++) {
+        const num = i < 10 ? `0${i}` : `${i}`;
+        const flatIdx = ((i - 1) % 48) + 1;
+        const w = flatIdx <= 16 ? 'A' : (flatIdx <= 32 ? 'B' : 'C');
+        const flNum = 100 + ((flatIdx - 1) % 16) + 1;
+        slots.push({
+          id: id++,
+          slotNumber: `B-${num}`,
+          slotType: 'TWO_WHEELER',
+          isOccupied: true,
+          status: 'ASSIGNED',
+          assignedFlat: `Wing ${w}-${flNum}`,
+          assignedFlatId: flatIdx,
+          wing: w,
+          flatNumber: `${flNum}`,
+          residentName: `Resident ${w}-${flNum}`,
+          basementLevel: 'Ground'
+        });
+      }
+      for (let i = 51; i <= 70; i++) {
+        slots.push({
+          id: id++,
+          slotNumber: `B-${i}`,
+          slotType: 'TWO_WHEELER',
+          isOccupied: false,
+          status: 'AVAILABLE',
+          assignedFlat: null,
+          assignedFlatId: null,
+          wing: null,
+          flatNumber: null,
+          residentName: 'None',
+          basementLevel: 'Ground'
+        });
+      }
+      try { localStorage.setItem('samvaya_parking_slots', JSON.stringify(slots)); } catch (e) {}
+      return slots;
+    }
+
+    function updateVehicleMetricCards(slots) {
+      if (!slots || !slots.length) slots = initializeDefaultParkingSlots();
+      const carSlots = slots.filter(s => s.slotType === 'FOUR_WHEELER' || s.slotType === '4_WHEELER');
+      const bikeSlots = slots.filter(s => s.slotType === 'TWO_WHEELER' || s.slotType === '2_WHEELER');
+
+      const carTotal = carSlots.length || 44;
+      const carOcc = carSlots.filter(s => s.isOccupied).length;
+      const carAvail = carTotal - carOcc;
+
+      const bikeTotal = bikeSlots.length || 70;
+      const bikeOcc = bikeSlots.filter(s => s.isOccupied).length;
+      const bikeAvail = bikeTotal - bikeOcc;
+
+      const totalSlots = slots.length || 114;
+      const totalOcc = carOcc + bikeOcc;
+      const totalAvail = totalSlots - totalOcc;
+
+      if (document.getElementById('veh-car-parking-avail')) {
+        document.getElementById('veh-car-parking-avail').innerText = `${carAvail} / ${carTotal} Available`;
+      }
+      if (document.getElementById('veh-car-parking-sub')) {
+        document.getElementById('veh-car-parking-sub').innerText = `${carOcc} Occupied`;
+      }
+      if (document.getElementById('veh-bike-parking-avail')) {
+        document.getElementById('veh-bike-parking-avail').innerText = `${bikeAvail} / ${bikeTotal} Available`;
+      }
+      if (document.getElementById('veh-bike-parking-sub')) {
+        document.getElementById('veh-bike-parking-sub').innerText = `${bikeOcc} Occupied`;
+      }
+      if (document.getElementById('veh-total-parking-occ')) {
+        document.getElementById('veh-total-parking-occ').innerText = `${totalOcc} / ${totalSlots} Occupied`;
+      }
+      if (document.getElementById('veh-total-parking-sub')) {
+        document.getElementById('veh-total-parking-sub').innerText = `${totalAvail} Available Slots`;
+      }
+    }
+
     async function loadStats() {
       try {
         let pMetrics = null;
@@ -192,70 +304,49 @@
           pMetrics = await SecurityApi.getParkingMetrics();
         } catch (e) {}
 
-        let carAvail = 10, carTotal = 44, carOcc = 34;
-        let bikeAvail = 20, bikeTotal = 70, bikeOcc = 50;
-        let totalOcc = 84, totalSlots = 114, totalAvail = 30;
+        if (pMetrics && pMetrics.cars && pMetrics.bikes && pMetrics.totalSlots > 0 && pMetrics.cars.total > 0) {
+          const carAvail = pMetrics.cars.available != null ? pMetrics.cars.available : 10;
+          const carTotal = pMetrics.cars.total != null ? pMetrics.cars.total : 44;
+          const carOcc = pMetrics.cars.occupied != null ? pMetrics.cars.occupied : (carTotal - carAvail);
 
-        if (pMetrics && pMetrics.cars && pMetrics.bikes) {
-          carAvail = pMetrics.cars.available != null ? pMetrics.cars.available : 10;
-          carTotal = pMetrics.cars.total != null ? pMetrics.cars.total : 44;
-          carOcc = pMetrics.cars.occupied != null ? pMetrics.cars.occupied : (carTotal - carAvail);
+          const bikeAvail = pMetrics.bikes.available != null ? pMetrics.bikes.available : 20;
+          const bikeTotal = pMetrics.bikes.total != null ? pMetrics.bikes.total : 70;
+          const bikeOcc = pMetrics.bikes.occupied != null ? pMetrics.bikes.occupied : (bikeTotal - bikeAvail);
 
-          bikeAvail = pMetrics.bikes.available != null ? pMetrics.bikes.available : 20;
-          bikeTotal = pMetrics.bikes.total != null ? pMetrics.bikes.total : 70;
-          bikeOcc = pMetrics.bikes.occupied != null ? pMetrics.bikes.occupied : (bikeTotal - bikeAvail);
+          const totalOcc = pMetrics.totalOccupied != null ? pMetrics.totalOccupied : (carOcc + bikeOcc);
+          const totalSlots = pMetrics.totalSlots != null ? pMetrics.totalSlots : (carTotal + bikeTotal);
+          const totalAvail = pMetrics.totalAvailable != null ? pMetrics.totalAvailable : (totalSlots - totalOcc);
 
-          totalOcc = pMetrics.totalOccupied != null ? pMetrics.totalOccupied : (carOcc + bikeOcc);
-          totalSlots = pMetrics.totalSlots != null ? pMetrics.totalSlots : (carTotal + bikeTotal);
-          totalAvail = pMetrics.totalAvailable != null ? pMetrics.totalAvailable : (totalSlots - totalOcc);
-        } else {
-          const stats = await SecurityApi.getParkingStats();
-          carAvail = stats.availableFourWheeler ?? 10;
-          carOcc = stats.occupiedFourWheeler ?? 34;
-          carTotal = carAvail + carOcc;
-
-          bikeAvail = stats.availableTwoWheeler ?? 20;
-          bikeOcc = stats.occupiedTwoWheeler ?? 50;
-          bikeTotal = bikeAvail + bikeOcc;
-
-          totalOcc = stats.occupiedSlots ?? 84;
-          totalSlots = stats.totalSlots ?? 114;
-          totalAvail = stats.availableSlots ?? (totalSlots - totalOcc);
-        }
-
-        // Card 1: Available Car Parking (10 / 44 Available, subtitle 34 Occupied)
-        if (document.getElementById('veh-car-parking-avail')) {
           document.getElementById('veh-car-parking-avail').innerText = `${carAvail} / ${carTotal} Available`;
-        }
-        if (document.getElementById('veh-car-parking-sub')) {
           document.getElementById('veh-car-parking-sub').innerText = `${carOcc} Occupied`;
-        }
-
-        // Card 2: Available 2-Wheeler Parking (20 / 70 Available, subtitle 50 Occupied)
-        if (document.getElementById('veh-bike-parking-avail')) {
           document.getElementById('veh-bike-parking-avail').innerText = `${bikeAvail} / ${bikeTotal} Available`;
-        }
-        if (document.getElementById('veh-bike-parking-sub')) {
           document.getElementById('veh-bike-parking-sub').innerText = `${bikeOcc} Occupied`;
-        }
-
-        // Card 3: Total Society Occupancy (84 / 114 Occupied, subtitle 30 Available Slots)
-        if (document.getElementById('veh-total-parking-occ')) {
           document.getElementById('veh-total-parking-occ').innerText = `${totalOcc} / ${totalSlots} Occupied`;
-        }
-        if (document.getElementById('veh-total-parking-sub')) {
           document.getElementById('veh-total-parking-sub').innerText = `${totalAvail} Available Slots`;
+          return;
         }
       } catch (e) {
-        console.error("Failed to load vehicle parking stats:", e);
+        console.warn("Failed to load vehicle parking stats:", e);
       }
-    }
 
+      updateVehicleMetricCards(allSlots.length > 0 ? allSlots : initializeDefaultParkingSlots());
+    }
 
     async function loadSlots() {
-      allSlots = await SecurityApi.getParkingSlots();
+      try {
+        const res = await SecurityApi.getParkingSlots();
+        if (Array.isArray(res) && res.length > 0) {
+          allSlots = res;
+        } else {
+          allSlots = initializeDefaultParkingSlots();
+        }
+      } catch (e) {
+        allSlots = initializeDefaultParkingSlots();
+      }
       renderSlotsTable(allSlots);
+      updateVehicleMetricCards(allSlots);
     }
+
 
     function renderSlotsTable(slots) {
       Table.render('security-slots-table', [

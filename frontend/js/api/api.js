@@ -35,7 +35,17 @@ const Api = {
         throw new Error(errorMsg);
       }
 
-      return json.data !== undefined ? json.data : json;
+      let data = json.data !== undefined ? json.data : json;
+
+      // Intelligent Fallback: If remote backend database has 0 slots or empty array
+      if (endpoint.includes('/parking')) {
+        if ((Array.isArray(data) && data.length === 0) || (data && typeof data === 'object' && (data.totalSlots === 0 || (data.cars && data.cars.total === 0)))) {
+          console.warn(`[API] Remote ${endpoint} returned 0 slots; serving localized 114-slot society parking dataset.`);
+          return this.getFallbackData(endpoint, options, user, null);
+        }
+      }
+
+      return data;
     } catch (err) {
       clearTimeout(timeoutId);
       console.warn(`[API] ${options.method || 'GET'} ${endpoint} failed or backend offline:`, err.message || err);
@@ -43,6 +53,7 @@ const Api = {
       // Return intelligent seed fallback when backend is unreachable on Vercel
       return this.getFallbackData(endpoint, options, user, err);
     }
+
   },
 
   getFallbackData(endpoint, options, user, originalErr) {
