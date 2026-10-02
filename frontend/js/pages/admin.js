@@ -69,7 +69,10 @@ const AdminPage = {
   },
 
   async loadResidentsTable(type = '') {
-    const residents = await AdminApi.getResidents(type);
+    let residents = await AdminApi.getResidents(type);
+    if (Array.isArray(residents)) {
+      residents = residents.filter(r => r.status !== 'INACTIVE' && r.accountStatus !== 'INACTIVE' && r.accountStatus !== 'OFFBOARDED');
+    }
     Table.render('residents-data-table', [
       { label: 'Full Name', render: r => `<b>${r.fullName}</b>` },
       { label: 'Type', render: r => `<span class="badge ${r.residentType === 'OWNER' ? 'badge-info' : 'badge-neutral'}">${r.residentType}</span>` },
@@ -86,7 +89,7 @@ const AdminPage = {
             : `<span class="badge badge-success">ACTIVE</span>`;
         }
       }
-    ], residents);
+    ], residents || []);
   },
 
   async initFlats() {

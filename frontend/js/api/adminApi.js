@@ -23,6 +23,10 @@ const AdminApi = {
     return Api.put(`/admin/residents/${residentId}`, data);
   },
 
+  deleteResident(residentId) {
+    return Api.delete(`/admin/residents/${residentId}`);
+  },
+
   getOwners() {
     return Api.get('/admin/owners');
   },

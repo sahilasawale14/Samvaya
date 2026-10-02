@@ -415,6 +415,57 @@ const Api = {
       return updatedRes || { success: true };
     }
 
+    // Admin Resident Delete (Permanent)
+    if (endpoint.includes('/admin/residents/') && options.method === 'DELETE') {
+      const match = endpoint.match(/residents\/(\d+)/);
+      const resId = match ? parseInt(match[1], 10) : null;
+
+      const residents = getLocalResidents();
+      let targetResident = null;
+      const updatedResidents = residents.filter(r => {
+        if (resId && (r.id == resId || (r.userId && r.userId == resId))) {
+          targetResident = r;
+          recordDeactivatedUser(r.username);
+          return false;
+        }
+        return true;
+      });
+      saveLocalResidents(updatedResidents);
+
+      // Vacate corresponding flat
+      const flats = getLocalFlats();
+      const updatedFlats = flats.map(f => {
+        if (targetResident && (f.residentId == targetResident.id || f.currentResidentId == targetResident.id || (f.flatNumber === targetResident.flatNumber && f.wing === targetResident.wing))) {
+          return {
+            ...f,
+            status: 'VACANT',
+            occupancyStatus: 'VACANT',
+            residentId: null,
+            currentResidentId: null,
+            currentResidentName: 'None',
+            residentType: '-'
+          };
+        }
+        return f;
+      });
+      saveLocalFlats(updatedFlats);
+
+      // Cancel pending passes
+      const visitors = getLocalPreapproved();
+      const updatedVisitors = visitors.map(v => {
+        if (targetResident && (v.wing === targetResident.wing && v.flatNumber === targetResident.flatNumber)) {
+          return { ...v, status: 'CANCELLED', approvalStatus: 'REJECTED' };
+        }
+        return v;
+      });
+      saveLocalPreapproved(updatedVisitors);
+
+      if (typeof Toast !== 'undefined') {
+        Toast.success('Resident permanently deleted and flat vacated (Offline Mode)!');
+      }
+      return { success: true, message: 'Resident permanently deleted and flat marked as vacant' };
+    }
+
     // Admin Resident Create / Onboard
     if (endpoint.includes('/admin/residents') && options.method === 'POST') {
       let body = {};

@@ -249,6 +249,76 @@ public class ResidentService {
     }
 
     @Transactional
+    public void deleteResident(Long residentId) {
+        Resident resident = residentRepository.findById(residentId)
+                .orElseGet(() -> residentRepository.findByUserId(residentId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Resident not found with id: " + residentId)));
+
+        // 1. Vacate Flat(s) and clear resident associations
+        com.samvaya.model.Flat flat = resident.getFlat();
+        if (flat != null) {
+            flat.setStatus("VACANT");
+            flat.setOccupancyStatus("VACANT");
+            flat.setResidentId(null);
+            flat.setCurrentResidentId(null);
+            flatRepository.save(flat);
+        }
+
+        java.util.List<com.samvaya.model.Flat> flatsWithResident = flatRepository.findAll().stream()
+                .filter(f -> resident.getId().equals(f.getResidentId()) || resident.getId().equals(f.getCurrentResidentId()))
+                .collect(Collectors.toList());
+        for (com.samvaya.model.Flat f : flatsWithResident) {
+            f.setStatus("VACANT");
+            f.setOccupancyStatus("VACANT");
+            f.setResidentId(null);
+            f.setCurrentResidentId(null);
+            flatRepository.save(f);
+        }
+
+        // 2. Release Parking Slots
+        if (flat != null) {
+            java.util.List<com.samvaya.model.ParkingSlot> slots = parkingSlotRepository.findByFlatId(flat.getId());
+            slots.addAll(parkingSlotRepository.findByAssignedFlatId(flat.getId()));
+            for (com.samvaya.model.ParkingSlot slot : slots) {
+                slot.setFlat(null);
+                slot.setAssignedFlatId(null);
+                slot.setIsOccupied(false);
+                slot.setStatus("AVAILABLE");
+                parkingSlotRepository.save(slot);
+            }
+        }
+
+        // 3. Cancel any pending or expected visitor passes
+        java.util.Set<com.samvaya.model.Visitor> visitors = new java.util.HashSet<>(visitorRepository.findByResidentId(resident.getId()));
+        if (flat != null) {
+            visitors.addAll(visitorRepository.findByFlatId(flat.getId()));
+        }
+        for (com.samvaya.model.Visitor v : visitors) {
+            if ("EXPECTED".equalsIgnoreCase(v.getStatus()) || "PENDING".equalsIgnoreCase(v.getStatus()) || "PRE_APPROVED".equalsIgnoreCase(v.getApprovalStatus())) {
+                v.setStatus("CANCELLED");
+                v.setApprovalStatus("REJECTED");
+                visitorRepository.save(v);
+            }
+        }
+
+        // 4. Disassociate flat from resident before deletion to satisfy foreign keys
+        resident.setFlat(null);
+        residentRepository.saveAndFlush(resident);
+
+        com.samvaya.model.User user = resident.getUser();
+
+        // 5. Delete resident
+        residentRepository.delete(resident);
+        residentRepository.flush();
+
+        // 6. Delete user
+        if (user != null) {
+            userRepository.delete(user);
+            userRepository.flush();
+        }
+    }
+
+    @Transactional
     public ResidentDTO updateResident(Long residentId, ResidentDTO request) {
         Resident resident = residentRepository.findById(residentId)
                 .orElseGet(() -> residentRepository.findByUserId(residentId)

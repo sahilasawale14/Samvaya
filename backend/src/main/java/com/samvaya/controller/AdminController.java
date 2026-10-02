@@ -69,6 +69,17 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Resident updated successfully", resident));
     }
 
+    @DeleteMapping("/residents/{residentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteResident(
+            @PathVariable Long residentId,
+            @RequestHeader(value = "X-User-Id", required = false) Long adminUserId) {
+        residentService.deleteResident(residentId);
+        if (adminUserId != null) {
+            adminService.logAdminActivity(adminUserId, "RESIDENT_DELETE", "PEOPLE_UNITS", "Permanently deleted resident ID " + residentId, residentId);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Resident permanently deleted and flat marked as vacant", null));
+    }
+
     @GetMapping("/owners")
     public ResponseEntity<ApiResponse<List<ResidentDTO>>> getAllOwners() {
         List<ResidentDTO> owners = adminService.getResidentsByType("OWNER");

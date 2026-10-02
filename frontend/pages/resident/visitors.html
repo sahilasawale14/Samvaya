@@ -23,7 +23,7 @@
               <h2 class="card-title">My Expected Visitors & Guest Passes</h2>
               <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Generate instant passcodes and approve arrivals at the security gate</p>
             </div>
-            <button class="btn btn-primary" onclick="Modal.open('new-visitor-modal')">
+            <button class="btn btn-primary" onclick="openCreatePassModal()">
               <span class="material-symbols-outlined">add</span> Create Visitor Pass
             </button>
           </div>
@@ -131,10 +131,20 @@
   <script src="/js/api/residentApi.js"></script>
   <script src="/js/pages/resident.js"></script>
   <script>
+    function openCreatePassModal() {
+      const dateEl = document.getElementById('visitor-date');
+      const timeEl = document.getElementById('visitor-time');
+      if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+      if (timeEl && !timeEl.value) timeEl.value = "18:00";
+      Modal.open('new-visitor-modal');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       if (checkAuth(['RESIDENT'])) {
-        document.getElementById('visitor-date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('visitor-time').value = "18:00";
+        const dateEl = document.getElementById('visitor-date');
+        const timeEl = document.getElementById('visitor-time');
+        if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+        if (timeEl) timeEl.value = "18:00";
         ResidentPage.initVisitors();
       }
     });
