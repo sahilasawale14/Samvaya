@@ -67,6 +67,19 @@ const AuthApi = {
     const cleanUser = (username || '').trim().toLowerCase();
     let authUser = null;
 
+    // Check if user has been offboarded / deactivated
+    try {
+      const deactStr = localStorage.getItem('samvaya_deactivated_users');
+      if (deactStr) {
+        const deactivated = JSON.parse(deactStr);
+        if (Array.isArray(deactivated) && deactivated.includes(cleanUser)) {
+          throw new Error('Account deactivated: Resident has moved out. Please contact the society admin office.');
+        }
+      }
+    } catch (e) {
+      if (e.message && e.message.includes('Account deactivated')) throw e;
+    }
+
     // 1. Try Live Backend API First
     try {
       const data = await Api.request('/auth/login', {
@@ -100,6 +113,9 @@ const AuthApi = {
         };
       }
     } catch (err) {
+      if (err.message && (err.message.toLowerCase().includes('deactivated') || err.message.toLowerCase().includes('inactive'))) {
+        throw new Error(err.message || 'Your resident account has been deactivated. Please contact the society admin office.');
+      }
       console.warn('[AuthApi] Live API unreachable or failed, checking seed fallback credentials...', err);
     }
 

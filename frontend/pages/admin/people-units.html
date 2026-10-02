@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -256,6 +256,140 @@
     </div>
   </div>
 
+  <!-- Offboard Resident Modal -->
+  <div class="modal-backdrop" id="offboard-resident-modal">
+    <div class="modal-container" style="max-width:540px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(239,68,68,0.2); background:rgba(239,68,68,0.04);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="material-symbols-outlined" style="color:var(--danger, #ef4444); font-size:26px;">person_remove</span>
+          <h3 style="font-size:18px; color:var(--danger, #ef4444); margin:0;">Offboard Resident & Vacate Flat</h3>
+        </div>
+        <button class="btn-ghost" onclick="Modal.close('offboard-resident-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="offboard-resident-form" onsubmit="submitOffboardResident(event)">
+        <input type="hidden" id="offboard-resident-id">
+        <div class="modal-body" style="padding:20px;">
+          <!-- Resident Info Card -->
+          <div style="background:var(--surface-variant, #f8fafc); border:1px solid var(--outline, #e2e8f0); border-radius:8px; padding:14px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h4 id="offboard-res-name" style="margin:0 0 4px 0; font-size:16px;">-</h4>
+                <div style="font-size:13px; color:var(--on-surface-variant);">
+                  Flat: <b id="offboard-res-flat">-</b> • Type: <b id="offboard-res-type">-</b>
+                </div>
+              </div>
+              <span id="offboard-res-badge" class="badge badge-success">ACTIVE</span>
+            </div>
+          </div>
+
+          <!-- Consequences Warning Alert -->
+          <div style="background:rgba(239,68,68,0.08); border-left:4px solid var(--danger, #ef4444); padding:12px 14px; border-radius:4px; margin-bottom:16px; font-size:13px; color:#991b1b; line-height:1.5;">
+            <b>Permanent Offboarding Actions:</b>
+            <ul style="margin:6px 0 0 18px; padding:0;">
+              <li>Revokes resident login credentials immediately (account status set to INACTIVE).</li>
+              <li>Vacates flat unit and resets flat occupancy status to <b>VACANT</b>.</li>
+              <li>Releases assigned parking slot(s) back to the open society parking pool.</li>
+              <li>Cancels any scheduled visitor gate passes and delivery pre-approvals.</li>
+            </ul>
+          </div>
+
+          <!-- Reason Field -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Reason for Moving Out</label>
+            <select id="offboard-reason" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid var(--outline, #cbd5e1);">
+              <option value="Tenancy lease expired">Tenancy lease expired</option>
+              <option value="Property sold to new owner">Property sold to new owner</option>
+              <option value="Relocation / Job transfer">Relocation / Job transfer</option>
+              <option value="Voluntary move-out">Voluntary move-out</option>
+              <option value="Administrative clearance">Administrative clearance</option>
+            </select>
+          </div>
+
+          <!-- Key / Dues Clearance Checkbox (Required) -->
+          <div style="margin-top:16px; padding:12px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px;">
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:13px; font-weight:600; color:#92400e;">
+              <input type="checkbox" id="offboard-clearance-check" required style="margin-top:2px; width:16px; height:16px; accent-color:#d97706;">
+              <span>I confirm all society maintenance dues, physical keys, and RFID access gate cards have been settled/returned.</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('offboard-resident-modal')">Cancel</button>
+          <button type="submit" class="btn btn-danger" id="offboard-submit-btn" style="background:#dc2626; color:white; border:none; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+            <span>Confirm Resident Offboarding</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Resident Modal -->
+  <div class="modal-backdrop" id="edit-resident-modal">
+    <div class="modal-container" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 style="font-size:18px;">Edit Resident Details</h3>
+        <button class="btn-ghost" onclick="Modal.close('edit-resident-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="edit-resident-form" onsubmit="submitEditResident(event)">
+        <input type="hidden" id="edit-resident-id">
+        <div class="modal-body" style="padding:20px;">
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Full Name *</label>
+            <input type="text" id="edit-res-fullname" required>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Email Address *</label>
+              <input type="email" id="edit-res-email" required>
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Phone Number *</label>
+              <input type="tel" id="edit-res-phone" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Resident Type *</label>
+              <select id="edit-res-type" required>
+                <option value="OWNER">Owner</option>
+                <option value="TENANT">Tenant</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Account Status</label>
+              <select id="edit-res-status">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE (Deactivated)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Emergency Contact Name</label>
+              <input type="text" id="edit-res-emg-name" placeholder="e.g. Suman Sharma">
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:600; display:block; margin-bottom:4px;">Emergency Contact Phone</label>
+              <input type="tel" id="edit-res-emg-phone" placeholder="+91 98000 00000">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('edit-resident-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="/js/config.js?v=4"></script>
   <script src="/js/components/toast.js?v=4"></script>
   <script src="/js/components/sidebar.js?v=4"></script>
@@ -309,9 +443,32 @@
         { label: 'Floor', key: 'floorNumber' },
         { label: 'Unit Type', render: r => `<span class="badge badge-info">${r.flatType || r.bhkType}</span>` },
         { label: 'Carpet Area', render: r => `<b>${r.carpetAreaSqFt || r.squareFeet} sq.ft</b>` },
-        { label: 'Status', render: r => `<span class="badge ${r.status === 'OCCUPIED' ? 'badge-success' : 'badge-warning'}">${r.status}</span>` },
-        { label: 'Current Resident', key: 'currentResidentName' },
-        { label: 'Occupancy', render: r => `<span class="badge badge-neutral">${r.residentType}</span>` }
+        { 
+          label: 'Occupancy Status', 
+          render: r => {
+            const occ = r.occupancyStatus || (r.status === 'VACANT' ? 'VACANT' : (r.residentType === 'TENANT' ? 'OCCUPIED_TENANT' : 'OCCUPIED_OWNER'));
+            if (occ === 'OCCUPIED_OWNER') {
+              return `<span class="badge" style="background:#059669; color:#fff; font-weight:600;">Occupied (Owner)</span>`;
+            } else if (occ === 'OCCUPIED_TENANT') {
+              return `<span class="badge" style="background:#2563eb; color:#fff; font-weight:600;">Occupied (Tenant)</span>`;
+            } else {
+              return `<span class="badge" style="background:#d97706; color:#fff; font-weight:600;">Vacant</span>`;
+            }
+          }
+        },
+        { label: 'Current Resident', render: r => r.currentResidentName && r.currentResidentName !== 'None' ? `<b>${r.currentResidentName}</b>` : '<span style="color:var(--on-surface-variant); font-style:italic;">None</span>' },
+        {
+          label: 'Action',
+          render: r => {
+            const isVacant = r.status === 'VACANT' || r.occupancyStatus === 'VACANT' || !r.currentResidentName || r.currentResidentName === 'None';
+            if (isVacant) {
+              return `<button class="btn btn-sm" style="font-size:12px; padding:4px 10px; background:rgba(13,148,136,0.12); color:#0d9488; border:1px solid #0d9488; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;" onclick="openAssignResidentModal('${r.wing}', '${r.flatNumber}', ${r.id})">
+                <span class="material-symbols-outlined" style="font-size:15px;">person_add</span> Assign Resident
+              </button>`;
+            }
+            return `<span style="color:var(--on-surface-variant); font-size:12px;"><span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#059669;">check_circle</span> Occupied</span>`;
+          }
+        }
       ], flats);
     }
 
@@ -321,7 +478,13 @@
 
       let filtered = allFlats;
       if (wing) filtered = filtered.filter(f => f.wing === wing);
-      if (status) filtered = filtered.filter(f => f.status === status);
+      if (status) {
+        filtered = filtered.filter(f => {
+          if (status === 'VACANT') return f.status === 'VACANT' || f.occupancyStatus === 'VACANT';
+          if (status === 'OCCUPIED') return f.status === 'OCCUPIED' || (f.occupancyStatus && f.occupancyStatus.includes('OCCUPIED'));
+          return true;
+        });
+      }
       renderFlatsTable(filtered);
     }
 
@@ -335,11 +498,38 @@
       Table.render('residents-data-table', [
         { label: 'Full Name', render: r => `<b>${r.fullName}</b>` },
         { label: 'Type', render: r => `<span class="badge ${r.residentType === 'OWNER' ? 'badge-info' : 'badge-neutral'}">${r.residentType}</span>` },
-        { label: 'Flat Unit', render: r => `Wing ${r.wing}-${r.flatNumber} (${r.bhkType || ''})` },
+        { label: 'Flat Unit', render: r => r.flatNumber ? `Wing ${r.wing || ''}-${r.flatNumber} (${r.bhkType || ''})` : '<span style="color:var(--on-surface-variant);">-</span>' },
         { label: 'Contact', render: r => `${r.phone}<br><small style="color:var(--outline);">${r.email}</small>` },
         { label: 'Emergency Contact', render: r => `${r.emergencyContactName || '-'}<br><small>${r.emergencyContactPhone || ''}</small>` },
         { label: 'Move In Date', key: 'moveInDate' },
-        { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        { 
+          label: 'Account Status', 
+          render: r => {
+            const isInactive = r.status === 'INACTIVE' || r.accountStatus === 'INACTIVE' || r.accountStatus === 'OFFBOARDED';
+            return isInactive
+              ? `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #f87171;">INACTIVE (Moved Out)</span>`
+              : `<span class="badge badge-success">ACTIVE</span>`;
+          }
+        },
+        {
+          label: 'Actions',
+          render: r => {
+            const isInactive = r.status === 'INACTIVE' || r.accountStatus === 'INACTIVE' || r.accountStatus === 'OFFBOARDED';
+            const editBtn = `<button class="btn btn-sm btn-ghost" style="padding:4px 8px; font-size:12px; display:inline-flex; align-items:center; gap:3px;" onclick="openEditResidentModal(${r.id})" title="Edit Details">
+              <span class="material-symbols-outlined" style="font-size:15px;">edit</span> Edit
+            </button>`;
+            
+            if (isInactive) {
+              return `<div style="display:flex; align-items:center; gap:6px;">${editBtn} <span style="color:var(--on-surface-variant); font-size:11px; font-style:italic;">Offboarded</span></div>`;
+            }
+
+            const offboardBtn = `<button class="btn btn-sm" style="font-size:12px; padding:4px 8px; background:rgba(239,68,68,0.08); color:#dc2626; border:1px solid rgba(239,68,68,0.3); border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;" onclick="openOffboardModal(${r.id})" title="Offboard Resident & Vacate Flat">
+              <span class="material-symbols-outlined" style="font-size:15px;">person_remove</span> Offboard
+            </button>`;
+
+            return `<div style="display:flex; align-items:center; gap:6px;">${editBtn} ${offboardBtn}</div>`;
+          }
+        }
       ], residents);
     }
 
@@ -359,7 +549,12 @@
         { label: 'Phone', key: 'phone' },
         { label: 'Email', key: 'email' },
         { label: 'Registration Date', key: 'moveInDate' },
-        { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+        { 
+          label: 'Status', 
+          render: r => (r.status === 'INACTIVE' || r.accountStatus === 'INACTIVE')
+            ? `<span class="badge" style="background:#fee2e2; color:#991b1b;">INACTIVE</span>`
+            : `<span class="badge badge-success">ACTIVE</span>`
+        }
       ], owners);
     }
 
@@ -372,6 +567,108 @@
       else if (type === 'PENTHOUSE') areaInput.value = 3200;
     }
 
+    function openAssignResidentModal(wing, flatNumber, flatId) {
+      document.getElementById('new-res-wing').value = wing || 'A';
+      document.getElementById('new-res-flat').value = flatNumber || '';
+      Modal.open('add-resident-modal');
+    }
+
+    function openOffboardModal(residentId) {
+      const res = allResidents.find(r => r.id == residentId);
+      if (!res) {
+        Toast.error('Resident record not found');
+        return;
+      }
+      document.getElementById('offboard-resident-id').value = res.id;
+      document.getElementById('offboard-res-name').innerText = res.fullName;
+      document.getElementById('offboard-res-flat').innerText = res.flatNumber ? `Wing ${res.wing || ''}-${res.flatNumber}` : 'Unassigned';
+      document.getElementById('offboard-res-type').innerText = res.residentType || 'OWNER';
+      document.getElementById('offboard-clearance-check').checked = false;
+      document.getElementById('offboard-reason').selectedIndex = 0;
+      Modal.open('offboard-resident-modal');
+    }
+
+    async function submitOffboardResident(event) {
+      event.preventDefault();
+      const residentId = document.getElementById('offboard-resident-id').value;
+      const reason = document.getElementById('offboard-reason').value;
+      const clearanceConfirmed = document.getElementById('offboard-clearance-check').checked;
+
+      if (!clearanceConfirmed) {
+        Toast.error('Please confirm keys, cards, and society dues clearance to proceed.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('offboard-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Offboarding...';
+
+      try {
+        await AdminApi.offboardResident(residentId, {
+          reason: reason,
+          vacateParking: true,
+          cancelPendingVisitors: true,
+          clearDuesConfirmed: clearanceConfirmed
+        });
+
+        Toast.success('Resident offboarded successfully and flat marked VACANT.');
+        Modal.close('offboard-resident-modal');
+        document.getElementById('offboard-resident-form').reset();
+
+        await loadResidents();
+        await loadFlats();
+        await loadOwners();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to offboard resident');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> <span>Confirm Resident Offboarding</span>';
+      }
+    }
+
+    function openEditResidentModal(residentId) {
+      const res = allResidents.find(r => r.id == residentId);
+      if (!res) {
+        Toast.error('Resident record not found');
+        return;
+      }
+      document.getElementById('edit-resident-id').value = res.id;
+      document.getElementById('edit-res-fullname').value = res.fullName || '';
+      document.getElementById('edit-res-email').value = res.email || '';
+      document.getElementById('edit-res-phone').value = res.phone || '';
+      document.getElementById('edit-res-type').value = res.residentType || 'OWNER';
+      document.getElementById('edit-res-status').value = (res.status === 'INACTIVE' || res.accountStatus === 'INACTIVE') ? 'INACTIVE' : 'ACTIVE';
+      document.getElementById('edit-res-emg-name').value = res.emergencyContactName || '';
+      document.getElementById('edit-res-emg-phone').value = res.emergencyContactPhone || '';
+      Modal.open('edit-resident-modal');
+    }
+
+    async function submitEditResident(event) {
+      event.preventDefault();
+      const residentId = document.getElementById('edit-resident-id').value;
+      const updateData = {
+        fullName: document.getElementById('edit-res-fullname').value.trim(),
+        email: document.getElementById('edit-res-email').value.trim(),
+        phone: document.getElementById('edit-res-phone').value.trim(),
+        residentType: document.getElementById('edit-res-type').value,
+        accountStatus: document.getElementById('edit-res-status').value,
+        status: document.getElementById('edit-res-status').value,
+        emergencyContactName: document.getElementById('edit-res-emg-name').value.trim(),
+        emergencyContactPhone: document.getElementById('edit-res-emg-phone').value.trim()
+      };
+
+      try {
+        await AdminApi.updateResident(residentId, updateData);
+        Toast.success('Resident details updated successfully!');
+        Modal.close('edit-resident-modal');
+        await loadResidents();
+        await loadFlats();
+        await loadOwners();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to update resident');
+      }
+    }
+
     async function submitNewFlat(event) {
       event.preventDefault();
       const flatData = {
@@ -380,7 +677,8 @@
         floorNumber: parseInt(document.getElementById('new-flat-floor').value),
         flatType: document.getElementById('new-flat-type').value,
         carpetAreaSqFt: parseFloat(document.getElementById('new-flat-area').value),
-        status: 'VACANT'
+        status: 'VACANT',
+        occupancyStatus: 'VACANT'
       };
 
       try {

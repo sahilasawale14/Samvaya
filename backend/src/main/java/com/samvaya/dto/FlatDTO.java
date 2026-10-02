@@ -19,7 +19,20 @@ public class FlatDTO {
     private Double carpetAreaSqFt;
     private Double squareFeet;
     private Long residentId;
+    private Long currentResidentId;
     private String status;
+    private String occupancyStatus;
     private String currentResidentName;
     private String residentType;
+
+    public Long getCurrentResidentId() {
+        return currentResidentId != null ? currentResidentId : residentId;
+    }
+
+    public void setCurrentResidentId(Long currentResidentId) {
+        this.currentResidentId = currentResidentId;
+        if (this.residentId == null) {
+            this.residentId = currentResidentId;
+        }
+    }
 }

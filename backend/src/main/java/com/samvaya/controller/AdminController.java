@@ -44,6 +44,31 @@ public class AdminController {
                 .body(ApiResponse.success("Resident onboarded successfully", resident));
     }
 
+    @PostMapping("/residents/{residentId}/offboard")
+    public ResponseEntity<ApiResponse<ResidentDTO>> offboardResident(
+            @PathVariable Long residentId,
+            @RequestBody(required = false) ResidentDTO.OffboardResidentRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long adminUserId) {
+        ResidentDTO resident = residentService.offboardResident(residentId, request);
+        if (adminUserId != null) {
+            String desc = "Offboarded resident ID " + residentId + (request != null && request.getReason() != null ? " Reason: " + request.getReason() : "");
+            adminService.logAdminActivity(adminUserId, "RESIDENT_OFFBOARD", "PEOPLE_UNITS", desc, residentId);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Resident offboarded successfully and flat marked as vacant", resident));
+    }
+
+    @PutMapping("/residents/{residentId}")
+    public ResponseEntity<ApiResponse<ResidentDTO>> updateResident(
+            @PathVariable Long residentId,
+            @RequestBody ResidentDTO request,
+            @RequestHeader(value = "X-User-Id", required = false) Long adminUserId) {
+        ResidentDTO resident = residentService.updateResident(residentId, request);
+        if (adminUserId != null) {
+            adminService.logAdminActivity(adminUserId, "RESIDENT_UPDATE", "PEOPLE_UNITS", "Updated resident ID " + residentId, residentId);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Resident updated successfully", resident));
+    }
+
     @GetMapping("/owners")
     public ResponseEntity<ApiResponse<List<ResidentDTO>>> getAllOwners() {
         List<ResidentDTO> owners = adminService.getResidentsByType("OWNER");

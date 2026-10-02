@@ -15,6 +15,14 @@ const AdminApi = {
     return Api.post('/admin/residents', residentData);
   },
 
+  offboardResident(residentId, data = {}) {
+    return Api.post(`/admin/residents/${residentId}/offboard`, data);
+  },
+
+  updateResident(residentId, data) {
+    return Api.put(`/admin/residents/${residentId}`, data);
+  },
+
   getOwners() {
     return Api.get('/admin/owners');
   },

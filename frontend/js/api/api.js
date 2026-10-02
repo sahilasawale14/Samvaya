@@ -109,6 +109,69 @@ const Api = {
       } catch (e) {}
     };
 
+    // Helpers for Residents & Flats state persistence (Vercel & Offline Resilience)
+    const getLocalResidents = () => {
+      try {
+        const stored = localStorage.getItem('samvaya_residents');
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      const defaultResidents = [
+        { id: 1, userId: 2, username: 'resident1', fullName: 'Rahul Sharma', email: 'rahul.sharma@example.com', phone: '+91 98765 43210', residentType: 'OWNER', flatId: 1, wing: 'A', flatNumber: '101', bhkType: '2BHK', emergencyContactName: 'Anita Sharma', emergencyContactPhone: '+91 98765 00000', moveInDate: '2024-01-15', status: 'ACTIVE', accountStatus: 'ACTIVE', movedOutAt: null },
+        { id: 2, userId: 3, username: 'tenant1', fullName: 'Priya Patel', email: 'priya.patel@example.com', phone: '+91 98765 12345', residentType: 'TENANT', flatId: 2, wing: 'A', flatNumber: '102', bhkType: '1BHK', emergencyContactName: 'Kunal Patel', emergencyContactPhone: '+91 98765 11111', moveInDate: '2024-03-01', status: 'ACTIVE', accountStatus: 'ACTIVE', movedOutAt: null },
+        { id: 3, userId: 5, username: 'amit_p', fullName: 'Amit Patel', email: 'amit.patel@example.com', phone: '+91 98111 22334', residentType: 'OWNER', flatId: 3, wing: 'B', flatNumber: '201', bhkType: '3BHK', emergencyContactName: 'Meera Patel', emergencyContactPhone: '+91 98111 00000', moveInDate: '2023-11-10', status: 'ACTIVE', accountStatus: 'ACTIVE', movedOutAt: null },
+        { id: 4, userId: 6, username: 'sneha_k', fullName: 'Sneha Kulkarni', email: 'sneha.k@example.com', phone: '+91 98222 33445', residentType: 'TENANT', flatId: 4, wing: 'B', flatNumber: '202', bhkType: '2BHK', emergencyContactName: 'Rohan Kulkarni', emergencyContactPhone: '+91 98222 00000', moveInDate: '2024-05-20', status: 'ACTIVE', accountStatus: 'ACTIVE', movedOutAt: null },
+        { id: 5, userId: 7, username: 'vikram_s', fullName: 'Vikram Singh', email: 'vikram.singh@example.com', phone: '+91 98333 44556', residentType: 'OWNER', flatId: 5, wing: 'C', flatNumber: '301', bhkType: '3BHK', emergencyContactName: 'Sunita Singh', emergencyContactPhone: '+91 98333 00000', moveInDate: '2023-08-15', status: 'ACTIVE', accountStatus: 'ACTIVE', movedOutAt: null }
+      ];
+      try {
+        localStorage.setItem('samvaya_residents', JSON.stringify(defaultResidents));
+      } catch (e) {}
+      return defaultResidents;
+    };
+
+    const saveLocalResidents = (list) => {
+      try {
+        localStorage.setItem('samvaya_residents', JSON.stringify(list));
+      } catch (e) {}
+    };
+
+    const getLocalFlats = () => {
+      try {
+        const stored = localStorage.getItem('samvaya_flats');
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      const defaultFlats = [
+        { id: 1, wing: 'A', flatNumber: '101', floorNumber: 1, flatType: '2BHK', bhkType: '2BHK', carpetAreaSqFt: 950.0, squareFeet: 950.0, residentId: 1, currentResidentId: 1, status: 'OCCUPIED', occupancyStatus: 'OCCUPIED_OWNER', currentResidentName: 'Rahul Sharma', residentType: 'OWNER' },
+        { id: 2, wing: 'A', flatNumber: '102', floorNumber: 1, flatType: '1BHK', bhkType: '1BHK', carpetAreaSqFt: 650.0, squareFeet: 650.0, residentId: 2, currentResidentId: 2, status: 'OCCUPIED', occupancyStatus: 'OCCUPIED_TENANT', currentResidentName: 'Priya Patel', residentType: 'TENANT' },
+        { id: 3, wing: 'B', flatNumber: '201', floorNumber: 2, flatType: '3BHK', bhkType: '3BHK', carpetAreaSqFt: 1250.0, squareFeet: 1250.0, residentId: 3, currentResidentId: 3, status: 'OCCUPIED', occupancyStatus: 'OCCUPIED_OWNER', currentResidentName: 'Amit Patel', residentType: 'OWNER' },
+        { id: 4, wing: 'B', flatNumber: '202', floorNumber: 2, flatType: '2BHK', bhkType: '2BHK', carpetAreaSqFt: 900.0, squareFeet: 900.0, residentId: 4, currentResidentId: 4, status: 'OCCUPIED', occupancyStatus: 'OCCUPIED_TENANT', currentResidentName: 'Sneha Kulkarni', residentType: 'TENANT' },
+        { id: 5, wing: 'C', flatNumber: '301', floorNumber: 3, flatType: '3BHK', bhkType: '3BHK', carpetAreaSqFt: 1400.0, squareFeet: 1400.0, residentId: 5, currentResidentId: 5, status: 'OCCUPIED', occupancyStatus: 'OCCUPIED_OWNER', currentResidentName: 'Vikram Singh', residentType: 'OWNER' },
+        { id: 6, wing: 'C', flatNumber: '302', floorNumber: 3, flatType: '2BHK', bhkType: '2BHK', carpetAreaSqFt: 950.0, squareFeet: 950.0, residentId: null, currentResidentId: null, status: 'VACANT', occupancyStatus: 'VACANT', currentResidentName: 'None', residentType: '-' }
+      ];
+      try {
+        localStorage.setItem('samvaya_flats', JSON.stringify(defaultFlats));
+      } catch (e) {}
+      return defaultFlats;
+    };
+
+    const saveLocalFlats = (list) => {
+      try {
+        localStorage.setItem('samvaya_flats', JSON.stringify(list));
+      } catch (e) {}
+    };
+
+    const recordDeactivatedUser = (uname) => {
+      if (!uname) return;
+      try {
+        let deact = [];
+        const stored = localStorage.getItem('samvaya_deactivated_users');
+        if (stored) deact = JSON.parse(stored);
+        if (!deact.includes(uname.toLowerCase())) {
+          deact.push(uname.toLowerCase());
+          localStorage.setItem('samvaya_deactivated_users', JSON.stringify(deact));
+        }
+      } catch (e) {}
+    };
+
     // Pre-Approve Pass Creation (Resident portal)
     if (endpoint.includes('/pre-approve') || (endpoint.includes('/visitors') && options.method === 'POST' && !endpoint.includes('/check-in') && !endpoint.includes('/arrive') && !endpoint.includes('/entry'))) {
       let body = {};
@@ -265,6 +328,244 @@ const Api = {
     if (endpoint.includes('/visitors')) {
       const list = getLocalPreapproved();
       return list;
+    }
+
+    // Admin Resident Offboard
+    if ((endpoint.includes('/admin/residents') || endpoint.includes('/residents')) && endpoint.includes('/offboard')) {
+      const match = endpoint.match(/residents\/(\d+)\/offboard/);
+      const resId = match ? parseInt(match[1], 10) : null;
+      let body = {};
+      try {
+        body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+      } catch (e) {}
+
+      const residents = getLocalResidents();
+      let targetResident = null;
+      const updatedResidents = residents.map(r => {
+        if (!resId || r.id == resId || (r.userId && r.userId == resId)) {
+          targetResident = {
+            ...r,
+            status: 'INACTIVE',
+            accountStatus: 'INACTIVE',
+            movedOutAt: new Date().toISOString()
+          };
+          recordDeactivatedUser(r.username);
+          return targetResident;
+        }
+        return r;
+      });
+      saveLocalResidents(updatedResidents);
+
+      // Vacate corresponding flat
+      const flats = getLocalFlats();
+      const updatedFlats = flats.map(f => {
+        if (targetResident && (f.residentId == targetResident.id || f.currentResidentId == targetResident.id || (f.flatNumber === targetResident.flatNumber && f.wing === targetResident.wing))) {
+          return {
+            ...f,
+            status: 'VACANT',
+            occupancyStatus: 'VACANT',
+            residentId: null,
+            currentResidentId: null,
+            currentResidentName: 'None',
+            residentType: '-'
+          };
+        }
+        return f;
+      });
+      saveLocalFlats(updatedFlats);
+
+      // Cancel pending passes
+      const visitors = getLocalPreapproved();
+      const updatedVisitors = visitors.map(v => {
+        if (targetResident && (v.wing === targetResident.wing && v.flatNumber === targetResident.flatNumber)) {
+          return { ...v, status: 'CANCELLED', approvalStatus: 'REJECTED' };
+        }
+        return v;
+      });
+      saveLocalPreapproved(updatedVisitors);
+
+      if (typeof Toast !== 'undefined') {
+        Toast.success('Resident offboarded and flat marked VACANT successfully (Offline Mode)!');
+      }
+      return targetResident || { success: true };
+    }
+
+    // Admin Resident Update
+    if (endpoint.includes('/admin/residents/') && options.method === 'PUT') {
+      const match = endpoint.match(/residents\/(\d+)/);
+      const resId = match ? parseInt(match[1], 10) : null;
+      let body = {};
+      try {
+        body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+      } catch (e) {}
+
+      const residents = getLocalResidents();
+      let updatedRes = null;
+      const updatedList = residents.map(r => {
+        if (!resId || r.id == resId) {
+          updatedRes = { ...r, ...body };
+          return updatedRes;
+        }
+        return r;
+      });
+      saveLocalResidents(updatedList);
+      if (typeof Toast !== 'undefined') {
+        Toast.success('Resident details updated (Offline Mode)!');
+      }
+      return updatedRes || { success: true };
+    }
+
+    // Admin Resident Create / Onboard
+    if (endpoint.includes('/admin/residents') && options.method === 'POST') {
+      let body = {};
+      try {
+        body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+      } catch (e) {}
+
+      const newId = Date.now();
+      const newResident = {
+        id: newId,
+        userId: newId,
+        username: body.username || `resident_${newId}`,
+        fullName: body.fullName || 'New Resident',
+        email: body.email || 'resident@samvaya.com',
+        phone: body.phone || '+91 98000 00000',
+        residentType: (body.residentType || 'OWNER').toUpperCase(),
+        flatId: body.flatId || null,
+        wing: body.wing || 'A',
+        flatNumber: body.flatNumber || '101',
+        bhkType: '2BHK',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        moveInDate: new Date().toISOString().split('T')[0],
+        status: 'ACTIVE',
+        accountStatus: 'ACTIVE',
+        movedOutAt: null
+      };
+
+      const residents = getLocalResidents();
+      residents.unshift(newResident);
+      saveLocalResidents(residents);
+
+      // Mark Flat Occupied
+      const flats = getLocalFlats();
+      const updatedFlats = flats.map(f => {
+        if ((body.flatId && f.id == body.flatId) || (f.wing === newResident.wing && f.flatNumber === newResident.flatNumber)) {
+          return {
+            ...f,
+            status: 'OCCUPIED',
+            occupancyStatus: newResident.residentType === 'TENANT' ? 'OCCUPIED_TENANT' : 'OCCUPIED_OWNER',
+            residentId: newId,
+            currentResidentId: newId,
+            currentResidentName: newResident.fullName,
+            residentType: newResident.residentType
+          };
+        }
+        return f;
+      });
+      saveLocalFlats(updatedFlats);
+
+      if (typeof Toast !== 'undefined') {
+        Toast.success('Resident onboarded successfully (Offline Mode)!');
+      }
+      return newResident;
+    }
+
+    // Admin Residents & Owners Query
+    if (endpoint.includes('/admin/residents') || endpoint.includes('/admin/owners')) {
+      const residents = getLocalResidents();
+      if (endpoint.includes('type=OWNER') || endpoint.includes('/admin/owners')) {
+        return residents.filter(r => r.residentType === 'OWNER');
+      }
+      if (endpoint.includes('type=TENANT')) {
+        return residents.filter(r => r.residentType === 'TENANT');
+      }
+      return residents;
+    }
+
+    // Admin Flats Create
+    if (endpoint.includes('/admin/flats') && options.method === 'POST') {
+      let body = {};
+      try {
+        body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+      } catch (e) {}
+
+      const newFlat = {
+        id: Date.now(),
+        wing: body.wing || 'A',
+        flatNumber: body.flatNumber || '101',
+        floorNumber: parseInt(body.floorNumber || 1, 10),
+        flatType: body.flatType || body.bhkType || '2BHK',
+        bhkType: body.bhkType || body.flatType || '2BHK',
+        carpetAreaSqFt: parseFloat(body.carpetAreaSqFt || body.squareFeet || 900),
+        squareFeet: parseFloat(body.squareFeet || body.carpetAreaSqFt || 900),
+        residentId: null,
+        currentResidentId: null,
+        status: 'VACANT',
+        occupancyStatus: 'VACANT',
+        currentResidentName: 'None',
+        residentType: '-'
+      };
+      const flats = getLocalFlats();
+      flats.unshift(newFlat);
+      saveLocalFlats(flats);
+      if (typeof Toast !== 'undefined') Toast.success('Unit added successfully (Offline Mode)!');
+      return newFlat;
+    }
+
+    // Admin Flats Query
+    if (endpoint.includes('/admin/flats')) {
+      return getLocalFlats();
+    }
+
+    // Admin Users Query
+    if (endpoint.includes('/admin/users')) {
+      const residents = getLocalResidents();
+      return residents.map(r => ({
+        id: r.userId || r.id,
+        username: r.username,
+        fullName: r.fullName,
+        email: r.email,
+        phone: r.phone,
+        role: 'RESIDENT',
+        residentType: r.residentType,
+        flatId: r.flatId,
+        wing: r.wing,
+        flatNumber: r.flatNumber,
+        isActive: r.status === 'ACTIVE'
+      }));
+    }
+
+    // Admin Dashboard Query
+    if (endpoint.includes('/admin/dashboard')) {
+      const residents = getLocalResidents();
+      const flats = getLocalFlats();
+      const totalFlats = flats.length;
+      const occupiedFlats = flats.filter(f => f.status === 'OCCUPIED' || (f.occupancyStatus && f.occupancyStatus.includes('OCCUPIED'))).length;
+      const vacantFlats = flats.filter(f => f.status === 'VACANT' || f.occupancyStatus === 'VACANT').length;
+      const activeResidents = residents.filter(r => r.status === 'ACTIVE' && r.accountStatus !== 'INACTIVE');
+      return {
+        totalFlats,
+        occupiedFlats,
+        vacantFlats,
+        totalResidents: activeResidents.length,
+        totalOwners: activeResidents.filter(r => r.residentType === 'OWNER').length,
+        totalTenants: activeResidents.filter(r => r.residentType === 'TENANT').length,
+        totalStaff: 12,
+        activeSecurityStaff: 4,
+        pendingComplaints: 3,
+        resolvedComplaints: 28,
+        upcomingAmenityBookings: 2,
+        activeIncidents: 0,
+        collectedMaintenance: 145000,
+        pendingMaintenance: 12500,
+        totalParkingSlots: 50,
+        occupiedParkingSlots: occupiedFlats,
+        availableParkingSlots: 50 - occupiedFlats,
+        recentNotices: [],
+        recentComplaints: [],
+        recentActivities: []
+      };
     }
 
     // 3. Deliveries Endpoint

@@ -46,6 +46,13 @@ public class Resident {
     @Builder.Default
     private String status = "ACTIVE"; // 'ACTIVE', 'INACTIVE', 'PENDING_APPROVAL'
 
+    @Column(name = "account_status", length = 30)
+    @Builder.Default
+    private String accountStatus = "ACTIVE"; // 'ACTIVE', 'INACTIVE', 'OFFBOARDED'
+
+    @Column(name = "moved_out_at")
+    private LocalDateTime movedOutAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -56,10 +63,20 @@ public class Resident {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        syncStatus();
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+        syncStatus();
+    }
+
+    private void syncStatus() {
+        if ("INACTIVE".equalsIgnoreCase(this.accountStatus) || "OFFBOARDED".equalsIgnoreCase(this.accountStatus)) {
+            this.status = "INACTIVE";
+        } else if ("INACTIVE".equalsIgnoreCase(this.status)) {
+            this.accountStatus = "INACTIVE";
+        }
     }
 }

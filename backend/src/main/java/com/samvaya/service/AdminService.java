@@ -132,6 +132,17 @@ public class AdminService {
                     String fType = flat.getFlatType() != null ? flat.getFlatType() : flat.getBhkType();
                     Double carpet = flat.getCarpetAreaSqFt() != null ? flat.getCarpetAreaSqFt() : flat.getSquareFeet();
 
+                    String occStatus = flat.getOccupancyStatus();
+                    if (occStatus == null || occStatus.trim().isEmpty()) {
+                        if (resident == null || "VACANT".equalsIgnoreCase(flat.getStatus())) {
+                            occStatus = "VACANT";
+                        } else if ("TENANT".equalsIgnoreCase(resident.getResidentType())) {
+                            occStatus = "OCCUPIED_TENANT";
+                        } else {
+                            occStatus = "OCCUPIED_OWNER";
+                        }
+                    }
+
                     return FlatDTO.builder()
                             .id(flat.getId())
                             .wing(flat.getWing())
@@ -142,7 +153,9 @@ public class AdminService {
                             .carpetAreaSqFt(carpet)
                             .squareFeet(carpet)
                             .residentId(resident != null ? resident.getId() : null)
+                            .currentResidentId(resident != null ? resident.getId() : null)
                             .status(flat.getStatus())
+                            .occupancyStatus(occStatus)
                             .currentResidentName(resident != null && resident.getUser() != null ? resident.getUser().getFullName() : "None")
                             .residentType(resident != null ? resident.getResidentType() : "-")
                             .build();
@@ -222,9 +235,21 @@ public class AdminService {
     }
 
     private ResidentDTO mapToResidentDTO(Resident r) {
+        String accountStatus = r.getAccountStatus();
+        if (accountStatus == null) {
+            accountStatus = (r.getUser() != null && r.getUser().getAccountStatus() != null)
+                    ? r.getUser().getAccountStatus()
+                    : ("INACTIVE".equalsIgnoreCase(r.getStatus()) ? "INACTIVE" : "ACTIVE");
+        }
+        java.time.LocalDateTime movedOutAt = r.getMovedOutAt();
+        if (movedOutAt == null && r.getUser() != null) {
+            movedOutAt = r.getUser().getMovedOutAt();
+        }
+
         return ResidentDTO.builder()
                 .id(r.getId())
                 .userId(r.getUser() != null ? r.getUser().getId() : null)
+                .username(r.getUser() != null ? r.getUser().getUsername() : null)
                 .fullName(r.getUser() != null ? r.getUser().getFullName() : "N/A")
                 .email(r.getUser() != null ? r.getUser().getEmail() : "N/A")
                 .phone(r.getUser() != null ? r.getUser().getPhone() : "N/A")
@@ -237,6 +262,8 @@ public class AdminService {
                 .emergencyContactPhone(r.getEmergencyContactPhone())
                 .moveInDate(r.getMoveInDate())
                 .status(r.getStatus())
+                .accountStatus(accountStatus)
+                .movedOutAt(movedOutAt)
                 .build();
     }
 }

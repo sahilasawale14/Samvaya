@@ -51,11 +51,23 @@ public class Flat {
     @Builder.Default
     private String status = "OCCUPIED"; // 'OCCUPIED', 'VACANT', 'UNDER_MAINTENANCE'
 
+    @Column(name = "occupancy_status", length = 30)
+    @Builder.Default
+    private String occupancyStatus = "OCCUPIED_OWNER"; // 'OCCUPIED_OWNER', 'OCCUPIED_TENANT', 'VACANT'
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public Long getCurrentResidentId() {
+        return this.residentId;
+    }
+
+    public void setCurrentResidentId(Long currentResidentId) {
+        this.residentId = currentResidentId;
+    }
 
     @PrePersist
     protected void onCreate() {
@@ -80,6 +92,14 @@ public class Flat {
             this.carpetAreaSqFt = this.squareFeet;
         } else if (this.squareFeet == null && this.carpetAreaSqFt != null) {
             this.squareFeet = this.carpetAreaSqFt;
+        }
+
+        if ("VACANT".equalsIgnoreCase(this.occupancyStatus)) {
+            this.status = "VACANT";
+            this.residentId = null;
+        } else if ("VACANT".equalsIgnoreCase(this.status)) {
+            this.occupancyStatus = "VACANT";
+            this.residentId = null;
         }
     }
 }

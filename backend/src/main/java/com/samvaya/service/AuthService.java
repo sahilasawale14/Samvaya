@@ -41,8 +41,10 @@ public class AuthService {
             throw new UnauthorizedException("Invalid username or password");
         }
 
-        if (Boolean.FALSE.equals(user.getIsActive())) {
-            throw new UnauthorizedException("User account is deactivated. Please contact society administration.");
+        if (Boolean.FALSE.equals(user.getIsActive()) ||
+            "INACTIVE".equalsIgnoreCase(user.getAccountStatus()) ||
+            "OFFBOARDED".equalsIgnoreCase(user.getAccountStatus())) {
+            throw new UnauthorizedException("Your resident account has been deactivated. Please contact the society admin office.");
         }
 
         user.setLastLogin(LocalDateTime.now());
@@ -59,6 +61,11 @@ public class AuthService {
         if ("RESIDENT".equalsIgnoreCase(rawRole)) {
             Resident resident = residentRepository.findByUserId(user.getId()).orElse(null);
             if (resident != null) {
+                if ("INACTIVE".equalsIgnoreCase(resident.getAccountStatus()) ||
+                    "OFFBOARDED".equalsIgnoreCase(resident.getAccountStatus()) ||
+                    "INACTIVE".equalsIgnoreCase(resident.getStatus())) {
+                    throw new UnauthorizedException("Your resident account has been deactivated. Please contact the society admin office.");
+                }
                 residentId = resident.getId();
                 residentType = resident.getResidentType();
                 if (resident.getFlat() != null) {

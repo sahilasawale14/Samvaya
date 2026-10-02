@@ -23,35 +23,35 @@ ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
 
 -- 3. Insert Default Users
 -- Passwords stored in plain-text/compatible format for sample authentication (e.g. "admin123", "owner123", "tenant123", "guard123", "password123")
-INSERT INTO `users` (`id`, `username`, `password`, `email`, `full_name`, `phone`, `role_id`, `is_active`) VALUES
-(1, 'admin', 'admin123', 'admin@samvaya.com', 'Vikramaditya Singhania', '+91 98200 11223', 1, TRUE),
-(2, 'owner1', 'owner123', 'rahul.sharma@samvaya.com', 'Rahul Sharma', '+91 98111 22334', 2, TRUE),
-(3, 'tenant1', 'tenant123', 'priya.patel@samvaya.com', 'Priya Patel', '+91 98333 44556', 2, TRUE),
-(4, 'guard1', 'guard123', 'ramesh.guard@samvaya.com', 'Ramesh Kumar (Gate 1)', '+91 97111 99887', 3, TRUE),
-(5, 'owner2', 'owner123', 'ananya.deshmukh@samvaya.com', 'Ananya Deshmukh', '+91 98444 55667', 2, TRUE),
-(6, 'guard2', 'guard123', 'suresh.guard@samvaya.com', 'Suresh Shinde (Gate 2)', '+91 97222 88776', 3, TRUE)
+INSERT INTO `users` (`id`, `username`, `password`, `email`, `full_name`, `phone`, `role_id`, `is_active`, `account_status`, `resident_type`) VALUES
+(1, 'admin', 'admin123', 'admin@samvaya.com', 'Vikramaditya Singhania', '+91 98200 11223', 1, TRUE, 'ACTIVE', NULL),
+(2, 'owner1', 'owner123', 'rahul.sharma@samvaya.com', 'Rahul Sharma', '+91 98111 22334', 2, TRUE, 'ACTIVE', 'OWNER'),
+(3, 'tenant1', 'tenant123', 'priya.patel@samvaya.com', 'Priya Patel', '+91 98333 44556', 2, TRUE, 'ACTIVE', 'TENANT'),
+(4, 'guard1', 'guard123', 'ramesh.guard@samvaya.com', 'Ramesh Kumar (Gate 1)', '+91 97111 99887', 3, TRUE, 'ACTIVE', NULL),
+(5, 'owner2', 'owner123', 'ananya.deshmukh@samvaya.com', 'Ananya Deshmukh', '+91 98444 55667', 2, TRUE, 'ACTIVE', 'OWNER'),
+(6, 'guard2', 'guard123', 'suresh.guard@samvaya.com', 'Suresh Shinde (Gate 2)', '+91 97222 88776', 3, TRUE, 'ACTIVE', NULL)
 ON DUPLICATE KEY UPDATE `username`=VALUES(`username`);
 
 -- 4. Insert Flats (Wing A, B, C)
-INSERT INTO `flats` (`id`, `society_id`, `wing`, `flat_number`, `floor_number`, `bhk_type`, `flat_type`, `square_feet`, `carpet_area_sq_ft`, `resident_id`, `status`) VALUES
-(1, 1, 'A', '101', 1, '3BHK', '3BHK', 1450.0, 1450.0, 1, 'OCCUPIED'),
-(2, 1, 'A', '102', 1, '2BHK', '2BHK', 900.0, 900.0, NULL, 'OCCUPIED'),
-(3, 1, 'A', '201', 2, '3BHK', '3BHK', 1450.0, 1450.0, NULL, 'VACANT'),
-(4, 1, 'A', '202', 2, '2BHK', '2BHK', 900.0, 900.0, 3, 'OCCUPIED'),
-(5, 1, 'B', '101', 1, '2BHK', '2BHK', 900.0, 900.0, NULL, 'OCCUPIED'),
-(6, 1, 'B', '202', 2, '3BHK', '3BHK', 1500.0, 1450.0, 2, 'OCCUPIED'),
-(7, 1, 'B', '301', 3, '4BHK', '4BHK', 2200.0, 2200.0, NULL, 'OCCUPIED'),
-(8, 1, 'B', '302', 3, '2BHK', '2BHK', 900.0, 900.0, NULL, 'VACANT'),
-(9, 1, 'C', '101', 1, 'PENTHOUSE', 'PENTHOUSE', 3200.0, 3200.0, NULL, 'OCCUPIED'),
-(10, 1, 'C', '102', 1, '3BHK', '3BHK', 1600.0, 1450.0, NULL, 'OCCUPIED'),
-(11, 1, 'A', '103', 1, '1BHK', '1BHK', 550.0, 550.0, NULL, 'OCCUPIED')
+INSERT INTO `flats` (`id`, `society_id`, `wing`, `flat_number`, `floor_number`, `bhk_type`, `flat_type`, `square_feet`, `carpet_area_sq_ft`, `resident_id`, `status`, `occupancy_status`) VALUES
+(1, 1, 'A', '101', 1, '3BHK', '3BHK', 1450.0, 1450.0, 1, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(2, 1, 'A', '102', 1, '2BHK', '2BHK', 900.0, 900.0, NULL, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(3, 1, 'A', '201', 2, '3BHK', '3BHK', 1450.0, 1450.0, NULL, 'VACANT', 'VACANT'),
+(4, 1, 'A', '202', 2, '2BHK', '2BHK', 900.0, 900.0, 3, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(5, 1, 'B', '101', 1, '2BHK', '2BHK', 900.0, 900.0, NULL, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(6, 1, 'B', '202', 2, '3BHK', '3BHK', 1500.0, 1450.0, 2, 'OCCUPIED', 'OCCUPIED_TENANT'),
+(7, 1, 'B', '301', 3, '4BHK', '4BHK', 2200.0, 2200.0, NULL, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(8, 1, 'B', '302', 3, '2BHK', '2BHK', 900.0, 900.0, NULL, 'VACANT', 'VACANT'),
+(9, 1, 'C', '101', 1, 'PENTHOUSE', 'PENTHOUSE', 3200.0, 3200.0, NULL, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(10, 1, 'C', '102', 1, '3BHK', '3BHK', 1600.0, 1450.0, NULL, 'OCCUPIED', 'OCCUPIED_OWNER'),
+(11, 1, 'A', '103', 1, '1BHK', '1BHK', 550.0, 550.0, NULL, 'OCCUPIED', 'OCCUPIED_OWNER')
 ON DUPLICATE KEY UPDATE `flat_number`=VALUES(`flat_number`), `carpet_area_sq_ft`=VALUES(`carpet_area_sq_ft`), `resident_id`=VALUES(`resident_id`);
 
 -- 5. Insert Residents (Owners and Tenants)
-INSERT INTO `residents` (`id`, `user_id`, `flat_id`, `resident_type`, `emergency_contact_name`, `emergency_contact_phone`, `move_in_date`, `status`) VALUES
-(1, 2, 1, 'OWNER', 'Sunita Sharma (Mother)', '+91 98111 22999', '2023-01-15', 'ACTIVE'),
-(2, 3, 6, 'TENANT', 'Kiran Patel (Father)', '+91 98333 44999', '2024-03-01', 'ACTIVE'),
-(3, 5, 4, 'OWNER', 'Rohan Deshmukh (Brother)', '+91 98444 55999', '2023-06-10', 'ACTIVE')
+INSERT INTO `residents` (`id`, `user_id`, `flat_id`, `resident_type`, `emergency_contact_name`, `emergency_contact_phone`, `move_in_date`, `status`, `account_status`) VALUES
+(1, 2, 1, 'OWNER', 'Sunita Sharma (Mother)', '+91 98111 22999', '2023-01-15', 'ACTIVE', 'ACTIVE'),
+(2, 3, 6, 'TENANT', 'Kiran Patel (Father)', '+91 98333 44999', '2024-03-01', 'ACTIVE', 'ACTIVE'),
+(3, 5, 4, 'OWNER', 'Rohan Deshmukh (Brother)', '+91 98444 55999', '2023-06-10', 'ACTIVE', 'ACTIVE')
 ON DUPLICATE KEY UPDATE `resident_type`=VALUES(`resident_type`);
 
 -- 6. Insert Household Members

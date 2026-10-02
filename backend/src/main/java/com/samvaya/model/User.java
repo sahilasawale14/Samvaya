@@ -40,6 +40,16 @@ public class User {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "account_status", length = 30)
+    @Builder.Default
+    private String accountStatus = "ACTIVE"; // 'ACTIVE', 'INACTIVE', 'OFFBOARDED'
+
+    @Column(name = "resident_type", length = 30)
+    private String residentType; // 'OWNER', 'TENANT'
+
+    @Column(name = "moved_out_at")
+    private LocalDateTime movedOutAt;
+
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
@@ -53,10 +63,20 @@ public class User {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        syncStatus();
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+        syncStatus();
+    }
+
+    private void syncStatus() {
+        if ("INACTIVE".equalsIgnoreCase(this.accountStatus) || "OFFBOARDED".equalsIgnoreCase(this.accountStatus)) {
+            this.isActive = false;
+        } else if (Boolean.FALSE.equals(this.isActive)) {
+            this.accountStatus = "INACTIVE";
+        }
     }
 }

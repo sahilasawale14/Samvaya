@@ -45,6 +45,9 @@ CREATE TABLE `users` (
     `phone` VARCHAR(30),
     `role_id` BIGINT NOT NULL,
     `is_active` BOOLEAN DEFAULT TRUE,
+    `account_status` VARCHAR(30) DEFAULT 'ACTIVE', -- 'ACTIVE', 'INACTIVE', 'OFFBOARDED'
+    `resident_type` VARCHAR(30) NULL, -- 'OWNER', 'TENANT'
+    `moved_out_at` TIMESTAMP NULL,
     `last_login` TIMESTAMP NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -64,7 +67,9 @@ CREATE TABLE `flats` (
     `square_feet` DOUBLE DEFAULT 1000.0,
     `carpet_area_sq_ft` DOUBLE DEFAULT 900.0,
     `resident_id` BIGINT NULL,
+    `current_resident_id` BIGINT NULL,
     `status` VARCHAR(30) DEFAULT 'OCCUPIED', -- 'OCCUPIED', 'VACANT', 'UNDER_MAINTENANCE'
+    `occupancy_status` VARCHAR(30) DEFAULT 'OCCUPIED_OWNER', -- 'OCCUPIED_OWNER', 'OCCUPIED_TENANT', 'VACANT'
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY `uk_wing_flat` (`wing`, `flat_number`),
@@ -83,6 +88,8 @@ CREATE TABLE `residents` (
     `move_in_date` DATE NOT NULL,
     `move_out_date` DATE NULL,
     `status` VARCHAR(30) DEFAULT 'ACTIVE', -- 'ACTIVE', 'INACTIVE', 'PENDING_APPROVAL'
+    `account_status` VARCHAR(30) DEFAULT 'ACTIVE', -- 'ACTIVE', 'INACTIVE', 'OFFBOARDED'
+    `moved_out_at` TIMESTAMP NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_resident_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,

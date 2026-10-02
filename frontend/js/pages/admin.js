@@ -73,11 +73,19 @@ const AdminPage = {
     Table.render('residents-data-table', [
       { label: 'Full Name', render: r => `<b>${r.fullName}</b>` },
       { label: 'Type', render: r => `<span class="badge ${r.residentType === 'OWNER' ? 'badge-info' : 'badge-neutral'}">${r.residentType}</span>` },
-      { label: 'Flat', render: r => `Wing ${r.wing}-${r.flatNumber} (${r.bhkType})` },
+      { label: 'Flat', render: r => r.flatNumber ? `Wing ${r.wing || ''}-${r.flatNumber} (${r.bhkType || ''})` : '<span style="color:var(--on-surface-variant);">-</span>' },
       { label: 'Contact', render: r => `${r.phone}<br><small style="color:var(--outline);">${r.email}</small>` },
       { label: 'Emergency Contact', render: r => `${r.emergencyContactName || '-'}<br><small>${r.emergencyContactPhone || ''}</small>` },
       { label: 'Move In Date', key: 'moveInDate' },
-      { label: 'Status', render: r => `<span class="badge badge-success">${r.status}</span>` }
+      { 
+        label: 'Account Status', 
+        render: r => {
+          const isInactive = r.status === 'INACTIVE' || r.accountStatus === 'INACTIVE' || r.accountStatus === 'OFFBOARDED';
+          return isInactive
+            ? `<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #f87171;">INACTIVE (Moved Out)</span>`
+            : `<span class="badge badge-success">ACTIVE</span>`;
+        }
+      }
     ], residents);
   },
 
@@ -89,11 +97,22 @@ const AdminPage = {
       { label: 'Wing', key: 'wing' },
       { label: 'Flat No.', render: r => `<b>${r.flatNumber}</b>` },
       { label: 'Floor', key: 'floorNumber' },
-      { label: 'BHK Type', key: 'bhkType' },
-      { label: 'Area', render: r => `${r.squareFeet} sq.ft` },
-      { label: 'Status', render: r => `<span class="badge ${r.status === 'OCCUPIED' ? 'badge-success' : 'badge-warning'}">${r.status}</span>` },
-      { label: 'Current Resident', key: 'currentResidentName' },
-      { label: 'Occupancy', render: r => `<span class="badge badge-neutral">${r.residentType}</span>` }
+      { label: 'Unit Type', render: r => `<span class="badge badge-info">${r.flatType || r.bhkType}</span>` },
+      { label: 'Carpet Area', render: r => `<b>${r.carpetAreaSqFt || r.squareFeet} sq.ft</b>` },
+      { 
+        label: 'Occupancy Status', 
+        render: r => {
+          const occ = r.occupancyStatus || (r.status === 'VACANT' ? 'VACANT' : (r.residentType === 'TENANT' ? 'OCCUPIED_TENANT' : 'OCCUPIED_OWNER'));
+          if (occ === 'OCCUPIED_OWNER') {
+            return `<span class="badge" style="background:#059669; color:#fff; font-weight:600;">Occupied (Owner)</span>`;
+          } else if (occ === 'OCCUPIED_TENANT') {
+            return `<span class="badge" style="background:#2563eb; color:#fff; font-weight:600;">Occupied (Tenant)</span>`;
+          } else {
+            return `<span class="badge" style="background:#d97706; color:#fff; font-weight:600;">Vacant</span>`;
+          }
+        }
+      },
+      { label: 'Current Resident', render: r => r.currentResidentName && r.currentResidentName !== 'None' ? `<b>${r.currentResidentName}</b>` : '<span style="color:var(--on-surface-variant); font-style:italic;">None</span>' }
     ], flats);
   },
 

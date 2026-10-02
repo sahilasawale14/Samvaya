@@ -21,6 +21,7 @@ public class ResidentService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final FlatRepository flatRepository;
+    private final ParkingSlotRepository parkingSlotRepository;
     private final VisitorRepository visitorRepository;
     private final DeliveryRepository deliveryRepository;
     private final ComplaintRepository complaintRepository;
@@ -165,10 +166,150 @@ public class ResidentService {
         return mapToDTO(r);
     }
 
+    @Transactional
+    public ResidentDTO offboardResident(Long residentId, ResidentDTO.OffboardResidentRequest request) {
+        Resident resident = residentRepository.findById(residentId)
+                .orElseGet(() -> residentRepository.findByUserId(residentId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Resident not found with id: " + residentId)));
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+        // 1. Revoke User login and deactivate
+        com.samvaya.model.User user = resident.getUser();
+        if (user != null) {
+            user.setIsActive(false);
+            user.setAccountStatus("INACTIVE");
+            user.setMovedOutAt(now);
+            userRepository.save(user);
+        }
+
+        // 2. Mark Resident record as INACTIVE
+        resident.setStatus("INACTIVE");
+        resident.setAccountStatus("INACTIVE");
+        resident.setMovedOutAt(now);
+
+        // 3. Mark Flat as VACANT and remove resident association
+        com.samvaya.model.Flat flat = resident.getFlat();
+        if (flat != null) {
+            flat.setStatus("VACANT");
+            flat.setOccupancyStatus("VACANT");
+            flat.setResidentId(null);
+            flat.setCurrentResidentId(null);
+            flatRepository.save(flat);
+            resident.setFlat(null);
+        }
+
+        // Also check if any other flat points to this resident
+        java.util.List<com.samvaya.model.Flat> flatsWithResident = flatRepository.findAll().stream()
+                .filter(f -> resident.getId().equals(f.getResidentId()) || resident.getId().equals(f.getCurrentResidentId()))
+                .collect(Collectors.toList());
+        for (com.samvaya.model.Flat f : flatsWithResident) {
+            f.setStatus("VACANT");
+            f.setOccupancyStatus("VACANT");
+            f.setResidentId(null);
+            f.setCurrentResidentId(null);
+            flatRepository.save(f);
+        }
+
+        Resident saved = residentRepository.save(resident);
+
+        // 4. Vacate Parking Slots
+        boolean vacateParking = request == null || request.getVacateParking() == null || Boolean.TRUE.equals(request.getVacateParking());
+        if (vacateParking && flat != null) {
+            java.util.List<com.samvaya.model.ParkingSlot> slots = parkingSlotRepository.findByFlatId(flat.getId());
+            slots.addAll(parkingSlotRepository.findByAssignedFlatId(flat.getId()));
+            for (com.samvaya.model.ParkingSlot slot : slots) {
+                slot.setFlat(null);
+                slot.setAssignedFlatId(null);
+                slot.setIsOccupied(false);
+                slot.setStatus("AVAILABLE");
+                parkingSlotRepository.save(slot);
+            }
+        }
+
+        // 5. Cancel pending / pre-approved visitor passes
+        boolean cancelVisitors = request == null || request.getCancelPendingVisitors() == null || Boolean.TRUE.equals(request.getCancelPendingVisitors());
+        if (cancelVisitors) {
+            java.util.List<com.samvaya.model.Visitor> visitors = visitorRepository.findByResidentId(resident.getId());
+            if (flat != null) {
+                visitors.addAll(visitorRepository.findByFlatId(flat.getId()));
+            }
+            for (com.samvaya.model.Visitor v : visitors) {
+                if ("EXPECTED".equalsIgnoreCase(v.getStatus()) || "PENDING".equalsIgnoreCase(v.getStatus()) || "PRE_APPROVED".equalsIgnoreCase(v.getApprovalStatus())) {
+                    v.setStatus("CANCELLED");
+                    v.setApprovalStatus("REJECTED");
+                    visitorRepository.save(v);
+                }
+            }
+        }
+
+        return mapToDTO(saved);
+    }
+
+    @Transactional
+    public ResidentDTO updateResident(Long residentId, ResidentDTO request) {
+        Resident resident = residentRepository.findById(residentId)
+                .orElseGet(() -> residentRepository.findByUserId(residentId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Resident not found with id: " + residentId)));
+
+        com.samvaya.model.User user = resident.getUser();
+        if (user != null) {
+            if (request.getFullName() != null && !request.getFullName().trim().isEmpty()) {
+                user.setFullName(request.getFullName().trim());
+            }
+            if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+                user.setEmail(request.getEmail().trim());
+            }
+            if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+                user.setPhone(request.getPhone().trim());
+            }
+            if (request.getAccountStatus() != null && !request.getAccountStatus().trim().isEmpty()) {
+                user.setAccountStatus(request.getAccountStatus().trim().toUpperCase());
+                if ("ACTIVE".equalsIgnoreCase(request.getAccountStatus())) {
+                    user.setIsActive(true);
+                } else if ("INACTIVE".equalsIgnoreCase(request.getAccountStatus()) || "OFFBOARDED".equalsIgnoreCase(request.getAccountStatus())) {
+                    user.setIsActive(false);
+                }
+            }
+            userRepository.save(user);
+        }
+
+        if (request.getResidentType() != null && !request.getResidentType().trim().isEmpty()) {
+            resident.setResidentType(request.getResidentType().trim().toUpperCase());
+        }
+        if (request.getEmergencyContactName() != null) {
+            resident.setEmergencyContactName(request.getEmergencyContactName().trim());
+        }
+        if (request.getEmergencyContactPhone() != null) {
+            resident.setEmergencyContactPhone(request.getEmergencyContactPhone().trim());
+        }
+        if (request.getStatus() != null && !request.getStatus().trim().isEmpty()) {
+            resident.setStatus(request.getStatus().trim().toUpperCase());
+        }
+        if (request.getAccountStatus() != null && !request.getAccountStatus().trim().isEmpty()) {
+            resident.setAccountStatus(request.getAccountStatus().trim().toUpperCase());
+        }
+
+        Resident saved = residentRepository.save(resident);
+        return mapToDTO(saved);
+    }
+
     public ResidentDTO mapToDTO(Resident r) {
+        String accountStatus = r.getAccountStatus();
+        if (accountStatus == null) {
+            accountStatus = (r.getUser() != null && r.getUser().getAccountStatus() != null)
+                    ? r.getUser().getAccountStatus()
+                    : ("INACTIVE".equalsIgnoreCase(r.getStatus()) ? "INACTIVE" : "ACTIVE");
+        }
+        java.time.LocalDateTime movedOutAt = r.getMovedOutAt();
+        if (movedOutAt == null && r.getUser() != null) {
+            movedOutAt = r.getUser().getMovedOutAt();
+        }
+
         return ResidentDTO.builder()
                 .id(r.getId())
                 .userId(r.getUser() != null ? r.getUser().getId() : null)
+                .username(r.getUser() != null ? r.getUser().getUsername() : null)
                 .fullName(r.getUser() != null ? r.getUser().getFullName() : "N/A")
                 .email(r.getUser() != null ? r.getUser().getEmail() : "N/A")
                 .phone(r.getUser() != null ? r.getUser().getPhone() : "N/A")
@@ -181,6 +322,8 @@ public class ResidentService {
                 .emergencyContactPhone(r.getEmergencyContactPhone())
                 .moveInDate(r.getMoveInDate())
                 .status(r.getStatus())
+                .accountStatus(accountStatus)
+                .movedOutAt(movedOutAt)
                 .build();
     }
 }
