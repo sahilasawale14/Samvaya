@@ -159,7 +159,144 @@ const Api = {
       } catch (e) {}
     };
 
+    const getLocalParkingSlots = () => {
+      try {
+        const stored = localStorage.getItem('samvaya_parking_slots');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length === 114) return parsed;
+        }
+      } catch (e) {}
+
+      const slots = [];
+      let idCounter = 1;
+
+      // 1. Wing A Cars (15 occupied)
+      const wingAFlats = [
+        'A-101','A-102','A-103','A-104',
+        'A-201','A-202','A-203','A-204',
+        'A-301','A-302','A-303','A-304',
+        'A-401','A-402','A-403'
+      ];
+      wingAFlats.forEach((fn, idx) => {
+        slots.push({
+          id: idCounter++,
+          slotNumber: `C-${fn.replace('-', '')}`,
+          slotType: '4_WHEELER',
+          isOccupied: true,
+          status: 'ASSIGNED',
+          assignedFlatId: idx + 1,
+          wing: 'A',
+          flatNumber: fn.split('-')[1],
+          residentName: `Resident ${fn}`,
+          basementLevel: 'B1'
+        });
+      });
+
+      // 2. Wing B Cars (15 occupied)
+      const wingBFlats = [
+        'B-101','B-102','B-103','B-104',
+        'B-201','B-202','B-203','B-204',
+        'B-301','B-302','B-303','B-304',
+        'B-401','B-402','B-403'
+      ];
+      wingBFlats.forEach((fn, idx) => {
+        slots.push({
+          id: idCounter++,
+          slotNumber: `C-${fn.replace('-', '')}`,
+          slotType: '4_WHEELER',
+          isOccupied: true,
+          status: 'ASSIGNED',
+          assignedFlatId: 17 + idx,
+          wing: 'B',
+          flatNumber: fn.split('-')[1],
+          residentName: `Resident ${fn}`,
+          basementLevel: 'B1'
+        });
+      });
+
+      // 3. Wing C Cars: 4 occupied (C-C101..C-C104) + 10 available buffer (C-C201..C-C402) = 14 slots
+      const wingCOccFlats = ['C-101', 'C-102', 'C-103', 'C-104'];
+      wingCOccFlats.forEach((fn, idx) => {
+        slots.push({
+          id: idCounter++,
+          slotNumber: `C-${fn.replace('-', '')}`,
+          slotType: '4_WHEELER',
+          isOccupied: true,
+          status: 'ASSIGNED',
+          assignedFlatId: 33 + idx,
+          wing: 'C',
+          flatNumber: fn.split('-')[1],
+          residentName: `Resident ${fn}`,
+          basementLevel: 'B2'
+        });
+      });
+
+      const wingCAvailSlots = ['C-C201','C-C202','C-C203','C-C204','C-C301','C-C302','C-C303','C-C304','C-C401','C-C402'];
+      wingCAvailSlots.forEach((slotNum) => {
+        slots.push({
+          id: idCounter++,
+          slotNumber: slotNum,
+          slotType: '4_WHEELER',
+          isOccupied: false,
+          status: 'AVAILABLE',
+          assignedFlatId: null,
+          wing: null,
+          flatNumber: null,
+          residentName: 'None',
+          basementLevel: 'B2'
+        });
+      });
+
+      // 4. Bikes: 70 total (50 occupied, 20 available)
+      for (let i = 1; i <= 50; i++) {
+        const numStr = i < 10 ? `0${i}` : `${i}`;
+        const flatId = ((i - 1) % 48) + 1;
+        const wing = flatId <= 16 ? 'A' : (flatId <= 32 ? 'B' : 'C');
+        const flatNum = 100 + ((flatId - 1) % 16) + 1;
+        slots.push({
+          id: idCounter++,
+          slotNumber: `B-${numStr}`,
+          slotType: '2_WHEELER',
+          isOccupied: true,
+          status: 'ASSIGNED',
+          assignedFlatId: flatId,
+          wing: wing,
+          flatNumber: `${flatNum}`,
+          residentName: `Resident ${wing}-${flatNum}`,
+          basementLevel: 'Ground'
+        });
+      }
+
+      for (let i = 51; i <= 70; i++) {
+        slots.push({
+          id: idCounter++,
+          slotNumber: `B-${i}`,
+          slotType: '2_WHEELER',
+          isOccupied: false,
+          status: 'AVAILABLE',
+          assignedFlatId: null,
+          wing: null,
+          flatNumber: null,
+          residentName: 'None',
+          basementLevel: 'Ground'
+        });
+      }
+
+      try {
+        localStorage.setItem('samvaya_parking_slots', JSON.stringify(slots));
+      } catch (e) {}
+      return slots;
+    };
+
+    const saveLocalParkingSlots = (list) => {
+      try {
+        localStorage.setItem('samvaya_parking_slots', JSON.stringify(list));
+      } catch (e) {}
+    };
+
     const recordDeactivatedUser = (uname) => {
+
       if (!uname) return;
       try {
         let deact = [];
@@ -595,6 +732,13 @@ const Api = {
       const occupiedFlats = flats.filter(f => f.status === 'OCCUPIED' || (f.occupancyStatus && f.occupancyStatus.includes('OCCUPIED'))).length;
       const vacantFlats = flats.filter(f => f.status === 'VACANT' || f.occupancyStatus === 'VACANT').length;
       const activeResidents = residents.filter(r => r.status === 'ACTIVE' && r.accountStatus !== 'INACTIVE');
+      const pSlots = getLocalParkingSlots();
+      const pCars = pSlots.filter(s => s.slotType === '4_WHEELER' || s.slotType === 'FOUR_WHEELER');
+      const pBikes = pSlots.filter(s => s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER');
+      const pCarsOcc = pCars.filter(s => s.isOccupied).length;
+      const pBikesOcc = pBikes.filter(s => s.isOccupied).length;
+      const pTotalOcc = pSlots.filter(s => s.isOccupied).length;
+
       return {
         totalFlats,
         occupiedFlats,
@@ -610,14 +754,171 @@ const Api = {
         activeIncidents: 0,
         collectedMaintenance: 145000,
         pendingMaintenance: 12500,
-        totalParkingSlots: 50,
-        occupiedParkingSlots: occupiedFlats,
-        availableParkingSlots: 50 - occupiedFlats,
+        totalParkingSlots: pSlots.length,
+        occupiedParkingSlots: pTotalOcc,
+        availableParkingSlots: pSlots.length - pTotalOcc,
+        availableTwoWheelerSlots: pBikes.length - pBikesOcc,
+        availableFourWheelerSlots: pCars.length - pCarsOcc,
+        occupiedTwoWheelerSlots: pBikesOcc,
+        occupiedFourWheelerSlots: pCarsOcc,
         recentNotices: [],
         recentComplaints: [],
         recentActivities: []
       };
     }
+
+    // Security Dashboard Query
+    if (endpoint.includes('/security/dashboard')) {
+      const pSlots = getLocalParkingSlots();
+      const pCars = pSlots.filter(s => s.slotType === '4_WHEELER' || s.slotType === 'FOUR_WHEELER');
+      const pBikes = pSlots.filter(s => s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER');
+      const pCarsOcc = pCars.filter(s => s.isOccupied).length;
+      const pBikesOcc = pBikes.filter(s => s.isOccupied).length;
+      const pTotalOcc = pSlots.filter(s => s.isOccupied).length;
+
+      return {
+        expectedVisitorsToday: 5,
+        visitorsCurrentlyInside: 2,
+        expectedDeliveriesToday: 8,
+        deliveriesPendingAtGate: 3,
+        temporaryWorkersInside: 4,
+        activeIncidentsCount: 0,
+        staffPresentToday: 8,
+        totalParkingSlots: pSlots.length,
+        occupiedParkingSlots: pTotalOcc,
+        availableParkingSlots: pSlots.length - pTotalOcc,
+        availableTwoWheelerSlots: pBikes.length - pBikesOcc,
+        availableFourWheelerSlots: pCars.length - pCarsOcc,
+        occupiedTwoWheelerSlots: pBikesOcc,
+        occupiedFourWheelerSlots: pCarsOcc
+      };
+    }
+
+    // Parking Management Mock Endpoints
+    if (endpoint.includes('/parking/metrics') || endpoint.includes('/security/parking/metrics')) {
+      const slots = getLocalParkingSlots();
+      const carSlots = slots.filter(s => s.slotType === '4_WHEELER' || s.slotType === 'FOUR_WHEELER');
+      const bikeSlots = slots.filter(s => s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER');
+      const carOcc = carSlots.filter(s => s.isOccupied).length;
+      const bikeOcc = bikeSlots.filter(s => s.isOccupied).length;
+      const totalOcc = slots.filter(s => s.isOccupied).length;
+
+      return {
+        totalSlots: slots.length,
+        totalOccupied: totalOcc,
+        totalAvailable: slots.length - totalOcc,
+        cars: {
+          total: carSlots.length,
+          occupied: carOcc,
+          available: carSlots.length - carOcc
+        },
+        bikes: {
+          total: bikeSlots.length,
+          occupied: bikeOcc,
+          available: bikeSlots.length - bikeOcc
+        }
+      };
+    }
+
+    if (endpoint.includes('/parking/stats')) {
+      const slots = getLocalParkingSlots();
+      const carSlots = slots.filter(s => s.slotType === '4_WHEELER' || s.slotType === 'FOUR_WHEELER');
+      const bikeSlots = slots.filter(s => s.slotType === '2_WHEELER' || s.slotType === 'TWO_WHEELER');
+      const carOcc = carSlots.filter(s => s.isOccupied).length;
+      const bikeOcc = bikeSlots.filter(s => s.isOccupied).length;
+      const totalOcc = slots.filter(s => s.isOccupied).length;
+
+      return {
+        totalSlots: slots.length,
+        occupiedSlots: totalOcc,
+        availableSlots: slots.length - totalOcc,
+        availableTwoWheeler: bikeSlots.length - bikeOcc,
+        availableFourWheeler: carSlots.length - carOcc,
+        occupiedTwoWheeler: bikeOcc,
+        occupiedFourWheeler: carOcc
+      };
+    }
+
+    if (endpoint.includes('/parking/available')) {
+      const slots = getLocalParkingSlots();
+      return slots.filter(s => !s.isOccupied);
+    }
+
+    if (endpoint.includes('/parking/assign')) {
+      let slotId = null;
+      let flatId = null;
+      try {
+        const urlObj = new URL('http://dummy' + endpoint);
+        slotId = parseInt(urlObj.searchParams.get('slotId'), 10);
+        flatId = parseInt(urlObj.searchParams.get('flatId'), 10);
+      } catch (e) {}
+      if (!slotId && options.body) {
+        try {
+          const b = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+          slotId = parseInt(b.slotId, 10);
+          flatId = parseInt(b.flatId, 10);
+        } catch (e) {}
+      }
+      const slots = getLocalParkingSlots();
+      const flats = getLocalFlats();
+      const slot = slots.find(s => s.id === slotId);
+      const flat = flats.find(f => f.id === flatId);
+      if (slot) {
+        slot.isOccupied = true;
+        slot.status = 'ASSIGNED';
+        slot.assignedFlatId = flatId;
+        if (flat) {
+          slot.wing = flat.wing;
+          slot.flatNumber = flat.flatNumber;
+          slot.residentName = flat.currentResidentName || 'Resident';
+        }
+        saveLocalParkingSlots(slots);
+      }
+      return slot || { success: true };
+    }
+
+    if (endpoint.includes('/parking/vacate')) {
+      if (endpoint.includes('/vacate-flat/')) {
+        const flatId = parseInt(endpoint.split('/vacate-flat/')[1], 10);
+        const slots = getLocalParkingSlots();
+        slots.forEach(s => {
+          if (s.assignedFlatId === flatId) {
+            s.isOccupied = false;
+            s.status = 'AVAILABLE';
+            s.assignedFlatId = null;
+            s.residentName = 'None';
+          }
+        });
+        saveLocalParkingSlots(slots);
+        return { success: true };
+      }
+      let slotId = null;
+      try {
+        const urlObj = new URL('http://dummy' + endpoint);
+        slotId = parseInt(urlObj.searchParams.get('slotId'), 10);
+      } catch (e) {}
+      if (!slotId && options.body) {
+        try {
+          const b = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+          slotId = parseInt(b.slotId, 10);
+        } catch (e) {}
+      }
+      const slots = getLocalParkingSlots();
+      const slot = slots.find(s => s.id === slotId);
+      if (slot) {
+        slot.isOccupied = false;
+        slot.status = 'AVAILABLE';
+        slot.assignedFlatId = null;
+        slot.residentName = 'None';
+        saveLocalParkingSlots(slots);
+      }
+      return slot || { success: true };
+    }
+
+    if (endpoint.includes('/parking')) {
+      return getLocalParkingSlots();
+    }
+
 
     // 3. Deliveries Endpoint
     if (endpoint.includes('/deliveries')) {

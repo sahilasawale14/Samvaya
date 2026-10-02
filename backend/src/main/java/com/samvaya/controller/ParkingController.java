@@ -36,6 +36,13 @@ public class ParkingController {
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
+    @GetMapping("/metrics")
+    public ResponseEntity<ApiResponse<ParkingSlotDTO.ParkingDetailedMetricsDTO>> getDetailedMetrics() {
+        ParkingSlotDTO.ParkingDetailedMetricsDTO metrics = parkingService.getDetailedParkingMetrics();
+        return ResponseEntity.ok(ApiResponse.success(metrics));
+    }
+
+
     @PostMapping("/assign")
     public ResponseEntity<ApiResponse<ParkingSlotDTO>> assignSlot(
             @RequestParam(required = false) Long slotId,

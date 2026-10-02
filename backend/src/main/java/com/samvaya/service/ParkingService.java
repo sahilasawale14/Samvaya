@@ -75,6 +75,38 @@ public class ParkingService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public ParkingSlotDTO.ParkingDetailedMetricsDTO getDetailedParkingMetrics() {
+        long total = parkingSlotRepository.count();
+        long available = parkingSlotRepository.countByIsOccupiedFalse();
+        long occupied = parkingSlotRepository.countByIsOccupiedTrue();
+
+        long availableCars = parkingSlotRepository.countBySlotTypesAndIsOccupiedFalse("4_WHEELER", "FOUR_WHEELER");
+        long occupiedCars = parkingSlotRepository.countBySlotTypesAndIsOccupiedTrue("4_WHEELER", "FOUR_WHEELER");
+        long totalCars = availableCars + occupiedCars;
+
+        long availableBikes = parkingSlotRepository.countBySlotTypesAndIsOccupiedFalse("2_WHEELER", "TWO_WHEELER");
+        long occupiedBikes = parkingSlotRepository.countBySlotTypesAndIsOccupiedTrue("2_WHEELER", "TWO_WHEELER");
+        long totalBikes = availableBikes + occupiedBikes;
+
+        return ParkingSlotDTO.ParkingDetailedMetricsDTO.builder()
+                .totalSlots(total)
+                .totalOccupied(occupied)
+                .totalAvailable(available)
+                .cars(ParkingSlotDTO.CategoryMetrics.builder()
+                        .total(totalCars)
+                        .occupied(occupiedCars)
+                        .available(availableCars)
+                        .build())
+                .bikes(ParkingSlotDTO.CategoryMetrics.builder()
+                        .total(totalBikes)
+                        .occupied(occupiedBikes)
+                        .available(availableBikes)
+                        .build())
+                .build();
+    }
+
+
     @Transactional
     public ParkingSlotDTO assignSlot(Long slotId, Long flatId) {
         ParkingSlot slot = parkingSlotRepository.findById(slotId)

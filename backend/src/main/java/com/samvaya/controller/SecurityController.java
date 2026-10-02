@@ -16,12 +16,19 @@ public class SecurityController {
 
     private final SecurityService securityService;
     private final com.samvaya.service.VisitorService visitorService;
+    private final com.samvaya.service.ParkingService parkingService;
 
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<SecurityDashboardDTO>> getDashboard() {
         SecurityDashboardDTO stats = securityService.getSecurityDashboardStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
+
+    @GetMapping("/parking/metrics")
+    public ResponseEntity<ApiResponse<com.samvaya.dto.ParkingSlotDTO.ParkingDetailedMetricsDTO>> getParkingMetrics() {
+        return ResponseEntity.ok(ApiResponse.success(parkingService.getDetailedParkingMetrics()));
+    }
+
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Map<String, Object>>> globalSearch(@RequestParam(required = false) String q) {

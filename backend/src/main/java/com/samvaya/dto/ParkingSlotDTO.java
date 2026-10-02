@@ -34,4 +34,27 @@ public class ParkingSlotDTO {
         private Long occupiedTwoWheeler;
         private Long occupiedFourWheeler;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CategoryMetrics {
+        private Long total;
+        private Long occupied;
+        private Long available;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ParkingDetailedMetricsDTO {
+        private Long totalSlots;
+        private Long totalOccupied;
+        private Long totalAvailable;
+        private CategoryMetrics cars;
+        private CategoryMetrics bikes;
+    }
 }
+

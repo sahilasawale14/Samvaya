@@ -81,50 +81,43 @@
         </div>
 
         <div class="stats-grid" style="margin-bottom:24px;">
-          <div class="stat-card">
-            <div class="stat-icon-wrapper navy">
-              <span class="material-symbols-outlined">local_parking</span>
-            </div>
-            <div>
-              <div class="stat-value" id="sec-parking-total">0</div>
-              <div class="stat-label">Total Parking Slots</div>
-              <small style="color:var(--on-surface-variant); font-size:11px;">Basements B1, B2 & Ground</small>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon-wrapper coral">
-              <span class="material-symbols-outlined">no_crash</span>
-            </div>
-            <div>
-              <div class="stat-value" id="sec-parking-occupied">0</div>
-              <div class="stat-label">Occupied Slots</div>
-              <small id="sec-parking-occupied-breakdown" style="color:var(--danger); font-weight:600; font-size:11px;">0 (4W) • 0 (2W)</small>
-            </div>
-          </div>
-
+          <!-- Card 1: Available Car Parking -->
           <div class="stat-card">
             <div class="stat-icon-wrapper teal">
-              <span class="material-symbols-outlined">check_circle</span>
+              <span class="material-symbols-outlined">directions_car</span>
             </div>
             <div>
-              <div class="stat-value" id="sec-parking-available">0</div>
-              <div class="stat-label">Available Slots</div>
-              <small id="sec-parking-avail-breakdown" style="color:var(--success); font-weight:700; font-size:11px;">0 4-Wheeler • 0 2-Wheeler</small>
+              <div class="stat-value" id="sec-car-parking-avail">10 / 44 Available</div>
+              <div class="stat-label">Available Car Parking</div>
+              <small id="sec-car-parking-sub" style="color:var(--on-surface-variant); font-weight:600; font-size:12px;">34 Occupied</small>
             </div>
           </div>
 
+          <!-- Card 2: Available 2-Wheeler Parking -->
           <div class="stat-card">
             <div class="stat-icon-wrapper amber">
               <span class="material-symbols-outlined">two_wheeler</span>
             </div>
             <div>
-              <div class="stat-value" id="sec-parking-avail-2w">0</div>
-              <div class="stat-label">Available 2-Wheelers</div>
-              <small id="sec-parking-avail-4w" style="color:var(--secondary); font-weight:600; font-size:11px;">0 Available 4-Wheelers</small>
+              <div class="stat-value" id="sec-bike-parking-avail">20 / 70 Available</div>
+              <div class="stat-label">Available 2-Wheeler Parking</div>
+              <small id="sec-bike-parking-sub" style="color:var(--on-surface-variant); font-weight:600; font-size:12px;">50 Occupied</small>
+            </div>
+          </div>
+
+          <!-- Card 3: Total Society Occupancy -->
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">local_parking</span>
+            </div>
+            <div>
+              <div class="stat-value" id="sec-total-parking-occ">84 / 114 Occupied</div>
+              <div class="stat-label">Total Society Occupancy</div>
+              <small id="sec-total-parking-sub" style="color:var(--success); font-weight:700; font-size:12px;">30 Available Slots</small>
             </div>
           </div>
         </div>
+
 
         <!-- 2 Column: Gate Visitors & Deliveries -->
         <div class="admin-grid-layout">

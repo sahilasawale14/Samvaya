@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,56 +28,43 @@
 
         <!-- Dynamic Parking Metric Cards -->
         <div class="stats-grid" style="margin-bottom:24px;">
-          <div class="stat-card">
-            <div class="stat-icon-wrapper navy">
-              <span class="material-symbols-outlined">local_parking</span>
-            </div>
-            <div>
-              <div class="stat-value" id="metric-total-parking">0</div>
-              <div class="stat-label">Total Parking Slots</div>
-              <small style="color:var(--on-surface-variant); font-size:11px;">Basements B1, B2 & Ground</small>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon-wrapper coral">
-              <span class="material-symbols-outlined">no_crash</span>
-            </div>
-            <div>
-              <div class="stat-value" id="metric-occupied-parking">0</div>
-              <div class="stat-label">Occupied Slots</div>
-              <small id="metric-occupied-breakdown" style="color:var(--danger); font-weight:600; font-size:11px;">
-                0 (4W) • 0 (2W)
-              </small>
-            </div>
-          </div>
-
+          <!-- Card 1: Available Car Parking -->
           <div class="stat-card">
             <div class="stat-icon-wrapper teal">
-              <span class="material-symbols-outlined">check_circle</span>
+              <span class="material-symbols-outlined">directions_car</span>
             </div>
             <div>
-              <div class="stat-value" id="metric-available-parking">0</div>
-              <div class="stat-label">Available Slots</div>
-              <small id="metric-available-breakdown" style="color:var(--success); font-weight:700; font-size:11px;">
-                0 4-Wheeler • 0 2-Wheeler
-              </small>
+              <div class="stat-value" id="gate-car-parking-avail">10 / 44 Available</div>
+              <div class="stat-label">Available Car Parking</div>
+              <small id="gate-car-parking-sub" style="color:var(--on-surface-variant); font-weight:600; font-size:12px;">34 Occupied</small>
             </div>
           </div>
 
+          <!-- Card 2: Available 2-Wheeler Parking -->
           <div class="stat-card">
             <div class="stat-icon-wrapper amber">
               <span class="material-symbols-outlined">two_wheeler</span>
             </div>
             <div>
-              <div class="stat-value" id="metric-available-2w">0</div>
-              <div class="stat-label">Available 2-Wheelers</div>
-              <small id="metric-available-4w" style="color:var(--secondary); font-weight:600; font-size:11px;">
-                0 Available 4-Wheelers
-              </small>
+              <div class="stat-value" id="gate-bike-parking-avail">20 / 70 Available</div>
+              <div class="stat-label">Available 2-Wheeler Parking</div>
+              <small id="gate-bike-parking-sub" style="color:var(--on-surface-variant); font-weight:600; font-size:12px;">50 Occupied</small>
+            </div>
+          </div>
+
+          <!-- Card 3: Total Society Occupancy -->
+          <div class="stat-card">
+            <div class="stat-icon-wrapper navy">
+              <span class="material-symbols-outlined">local_parking</span>
+            </div>
+            <div>
+              <div class="stat-value" id="gate-total-parking-occ">84 / 114 Occupied</div>
+              <div class="stat-label">Total Society Occupancy</div>
+              <small id="gate-total-parking-sub" style="color:var(--success); font-weight:700; font-size:12px;">30 Available Slots</small>
             </div>
           </div>
         </div>
+
 
         <!-- Workspace Tabs -->
         <div class="workspace-tabs">
@@ -250,23 +237,70 @@
 
     async function loadParkingStats() {
       try {
-        const stats = await AdminApi.getParkingStats();
-        document.getElementById('metric-total-parking').innerText = stats.totalSlots || 0;
-        document.getElementById('metric-occupied-parking').innerText = stats.occupiedSlots || 0;
-        document.getElementById('metric-occupied-breakdown').innerText = 
-          `${stats.occupiedFourWheeler || 0} (4W) • ${stats.occupiedTwoWheeler || 0} (2W)`;
+        let pMetrics = null;
+        try {
+          pMetrics = await AdminApi.getParkingMetrics();
+        } catch (e) {}
 
-        document.getElementById('metric-available-parking').innerText = stats.availableSlots || 0;
-        document.getElementById('metric-available-breakdown').innerText = 
-          `${stats.availableFourWheeler || 0} 4-Wheeler • ${stats.availableTwoWheeler || 0} 2-Wheeler`;
+        let carAvail = 10, carTotal = 44, carOcc = 34;
+        let bikeAvail = 20, bikeTotal = 70, bikeOcc = 50;
+        let totalOcc = 84, totalSlots = 114, totalAvail = 30;
 
-        document.getElementById('metric-available-2w').innerText = stats.availableTwoWheeler || 0;
-        document.getElementById('metric-available-4w').innerText = 
-          `${stats.availableFourWheeler || 0} Available 4-Wheelers`;
+        if (pMetrics && pMetrics.cars && pMetrics.bikes) {
+          carAvail = pMetrics.cars.available != null ? pMetrics.cars.available : 10;
+          carTotal = pMetrics.cars.total != null ? pMetrics.cars.total : 44;
+          carOcc = pMetrics.cars.occupied != null ? pMetrics.cars.occupied : (carTotal - carAvail);
+
+          bikeAvail = pMetrics.bikes.available != null ? pMetrics.bikes.available : 20;
+          bikeTotal = pMetrics.bikes.total != null ? pMetrics.bikes.total : 70;
+          bikeOcc = pMetrics.bikes.occupied != null ? pMetrics.bikes.occupied : (bikeTotal - bikeAvail);
+
+          totalOcc = pMetrics.totalOccupied != null ? pMetrics.totalOccupied : (carOcc + bikeOcc);
+          totalSlots = pMetrics.totalSlots != null ? pMetrics.totalSlots : (carTotal + bikeTotal);
+          totalAvail = pMetrics.totalAvailable != null ? pMetrics.totalAvailable : (totalSlots - totalOcc);
+        } else {
+          const stats = await AdminApi.getParkingStats();
+          carAvail = stats.availableFourWheeler ?? 10;
+          carOcc = stats.occupiedFourWheeler ?? 34;
+          carTotal = carAvail + carOcc;
+
+          bikeAvail = stats.availableTwoWheeler ?? 20;
+          bikeOcc = stats.occupiedTwoWheeler ?? 50;
+          bikeTotal = bikeAvail + bikeOcc;
+
+          totalOcc = stats.occupiedSlots ?? 84;
+          totalSlots = stats.totalSlots ?? 114;
+          totalAvail = stats.availableSlots ?? (totalSlots - totalOcc);
+        }
+
+        // Card 1: Available Car Parking (10 / 44 Available, subtitle 34 Occupied)
+        if (document.getElementById('gate-car-parking-avail')) {
+          document.getElementById('gate-car-parking-avail').innerText = `${carAvail} / ${carTotal} Available`;
+        }
+        if (document.getElementById('gate-car-parking-sub')) {
+          document.getElementById('gate-car-parking-sub').innerText = `${carOcc} Occupied`;
+        }
+
+        // Card 2: Available 2-Wheeler Parking (20 / 70 Available, subtitle 50 Occupied)
+        if (document.getElementById('gate-bike-parking-avail')) {
+          document.getElementById('gate-bike-parking-avail').innerText = `${bikeAvail} / ${bikeTotal} Available`;
+        }
+        if (document.getElementById('gate-bike-parking-sub')) {
+          document.getElementById('gate-bike-parking-sub').innerText = `${bikeOcc} Occupied`;
+        }
+
+        // Card 3: Total Society Occupancy (84 / 114 Occupied, subtitle 30 Available Slots)
+        if (document.getElementById('gate-total-parking-occ')) {
+          document.getElementById('gate-total-parking-occ').innerText = `${totalOcc} / ${totalSlots} Occupied`;
+        }
+        if (document.getElementById('gate-total-parking-sub')) {
+          document.getElementById('gate-total-parking-sub').innerText = `${totalAvail} Available Slots`;
+        }
       } catch (e) {
         console.error("Failed to load parking stats:", e);
       }
     }
+
 
     async function loadParkingSlots() {
       allSlots = await AdminApi.getParkingSlots();

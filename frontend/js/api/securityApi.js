@@ -24,6 +24,11 @@ const SecurityApi = {
     return Api.get('/parking/stats');
   },
 
+  getParkingMetrics() {
+    return Api.get('/security/parking/metrics').catch(() => Api.get('/parking/metrics'));
+  },
+
+
   assignParkingSlot(slotId, flatId) {
     return Api.post(`/parking/assign?slotId=${slotId}&flatId=${flatId}`);
   },
