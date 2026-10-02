@@ -142,11 +142,20 @@ const AuthApi = {
         token: authUser.token || ''
       };
 
-      localStorage.setItem('currentUser', JSON.stringify(storagePayload));
-      localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(storagePayload));
-      if (storagePayload.token) {
-        localStorage.setItem(CONFIG.TOKEN_STORAGE_KEY, storagePayload.token);
+      sessionStorage.setItem('currentUser', JSON.stringify(storagePayload));
+      if (typeof CONFIG !== 'undefined' && CONFIG.AUTH_STORAGE_KEY) {
+        sessionStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(storagePayload));
       }
+      if (storagePayload.token && typeof CONFIG !== 'undefined' && CONFIG.TOKEN_STORAGE_KEY) {
+        sessionStorage.setItem(CONFIG.TOKEN_STORAGE_KEY, storagePayload.token);
+      }
+      try {
+        localStorage.removeItem('currentUser');
+        if (typeof CONFIG !== 'undefined') {
+          localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
+          localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
+        }
+      } catch (e) {}
       return storagePayload;
     }
 

@@ -58,8 +58,10 @@ const Navbar = {
 function handleGlobalSearch(q) {
   if (!q || !q.trim()) return;
   const user = getCurrentUser();
-  if (user && user.role === 'SECURITY_GUARD') {
-    window.location.href = `/pages/security/dashboard.html?q=${encodeURIComponent(q)}`;
+  const role = user ? (user.role || '').toUpperCase() : '';
+  if (role === 'SECURITY_GUARD' || role === 'SECURITY') {
+    const target = (typeof getAppPath === 'function') ? getAppPath(`pages/security/dashboard.html?q=${encodeURIComponent(q)}`) : `/pages/security/dashboard.html?q=${encodeURIComponent(q)}`;
+    window.location.href = target;
   } else {
     Toast.info(`Searching society records for "${q}"...`);
   }

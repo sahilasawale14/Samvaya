@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -39,7 +39,7 @@
   <script src="/js/api/securityApi.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+      if (checkAuth(['SECURITY'])) {
         Sidebar.render('sidebar-container', 'history');
         Navbar.render('navbar-container', 'Security History');
 

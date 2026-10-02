@@ -91,10 +91,16 @@ async function handleLoginSubmit(event) {
       flatId: isResident ? (user.flatId || 1) : null
     };
 
-    localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+    sessionStorage.setItem('currentUser', JSON.stringify(sessionUser));
     if (typeof CONFIG !== 'undefined' && CONFIG.AUTH_STORAGE_KEY) {
-      localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(sessionUser));
+      sessionStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(sessionUser));
     }
+    try {
+      localStorage.removeItem('currentUser');
+      if (typeof CONFIG !== 'undefined') {
+        localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
+      }
+    } catch (e) {}
 
     Toast.success(`Welcome, ${sessionUser.fullName}! Entering portal...`);
 

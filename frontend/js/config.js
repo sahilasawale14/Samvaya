@@ -34,29 +34,67 @@ function getAppPath(targetPath) {
   return '/' + cleanTarget;
 }
 
-// Global Helper to get Current Authenticated User
+// Global Helper to get Current Authenticated User (Tab-Isolated SessionStorage)
 function getCurrentUser() {
   try {
-    const userJson = localStorage.getItem('currentUser') || localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
+    const userJson = sessionStorage.getItem('currentUser') || sessionStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
     return userJson ? JSON.parse(userJson) : null;
   } catch (e) {
-    console.error('Error reading currentUser from localStorage:', e);
+    console.error('Error reading currentUser from sessionStorage:', e);
     return null;
   }
 }
 
-// Global Helper to check Role Access - Strict Session Enforced
+// Strict Single Portal Route Guard Utility
+function enforcePortalGuard(requiredRole) {
+  try {
+    const userJson = sessionStorage.getItem('currentUser') || sessionStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
+    const user = userJson ? JSON.parse(userJson) : null;
+    const loginUrl = (typeof getAppPath === 'function') ? getAppPath('index.html') : '../../index.html';
+
+    if (!user || !user.role) {
+      window.location.replace(loginUrl);
+      return false;
+    }
+
+    const role = (user.role || '').toUpperCase();
+    const targetRole = (requiredRole || '').toUpperCase();
+
+    if (targetRole === 'ADMIN' && role !== 'ADMIN') {
+      window.location.replace(loginUrl);
+      return false;
+    }
+    if (targetRole === 'RESIDENT' && role !== 'RESIDENT') {
+      window.location.replace(loginUrl);
+      return false;
+    }
+    if ((targetRole === 'SECURITY' || targetRole === 'SECURITY_GUARD') && (role !== 'SECURITY' && role !== 'SECURITY_GUARD')) {
+      window.location.replace(loginUrl);
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    console.error('Portal guard validation failed:', e);
+    const loginUrl = (typeof getAppPath === 'function') ? getAppPath('index.html') : '../../index.html';
+    window.location.replace(loginUrl);
+    return false;
+  }
+}
+
+// Global Helper to check Role Access - Strict Session Enforced (No Cross-Portal Leakage)
 function checkAuth(allowedRoles = []) {
   const user = getCurrentUser();
+  const loginUrl = (typeof getAppPath === 'function') ? getAppPath('index.html') : '../../index.html';
   
-  // If no user found in local storage, immediately redirect to login gateway
-  if (!user) {
-    window.location.href = getAppPath('index.html');
+  // If no user found in session storage, immediately redirect to login gateway
+  if (!user || !user.role) {
+    window.location.replace(loginUrl);
     return false;
   }
 
-  // If user role doesn't match allowed role, redirect strictly to their home portal
-  if (allowedRoles.length > 0) {
+  // If user role doesn't match allowed role, redirect strictly back to login page
+  if (allowedRoles && allowedRoles.length > 0) {
     const userRole = (user.role || '').toUpperCase();
     const isAllowed = allowedRoles.some(r => {
       const norm = r.toUpperCase();
@@ -66,13 +104,8 @@ function checkAuth(allowedRoles = []) {
     });
 
     if (!isAllowed) {
-      if (userRole === 'RESIDENT') {
-        window.location.href = getAppPath('pages/resident/dashboard.html');
-      } else if (userRole.includes('SECURITY')) {
-        window.location.href = getAppPath('pages/security/dashboard.html');
-      } else {
-        window.location.href = getAppPath('pages/admin/dashboard.html');
-      }
+      // Under no circumstance redirect across portals. Redirect strictly to login page.
+      window.location.replace(loginUrl);
       return false;
     }
   }
@@ -80,12 +113,19 @@ function checkAuth(allowedRoles = []) {
   return true;
 }
 
-// Global Logout
+// Global Logout - Completely Clear SessionStorage and Redirect to Login Gateway
 function logout() {
-  localStorage.removeItem('currentUser');
-  localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
-  localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
-  window.location.href = getAppPath('index.html');
+  try {
+    sessionStorage.clear();
+  } catch (e) {}
+  try {
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
+    localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
+  } catch (e) {}
+
+  const loginUrl = (typeof getAppPath === 'function') ? getAppPath('index.html') : '../../index.html';
+  window.location.replace(loginUrl);
 }
 
 // Attach to global window object
@@ -95,6 +135,7 @@ if (typeof window !== 'undefined') {
   window.getAppPath = getAppPath;
   window.getCurrentUser = getCurrentUser;
   window.checkAuth = checkAuth;
+  window.enforcePortalGuard = enforcePortalGuard;
   window.logout = logout;
 }
 

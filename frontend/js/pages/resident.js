@@ -4,10 +4,16 @@
 
 const ResidentPage = {
   checkResidentAuth() {
-    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-    if (!user || user.role !== 'RESIDENT') {
+    let user = null;
+    try {
+      const userJson = sessionStorage.getItem('currentUser') || (typeof CONFIG !== 'undefined' ? sessionStorage.getItem(CONFIG.AUTH_STORAGE_KEY) : null);
+      user = userJson ? JSON.parse(userJson) : (typeof getCurrentUser === 'function' ? getCurrentUser() : null);
+    } catch (e) {
+      user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    }
+    if (!user || (user.role || '').toUpperCase() !== 'RESIDENT') {
       const loginUrl = (typeof getAppPath === 'function') ? getAppPath('index.html') : '../../index.html';
-      window.location.href = loginUrl;
+      window.location.replace(loginUrl);
       return null;
     }
     return user;

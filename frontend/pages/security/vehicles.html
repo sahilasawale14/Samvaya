@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -171,7 +171,7 @@
     let allSlots = [];
 
     document.addEventListener('DOMContentLoaded', async () => {
-      if (checkAuth(['SECURITY_GUARD', 'ADMIN'])) {
+      if (checkAuth(['SECURITY'])) {
         Sidebar.render('sidebar-container', 'vehicles');
         Navbar.render('navbar-container', 'Parking & Vehicle Verification');
 

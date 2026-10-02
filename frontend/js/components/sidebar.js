@@ -8,33 +8,34 @@ const Sidebar = {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const user = getCurrentUser() || { fullName: 'User', role: 'ADMIN', username: 'admin' };
-    const role = (user.role || 'ADMIN').toUpperCase();
+    const user = getCurrentUser() || { fullName: 'User', role: 'GUEST', username: 'guest' };
+    const role = (user.role || 'GUEST').toUpperCase();
+    const resolveLink = (p) => (typeof getAppPath === 'function') ? getAppPath(p) : '/' + (p.startsWith('/') ? p.slice(1) : p);
 
     let menuHtml = '';
 
     if (role === 'ADMIN') {
       menuHtml = `
         <div class="sidebar-menu-category">Overview</div>
-        <a href="/pages/admin/dashboard.html" class="nav-item ${activePageKey === 'dashboard' ? 'active' : ''}">
+        <a href="${resolveLink('pages/admin/dashboard.html')}" class="nav-item ${activePageKey === 'dashboard' ? 'active' : ''}">
           <span class="material-symbols-outlined">dashboard</span>
           <span>Dashboard</span>
         </a>
 
         <div class="sidebar-menu-category">Unified Workspaces</div>
-        <a href="/pages/admin/people-units.html" class="nav-item ${activePageKey === 'people-units' ? 'active' : ''}">
+        <a href="${resolveLink('pages/admin/people-units.html')}" class="nav-item ${activePageKey === 'people-units' ? 'active' : ''}">
           <span class="material-symbols-outlined">groups</span>
           <span>People & Units</span>
         </a>
-        <a href="/pages/admin/gate-security.html" class="nav-item ${activePageKey === 'gate-security' ? 'active' : ''}">
+        <a href="${resolveLink('pages/admin/gate-security.html')}" class="nav-item ${activePageKey === 'gate-security' ? 'active' : ''}">
           <span class="material-symbols-outlined">shield_person</span>
           <span>Gate & Security</span>
         </a>
-        <a href="/pages/admin/financials.html" class="nav-item ${activePageKey === 'financials' ? 'active' : ''}">
+        <a href="${resolveLink('pages/admin/financials.html')}" class="nav-item ${activePageKey === 'financials' ? 'active' : ''}">
           <span class="material-symbols-outlined">receipt_long</span>
           <span>Financials</span>
         </a>
-        <a href="/pages/admin/community-desk.html" class="nav-item ${activePageKey === 'community-desk' ? 'active' : ''}">
+        <a href="${resolveLink('pages/admin/community-desk.html')}" class="nav-item ${activePageKey === 'community-desk' ? 'active' : ''}">
           <span class="material-symbols-outlined">forum</span>
           <span>Community & Desk</span>
         </a>
@@ -42,29 +43,29 @@ const Sidebar = {
     } else if (role === 'RESIDENT') {
       menuHtml = `
         <div class="sidebar-menu-category">Overview</div>
-        <a href="/pages/resident/dashboard.html" class="nav-item ${activePageKey === 'dashboard' ? 'active' : ''}">
+        <a href="${resolveLink('pages/resident/dashboard.html')}" class="nav-item ${activePageKey === 'dashboard' ? 'active' : ''}">
           <span class="material-symbols-outlined">home</span>
           <span>My Home</span>
         </a>
         
         <div class="sidebar-menu-category">Gate & Services</div>
-        <a href="/pages/resident/visitors.html" class="nav-item ${activePageKey === 'visitors' ? 'active' : ''}">
+        <a href="${resolveLink('pages/resident/visitors.html')}" class="nav-item ${activePageKey === 'visitors' ? 'active' : ''}">
           <span class="material-symbols-outlined">person_pin_circle</span>
           <span>Visitor Passes</span>
         </a>
-        <a href="/pages/resident/deliveries.html" class="nav-item ${activePageKey === 'deliveries' ? 'active' : ''}">
+        <a href="${resolveLink('pages/resident/deliveries.html')}" class="nav-item ${activePageKey === 'deliveries' ? 'active' : ''}">
           <span class="material-symbols-outlined">package_2</span>
           <span>Expected Deliveries</span>
         </a>
-        <a href="/pages/resident/payments.html" class="nav-item ${activePageKey === 'payments' ? 'active' : ''}">
+        <a href="${resolveLink('pages/resident/payments.html')}" class="nav-item ${activePageKey === 'payments' ? 'active' : ''}">
           <span class="material-symbols-outlined">credit_card</span>
           <span>Maintenance Dues</span>
         </a>
-        <a href="/pages/resident/complaints.html" class="nav-item ${activePageKey === 'complaints' ? 'active' : ''}">
+        <a href="${resolveLink('pages/resident/complaints.html')}" class="nav-item ${activePageKey === 'complaints' ? 'active' : ''}">
           <span class="material-symbols-outlined">help_center</span>
           <span>Complaints & Desk</span>
         </a>
-        <a href="/pages/resident/amenities.html" class="nav-item ${activePageKey === 'amenities' ? 'active' : ''}">
+        <a href="${resolveLink('pages/resident/amenities.html')}" class="nav-item ${activePageKey === 'amenities' ? 'active' : ''}">
           <span class="material-symbols-outlined">sports_tennis</span>
           <span>Book Amenities</span>
         </a>
@@ -72,25 +73,25 @@ const Sidebar = {
     } else if (role === 'SECURITY_GUARD' || role === 'SECURITY') {
       menuHtml = `
         <div class="sidebar-menu-category">Command & Control</div>
-        <a href="/pages/security/dashboard.html" class="nav-item ${activePageKey === 'dashboard' ? 'active' : ''}">
+        <a href="${resolveLink('pages/security/dashboard.html')}" class="nav-item ${activePageKey === 'dashboard' ? 'active' : ''}">
           <span class="material-symbols-outlined">local_police</span>
           <span>Gate Command</span>
         </a>
 
         <div class="sidebar-menu-category">Gate Operations</div>
-        <a href="/pages/security/visitors.html" class="nav-item ${activePageKey === 'visitors' ? 'active' : ''}">
+        <a href="${resolveLink('pages/security/visitors.html')}" class="nav-item ${activePageKey === 'visitors' ? 'active' : ''}">
           <span class="material-symbols-outlined">person_check</span>
           <span>Visitor Check-In</span>
         </a>
-        <a href="/pages/security/deliveries.html" class="nav-item ${activePageKey === 'deliveries' ? 'active' : ''}">
+        <a href="${resolveLink('pages/security/deliveries.html')}" class="nav-item ${activePageKey === 'deliveries' ? 'active' : ''}">
           <span class="material-symbols-outlined">local_shipping</span>
           <span>Delivery Check-In</span>
         </a>
-        <a href="/pages/security/vehicles.html" class="nav-item ${activePageKey === 'vehicles' ? 'active' : ''}">
+        <a href="${resolveLink('pages/security/vehicles.html')}" class="nav-item ${activePageKey === 'vehicles' ? 'active' : ''}">
           <span class="material-symbols-outlined">local_parking</span>
           <span>Parking & Vehicles</span>
         </a>
-        <a href="/pages/security/incidents.html" class="nav-item ${activePageKey === 'incidents' ? 'active' : ''}">
+        <a href="${resolveLink('pages/security/incidents.html')}" class="nav-item ${activePageKey === 'incidents' ? 'active' : ''}">
           <span class="material-symbols-outlined">warning</span>
           <span>Report Incident</span>
         </a>

@@ -370,7 +370,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      if (checkAuth(['SECURITY_GUARD', 'ADMIN', 'SECURITY'])) {
+      if (checkAuth(['SECURITY'])) {
         Sidebar.render('sidebar-container', 'visitors');
         Navbar.render('navbar-container', 'Visitor Gate Operations');
         loadPreApprovedVisitors();
