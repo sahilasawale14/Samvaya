@@ -23,7 +23,7 @@ public class Resident {
     private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "flat_id", nullable = false)
+    @JoinColumn(name = "flat_id", nullable = true)
     private Flat flat;
 
     @Column(name = "resident_type", nullable = false, length = 30)

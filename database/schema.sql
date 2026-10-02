@@ -81,7 +81,7 @@ DROP TABLE IF EXISTS `residents`;
 CREATE TABLE `residents` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT UNIQUE NOT NULL,
-    `flat_id` BIGINT NOT NULL,
+    `flat_id` BIGINT NULL,
     `resident_type` VARCHAR(30) NOT NULL DEFAULT 'OWNER', -- 'OWNER', 'TENANT'
     `emergency_contact_name` VARCHAR(150),
     `emergency_contact_phone` VARCHAR(30),

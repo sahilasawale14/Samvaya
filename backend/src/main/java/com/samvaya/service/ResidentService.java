@@ -106,7 +106,9 @@ public class ResidentService {
 
         // 5. Update flat association
         flat.setResidentId(savedResident.getId());
+        flat.setCurrentResidentId(savedResident.getId());
         flat.setStatus("OCCUPIED");
+        flat.setOccupancyStatus("TENANT".equalsIgnoreCase(resType) ? "OCCUPIED_TENANT" : "OCCUPIED_OWNER");
         flatRepository.save(flat);
 
         return mapToDTO(savedResident);
@@ -196,7 +198,7 @@ public class ResidentService {
             flat.setResidentId(null);
             flat.setCurrentResidentId(null);
             flatRepository.save(flat);
-            resident.setFlat(null);
+            resident.setMoveOutDate(java.time.LocalDate.now());
         }
 
         // Also check if any other flat points to this resident
@@ -230,7 +232,7 @@ public class ResidentService {
         // 5. Cancel pending / pre-approved visitor passes
         boolean cancelVisitors = request == null || request.getCancelPendingVisitors() == null || Boolean.TRUE.equals(request.getCancelPendingVisitors());
         if (cancelVisitors) {
-            java.util.List<com.samvaya.model.Visitor> visitors = visitorRepository.findByResidentId(resident.getId());
+            java.util.Set<com.samvaya.model.Visitor> visitors = new java.util.HashSet<>(visitorRepository.findByResidentId(resident.getId()));
             if (flat != null) {
                 visitors.addAll(visitorRepository.findByFlatId(flat.getId()));
             }

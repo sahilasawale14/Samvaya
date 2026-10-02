@@ -431,12 +431,21 @@
     }
 
     async function loadFlats() {
-      allFlats = await AdminApi.getFlats();
-      document.getElementById('tab-count-flats').innerText = allFlats.length;
-      renderFlatsTable(allFlats);
+      try {
+        const flats = await AdminApi.getFlats();
+        allFlats = Array.isArray(flats) ? flats : [];
+        const badge = document.getElementById('tab-count-flats');
+        if (badge) badge.innerText = allFlats.length;
+        renderFlatsTable(allFlats);
+      } catch (err) {
+        console.error('Error loading flats:', err);
+        allFlats = [];
+        renderFlatsTable([]);
+      }
     }
 
     function renderFlatsTable(flats) {
+      const data = Array.isArray(flats) ? flats : [];
       Table.render('flats-data-table', [
         { label: 'Wing', key: 'wing' },
         { label: 'Flat No.', render: r => `<b>${r.flatNumber}</b>` },
@@ -469,7 +478,7 @@
             return `<span style="color:var(--on-surface-variant); font-size:12px;"><span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#059669;">check_circle</span> Occupied</span>`;
           }
         }
-      ], flats);
+      ], data);
     }
 
     function filterFlats() {
@@ -489,12 +498,21 @@
     }
 
     async function loadResidents(type = '') {
-      allResidents = await AdminApi.getResidents(type);
-      document.getElementById('tab-count-residents').innerText = allResidents.length;
-      renderResidentsTable(allResidents);
+      try {
+        const residents = await AdminApi.getResidents(type);
+        allResidents = Array.isArray(residents) ? residents : [];
+        const badge = document.getElementById('tab-count-residents');
+        if (badge) badge.innerText = allResidents.length;
+        renderResidentsTable(allResidents);
+      } catch (err) {
+        console.error('Error loading residents:', err);
+        allResidents = [];
+        renderResidentsTable([]);
+      }
     }
 
     function renderResidentsTable(residents) {
+      const data = Array.isArray(residents) ? residents : [];
       Table.render('residents-data-table', [
         { label: 'Full Name', render: r => `<b>${r.fullName}</b>` },
         { label: 'Type', render: r => `<span class="badge ${r.residentType === 'OWNER' ? 'badge-info' : 'badge-neutral'}">${r.residentType}</span>` },
@@ -530,7 +548,7 @@
             return `<div style="display:flex; align-items:center; gap:6px;">${editBtn} ${offboardBtn}</div>`;
           }
         }
-      ], residents);
+      ], data);
     }
 
     function filterResidents() {
@@ -541,21 +559,28 @@
     }
 
     async function loadOwners() {
-      const owners = await AdminApi.getOwners();
-      document.getElementById('tab-count-owners').innerText = owners.length;
-      Table.render('owners-data-table', [
-        { label: 'Owner Name', render: r => `<b>${r.fullName}</b>` },
-        { label: 'Ownership Unit', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b>` },
-        { label: 'Phone', key: 'phone' },
-        { label: 'Email', key: 'email' },
-        { label: 'Registration Date', key: 'moveInDate' },
-        { 
-          label: 'Status', 
-          render: r => (r.status === 'INACTIVE' || r.accountStatus === 'INACTIVE')
-            ? `<span class="badge" style="background:#fee2e2; color:#991b1b;">INACTIVE</span>`
-            : `<span class="badge badge-success">ACTIVE</span>`
-        }
-      ], owners);
+      try {
+        const owners = await AdminApi.getOwners();
+        const ownersList = Array.isArray(owners) ? owners : [];
+        const badge = document.getElementById('tab-count-owners');
+        if (badge) badge.innerText = ownersList.length;
+        Table.render('owners-data-table', [
+          { label: 'Owner Name', render: r => `<b>${r.fullName}</b>` },
+          { label: 'Ownership Unit', render: r => `<b>Wing ${r.wing}-${r.flatNumber}</b>` },
+          { label: 'Phone', key: 'phone' },
+          { label: 'Email', key: 'email' },
+          { label: 'Registration Date', key: 'moveInDate' },
+          { 
+            label: 'Status', 
+            render: r => (r.status === 'INACTIVE' || r.accountStatus === 'INACTIVE')
+              ? `<span class="badge" style="background:#fee2e2; color:#991b1b;">INACTIVE</span>`
+              : `<span class="badge badge-success">ACTIVE</span>`
+          }
+        ], ownersList);
+      } catch (err) {
+        console.error('Error loading owners:', err);
+        Table.render('owners-data-table', [], []);
+      }
     }
 
     function autoSetCarpetArea(type) {
