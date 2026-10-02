@@ -9,13 +9,18 @@ const Navbar = {
 
     const user = getCurrentUser() || {};
     let unitInfo = '';
-    if (user.flatNumber) {
+    const userRole = (user.role || '').toUpperCase();
+    if (userRole === 'RESIDENT' && user.flatNumber) {
       const flat = user.flatNumber;
       if (flat.toLowerCase().startsWith('wing') || flat.includes('-')) {
         unitInfo = `(${flat.replace(/^Wing\s*/i, 'Wing ')})`;
       } else {
         unitInfo = `(Wing ${user.wing || 'A'}-${flat})`;
       }
+    } else if (userRole === 'ADMIN') {
+      unitInfo = '(Admin)';
+    } else if (userRole.includes('SECURITY')) {
+      unitInfo = '(Gate Command)';
     } else if (user.role) {
       unitInfo = `(${user.role.replace('_', ' ')})`;
     }

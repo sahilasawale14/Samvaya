@@ -78,17 +78,17 @@ async function handleLoginSubmit(event) {
   try {
     const user = await AuthApi.login(username, password);
 
-    // Save session data to localStorage with exact requested schema
+    const isResident = (user.role || '').toUpperCase() === 'RESIDENT';
     const sessionUser = {
       id: user.id || 1,
-      fullName: user.fullName || 'Resident User',
+      fullName: user.fullName || (isResident ? 'Resident User' : 'Society Administrator'),
       username: user.username || username,
       role: (user.role || 'RESIDENT').toUpperCase(),
-      flatNumber: user.flatNumber || 'A-101',
-      wing: user.wing || 'A',
-      residentType: user.residentType || 'OWNER',
-      residentId: user.residentId || 1,
-      flatId: user.flatId || 1
+      flatNumber: isResident ? (user.flatNumber || 'A-101') : null,
+      wing: isResident ? (user.wing || 'A') : null,
+      residentType: isResident ? (user.residentType || 'OWNER') : null,
+      residentId: isResident ? (user.residentId || 1) : null,
+      flatId: isResident ? (user.flatId || 1) : null
     };
 
     localStorage.setItem('currentUser', JSON.stringify(sessionUser));

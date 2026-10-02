@@ -99,7 +99,7 @@ const Sidebar = {
 
     const initials = (user.fullName || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
     let unitBadge = '';
-    if (user.flatNumber) {
+    if (role === 'RESIDENT' && user.flatNumber) {
       const flat = user.flatNumber;
       if (flat.toLowerCase().startsWith('wing') || flat.includes('-')) {
         unitBadge = flat.replace(/^Wing\s*/i, 'Wing ');
@@ -108,6 +108,10 @@ const Sidebar = {
       }
     } else if (user.residentType) {
       unitBadge = user.residentType;
+    } else if (role === 'ADMIN') {
+      unitBadge = 'Society Admin';
+    } else if (role.includes('SECURITY')) {
+      unitBadge = 'Gate Command';
     } else {
       unitBadge = role.replace('_', ' ');
     }

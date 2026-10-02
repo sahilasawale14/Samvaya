@@ -49,16 +49,16 @@ const SEED_USERS = {
     passwords: ['admin123', 'password123'],
     fullName: 'Society Administrator',
     role: 'ADMIN',
-    flatNumber: 'Admin Suite'
+    flatNumber: null
   },
   guard1: {
     id: 4,
     userId: 4,
     username: 'guard1',
     passwords: ['guard123', 'password123'],
-    fullName: 'Vikram Singh (Gate Command)',
+    fullName: 'Vikram Singh',
     role: 'SECURITY_GUARD',
-    flatNumber: 'Main Gate 1'
+    flatNumber: null
   }
 };
 
@@ -75,17 +75,27 @@ const AuthApi = {
       });
 
       if (data && (data.id || data.userId)) {
+        const userRole = (data.role || (SEED_USERS[cleanUser] ? SEED_USERS[cleanUser].role : 'RESIDENT')).toUpperCase();
+        let flatNum = data.flatNumber;
+        if (flatNum) {
+          flatNum = flatNum.includes('Wing') ? flatNum : `Wing ${data.wing || 'A'}-${flatNum}`;
+        } else if (userRole === 'RESIDENT') {
+          flatNum = 'A-101';
+        } else {
+          flatNum = null;
+        }
+
         authUser = {
           id: data.id || data.userId,
           userId: data.userId || data.id,
-          fullName: data.fullName || 'Resident User',
+          fullName: data.fullName || (userRole === 'ADMIN' ? 'Society Administrator' : (userRole.includes('SECURITY') ? 'Vikram Singh' : 'Resident User')),
           username: data.username || username,
-          role: (data.role || 'RESIDENT').toUpperCase(),
-          flatNumber: data.flatNumber ? (data.flatNumber.includes('Wing') ? data.flatNumber : `Wing ${data.wing || 'A'}-${data.flatNumber}`) : 'A-101',
-          wing: data.wing || 'A',
-          residentType: data.residentType || 'OWNER',
-          residentId: data.residentId || 1,
-          flatId: data.flatId || 1,
+          role: userRole,
+          flatNumber: flatNum,
+          wing: userRole === 'RESIDENT' ? (data.wing || 'A') : null,
+          residentType: userRole === 'RESIDENT' ? (data.residentType || 'OWNER') : null,
+          residentId: userRole === 'RESIDENT' ? (data.residentId || 1) : null,
+          flatId: userRole === 'RESIDENT' ? (data.flatId || 1) : null,
           token: data.token || `AUTH-TOKEN-${Date.now()}`
         };
       }
@@ -98,17 +108,18 @@ const AuthApi = {
       const seed = SEED_USERS[cleanUser];
       const validPasswords = seed.passwords || [seed.password];
       if (validPasswords.includes(password) || password === 'password123') {
+        const isRes = seed.role === 'RESIDENT';
         authUser = {
           id: seed.id,
           userId: seed.userId,
-          fullName: seed.fullName || 'Resident User',
+          fullName: seed.fullName,
           username: seed.username,
           role: seed.role,
-          flatNumber: seed.flatNumber || 'A-101',
-          wing: seed.wing || 'A',
-          residentType: seed.residentType || 'OWNER',
-          residentId: seed.residentId || 1,
-          flatId: seed.flatId || 1,
+          flatNumber: isRes ? (seed.flatNumber || 'A-101') : null,
+          wing: isRes ? (seed.wing || 'A') : null,
+          residentType: isRes ? (seed.residentType || 'OWNER') : null,
+          residentId: isRes ? (seed.residentId || 1) : null,
+          flatId: isRes ? (seed.flatId || 1) : null,
           token: `SEED-TOKEN-${Date.now()}`
         };
       }
@@ -116,17 +127,18 @@ const AuthApi = {
 
     // 3. Handle Successful Authentication
     if (authUser) {
+      const isRes = authUser.role === 'RESIDENT';
       const storagePayload = {
         id: authUser.id,
         userId: authUser.userId || authUser.id,
-        fullName: authUser.fullName || 'Resident User',
+        fullName: authUser.fullName,
         username: authUser.username,
-        role: authUser.role || 'RESIDENT',
-        flatNumber: authUser.flatNumber || 'A-101',
-        wing: authUser.wing || 'A',
-        residentType: authUser.residentType || 'OWNER',
-        residentId: authUser.residentId || 1,
-        flatId: authUser.flatId || 1,
+        role: authUser.role,
+        flatNumber: isRes ? (authUser.flatNumber || 'A-101') : null,
+        wing: isRes ? (authUser.wing || 'A') : null,
+        residentType: isRes ? (authUser.residentType || 'OWNER') : null,
+        residentId: isRes ? (authUser.residentId || 1) : null,
+        flatId: isRes ? (authUser.flatId || 1) : null,
         token: authUser.token || ''
       };
 
