@@ -91,3 +91,28 @@
   border-radius: var(--radius-sm);
   letter-spacing: 0.1em;
 }
+
+@media (max-width: 768px) {
+  .resident-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .resident-hero-card .btn {
+    width: 100%;
+  }
+
+  .quick-actions-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .visitor-pass-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+

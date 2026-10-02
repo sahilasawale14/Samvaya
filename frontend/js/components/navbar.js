@@ -8,10 +8,23 @@ const Navbar = {
     if (!container) return;
 
     const user = getCurrentUser() || {};
-    const unitInfo = user.flatNumber ? `(Wing ${user.wing || 'A'}-${user.flatNumber})` : (user.role ? `(${user.role.replace('_', ' ')})` : '');
+    let unitInfo = '';
+    if (user.flatNumber) {
+      const flat = user.flatNumber;
+      if (flat.toLowerCase().startsWith('wing') || flat.includes('-')) {
+        unitInfo = `(${flat.replace(/^Wing\s*/i, 'Wing ')})`;
+      } else {
+        unitInfo = `(Wing ${user.wing || 'A'}-${flat})`;
+      }
+    } else if (user.role) {
+      unitInfo = `(${user.role.replace('_', ' ')})`;
+    }
 
     container.innerHTML = `
       <div class="topbar-left">
+        <button class="mobile-menu-btn" onclick="Sidebar.toggleMobile()" aria-label="Toggle navigation menu" title="Menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
         <h1 class="topbar-title">${title}</h1>
       </div>
       <div class="topbar-actions">

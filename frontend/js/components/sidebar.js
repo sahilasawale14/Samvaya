@@ -98,15 +98,30 @@ const Sidebar = {
     }
 
     const initials = (user.fullName || 'User').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-    const unitBadge = user.flatNumber ? `Wing ${user.wing || 'A'}-${user.flatNumber}` : (user.residentType ? `${user.residentType}` : `${role.replace('_', ' ')}`);
+    let unitBadge = '';
+    if (user.flatNumber) {
+      const flat = user.flatNumber;
+      if (flat.toLowerCase().startsWith('wing') || flat.includes('-')) {
+        unitBadge = flat.replace(/^Wing\s*/i, 'Wing ');
+      } else {
+        unitBadge = `Wing ${user.wing || 'A'}-${flat}`;
+      }
+    } else if (user.residentType) {
+      unitBadge = user.residentType;
+    } else {
+      unitBadge = role.replace('_', ' ');
+    }
 
     container.innerHTML = `
       <div class="sidebar-header">
         <div class="sidebar-logo-icon">S</div>
-        <div>
+        <div style="flex:1;">
           <div class="sidebar-brand-name">SAMVAYA</div>
           <div class="sidebar-role-tag">${role.replace('_', ' ')} PORTAL</div>
         </div>
+        <button class="sidebar-close-btn" onclick="Sidebar.closeMobile()" aria-label="Close navigation menu" title="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
       <div class="sidebar-menu">
         ${menuHtml}
@@ -124,5 +139,50 @@ const Sidebar = {
         </button>
       </div>
     `;
+
+    // Ensure mobile drawer backdrop overlay exists
+    let overlay = document.getElementById('sidebar-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sidebar-overlay';
+      overlay.className = 'sidebar-overlay';
+      overlay.onclick = () => Sidebar.closeMobile();
+      document.body.appendChild(overlay);
+    }
+
+    // Auto-close drawer on navigation tap
+    container.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => Sidebar.closeMobile());
+    });
+  },
+
+  toggleMobile() {
+    const sidebar = document.querySelector('.app-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) {
+      const isOpen = sidebar.classList.toggle('open');
+      if (overlay) overlay.classList.toggle('active', isOpen);
+      document.body.classList.toggle('sidebar-open', isOpen);
+    }
+  },
+
+  openMobile() {
+    const sidebar = document.querySelector('.app-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) {
+      sidebar.classList.add('open');
+      if (overlay) overlay.classList.add('active');
+      document.body.classList.add('sidebar-open');
+    }
+  },
+
+  closeMobile() {
+    const sidebar = document.querySelector('.app-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) {
+      sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+      document.body.classList.remove('sidebar-open');
+    }
   }
 };

@@ -257,3 +257,52 @@ input:focus, select:focus, textarea:focus {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS & TOUCH TARGET RULES
+   ========================================================================== */
+
+.table-responsive-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  /* Prevent iOS Safari auto-zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  /* Accessible touch target size for buttons & nav */
+  .btn {
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 15px;
+  }
+
+  .btn-sm {
+    min-height: 38px;
+    padding: 6px 12px;
+  }
+
+  .action-icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  #toast-container {
+    left: 16px;
+    right: 16px;
+    top: 16px;
+  }
+
+  .toast {
+    min-width: unset;
+    width: 100%;
+  }
+}
+

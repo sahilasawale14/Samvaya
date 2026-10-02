@@ -3,30 +3,55 @@
 // ============================================================================
 
 const ResidentPage = {
+  checkResidentAuth() {
+    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    if (!user || user.role !== 'RESIDENT') {
+      const loginUrl = (typeof getAppPath === 'function') ? getAppPath('index.html') : '../../index.html';
+      window.location.href = loginUrl;
+      return null;
+    }
+    return user;
+  },
+
   async initDashboard() {
     Sidebar.render('sidebar-container', 'dashboard');
     Navbar.render('navbar-container', 'Resident Home Services');
 
-    const user = getCurrentUser();
-    if (!user) {
-      window.location.href = '/index.html';
-      return;
-    }
+    const user = ResidentPage.checkResidentAuth();
+    if (!user) return;
     const residentId = user.residentId || user.id || user.userId;
 
     try {
       const stats = await ResidentApi.getDashboard(residentId);
 
-      document.getElementById('res-name-title').innerText = `Welcome, ${user.fullName || stats.residentName || 'Resident'}!`;
-      const wingStr = user.wing || stats.wing || 'A';
-      const flatStr = user.flatNumber || stats.flatNumber || '101';
-      const typeStr = user.residentType || stats.residentType || 'OWNER';
-      document.getElementById('res-unit-badge').innerText = `Wing ${wingStr}-${flatStr} • ${typeStr}`;
+      const nameEl = document.getElementById('res-name-title');
+      if (nameEl) {
+        nameEl.innerText = `Welcome, ${user.fullName || stats.residentName || 'Resident'}!`;
+      }
 
-      document.getElementById('stat-visitors-count').innerText = stats.expectedVisitorsCount || 0;
-      document.getElementById('stat-deliveries-count').innerText = stats.activeDeliveriesCount || 0;
-      document.getElementById('stat-complaints-count').innerText = stats.pendingComplaintsCount || 0;
-      document.getElementById('stat-dues-amount').innerText = `₹${(stats.pendingMaintenanceAmount || 0).toLocaleString('en-IN')}`;
+      const flat = user.flatNumber || stats.flatNumber || '101';
+      const roleType = user.residentType || stats.residentType || 'OWNER';
+      let unitText = '';
+      if (flat.toLowerCase().startsWith('wing') || flat.includes('-')) {
+        unitText = `${flat.replace(/^Wing\s*/i, 'Wing ')} • ${roleType}`;
+      } else {
+        const wing = user.wing || stats.wing || 'A';
+        unitText = `Wing ${wing}-${flat} • ${roleType}`;
+      }
+
+      const badgeEl = document.getElementById('res-unit-badge');
+      if (badgeEl) {
+        badgeEl.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px;">apartment</span><span>${unitText}</span>`;
+      }
+
+      const visCountEl = document.getElementById('stat-visitors-count');
+      if (visCountEl) visCountEl.innerText = stats.expectedVisitorsCount || 0;
+      const delCountEl = document.getElementById('stat-deliveries-count');
+      if (delCountEl) delCountEl.innerText = stats.activeDeliveriesCount || 0;
+      const compCountEl = document.getElementById('stat-complaints-count');
+      if (compCountEl) compCountEl.innerText = stats.pendingComplaintsCount || 0;
+      const duesCountEl = document.getElementById('stat-dues-amount');
+      if (duesCountEl) duesCountEl.innerText = `₹${(stats.pendingMaintenanceAmount || 0).toLocaleString('en-IN')}`;
 
       // Render Visitors
       Table.render('upcoming-visitors-table', [
@@ -54,8 +79,9 @@ const ResidentPage = {
     Sidebar.render('sidebar-container', 'visitors');
     Navbar.render('navbar-container', 'My Expected Visitors & Guest Passes');
 
-    const user = getCurrentUser();
-    const residentId = user ? (user.residentId || user.id || user.userId) : null;
+    const user = ResidentPage.checkResidentAuth();
+    if (!user) return;
+    const residentId = user.residentId || user.id || user.userId;
 
     const visitors = await ResidentApi.getVisitors(residentId);
     Table.render('visitors-data-table', [
@@ -113,9 +139,10 @@ const ResidentPage = {
     Sidebar.render('sidebar-container', 'complaints');
     Navbar.render('navbar-container', 'My Maintenance Complaints');
 
-    const user = getCurrentUser();
-    const residentId = user ? user.residentId : null;
-    const userId = user ? (user.id || user.userId) : null;
+    const user = ResidentPage.checkResidentAuth();
+    if (!user) return;
+    const residentId = user.residentId;
+    const userId = user.id || user.userId;
 
     const complaints = await ResidentApi.getComplaints(residentId, userId);
     Table.render('resident-complaints-table', [
@@ -160,8 +187,9 @@ const ResidentPage = {
     Sidebar.render('sidebar-container', 'amenities');
     Navbar.render('navbar-container', 'Society Amenities & Facility Booking');
 
-    const user = getCurrentUser();
-    const residentId = user ? (user.residentId || user.id || user.userId) : null;
+    const user = ResidentPage.checkResidentAuth();
+    if (!user) return;
+    const residentId = user.residentId || user.id || user.userId;
 
     const amenities = await ResidentApi.getAmenities();
     const bookings = await ResidentApi.getBookings(residentId);
@@ -244,9 +272,10 @@ const ResidentPage = {
     Sidebar.render('sidebar-container', 'payments');
     Navbar.render('navbar-container', 'Maintenance Bills & Online Payments');
 
-    const user = getCurrentUser();
-    const flatId = user ? user.flatId : null;
-    const residentId = user ? (user.residentId || user.id || user.userId) : null;
+    const user = ResidentPage.checkResidentAuth();
+    if (!user) return;
+    const flatId = user.flatId || null;
+    const residentId = user.residentId || user.id || user.userId;
 
     const bills = await ResidentApi.getBills(flatId, residentId);
     window._residentBills = bills || [];

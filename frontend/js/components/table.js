@@ -27,8 +27,8 @@ const Table = {
     }).join('');
 
     container.innerHTML = `
-      <div style="overflow-x:auto;">
-        <table class="data-table">
+      <div class="table-responsive-wrapper" style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; display:block;">
+        <table class="data-table" style="width:100%; min-width:600px;">
           <thead>
             <tr>${thHtml}</tr>
           </thead>

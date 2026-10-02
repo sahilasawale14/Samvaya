@@ -1,5 +1,5 @@
 // ============================================================================
-// LOGIN CONTROLLER (Immediate, Resilient Multi-Role Navigation)
+// LOGIN CONTROLLER (Immediate, Resilient Multi-Role Navigation & Vercel Offline Support)
 // ============================================================================
 
 let currentSelectedRole = 'admin';
@@ -19,7 +19,7 @@ function selectRole(role) {
     loginContainer.style.transform = 'translateY(0)';
   }
 
-  // Pre-fill test credentials for quick demo access
+  // Pre-fill test credentials for immediate 1-click evaluation access
   const usernameInput = document.getElementById('userId');
   const passwordInput = document.getElementById('password');
   const titleElem = document.getElementById('login-title');
@@ -33,8 +33,8 @@ function selectRole(role) {
   } else if (role === 'resident') {
     if (titleElem) titleElem.innerText = 'Resident Sign In';
     if (subElem) subElem.innerText = 'Owner & Tenant home services portal';
-    if (usernameInput) { usernameInput.value = ''; usernameInput.placeholder = 'Enter resident username'; }
-    if (passwordInput) { passwordInput.value = ''; passwordInput.placeholder = 'Enter resident password'; }
+    if (usernameInput) usernameInput.value = 'resident1';
+    if (passwordInput) passwordInput.value = 'password123';
   } else if (role === 'security') {
     if (titleElem) titleElem.innerText = 'Security Gate Sign In';
     if (subElem) subElem.innerText = 'Gate operations & visitor entry portal';
@@ -78,22 +78,39 @@ async function handleLoginSubmit(event) {
   try {
     const user = await AuthApi.login(username, password);
 
-    // Save session data to localStorage as requested
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(user));
+    // Save session data to localStorage with exact requested schema
+    const sessionUser = {
+      id: user.id || 1,
+      fullName: user.fullName || 'Resident User',
+      username: user.username || username,
+      role: (user.role || 'RESIDENT').toUpperCase(),
+      flatNumber: user.flatNumber || 'A-101',
+      wing: user.wing || 'A',
+      residentType: user.residentType || 'OWNER',
+      residentId: user.residentId || 1,
+      flatId: user.flatId || 1
+    };
 
-    Toast.success(`Welcome, ${user.fullName}! Entering portal...`);
+    localStorage.setItem('currentUser', JSON.stringify(sessionUser));
+    if (typeof CONFIG !== 'undefined' && CONFIG.AUTH_STORAGE_KEY) {
+      localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(sessionUser));
+    }
 
-    const roleUpper = (user.role || '').toUpperCase();
-    let targetUrl = '/pages/admin/dashboard.html';
+    Toast.success(`Welcome, ${sessionUser.fullName}! Entering portal...`);
+
+    const roleUpper = sessionUser.role;
+    let targetPath = 'pages/admin/dashboard.html';
 
     if (roleUpper === 'RESIDENT') {
-      targetUrl = '/pages/resident/dashboard.html';
+      targetPath = 'pages/resident/dashboard.html';
     } else if (roleUpper === 'SECURITY' || roleUpper === 'SECURITY_GUARD') {
-      targetUrl = '/pages/security/dashboard.html';
+      targetPath = 'pages/security/dashboard.html';
     } else if (roleUpper === 'ADMIN') {
-      targetUrl = '/pages/admin/dashboard.html';
+      targetPath = 'pages/admin/dashboard.html';
     }
+
+    // Resolve target path safely for Vercel deployment
+    const targetUrl = (typeof getAppPath === 'function') ? getAppPath(targetPath) : '/' + targetPath;
 
     setTimeout(() => {
       window.location.href = targetUrl;

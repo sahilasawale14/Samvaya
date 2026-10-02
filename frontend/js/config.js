@@ -14,23 +14,44 @@ const CONFIG = {
   TOKEN_STORAGE_KEY: 'samvaya_auth_token'
 };
 
+// Global helper to safely resolve paths on Vercel, web servers, and local file testing
+function getAppPath(targetPath) {
+  if (!targetPath) return '/index.html';
+  if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) return targetPath;
+  if (targetPath.startsWith('../') || targetPath.startsWith('./')) return targetPath;
+  const cleanTarget = targetPath.startsWith('/') ? targetPath.slice(1) : targetPath;
+
+  // If running from local file:// protocol
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+    const currentPath = window.location.pathname.replace(/\\/g, '/');
+    if (currentPath.includes('/pages/')) {
+      return '../../' + cleanTarget;
+    }
+    return './' + cleanTarget;
+  }
+
+  // On web server / Vercel / Railway: root-relative path is always reliable and unambiguous
+  return '/' + cleanTarget;
+}
+
 // Global Helper to get Current Authenticated User
 function getCurrentUser() {
-  const userJson = localStorage.getItem('currentUser') || localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
   try {
+    const userJson = localStorage.getItem('currentUser') || localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
     return userJson ? JSON.parse(userJson) : null;
   } catch (e) {
+    console.error('Error reading currentUser from localStorage:', e);
     return null;
   }
 }
 
-// Global Helper to check Role Access - Strict DB Session Enforced
+// Global Helper to check Role Access - Strict Session Enforced
 function checkAuth(allowedRoles = []) {
   const user = getCurrentUser();
   
   // If no user found in local storage, immediately redirect to login gateway
   if (!user) {
-    window.location.href = '/index.html';
+    window.location.href = getAppPath('index.html');
     return false;
   }
 
@@ -46,11 +67,11 @@ function checkAuth(allowedRoles = []) {
 
     if (!isAllowed) {
       if (userRole === 'RESIDENT') {
-        window.location.href = '/pages/resident/dashboard.html';
+        window.location.href = getAppPath('pages/resident/dashboard.html');
       } else if (userRole.includes('SECURITY')) {
-        window.location.href = '/pages/security/dashboard.html';
+        window.location.href = getAppPath('pages/security/dashboard.html');
       } else {
-        window.location.href = '/pages/admin/dashboard.html';
+        window.location.href = getAppPath('pages/admin/dashboard.html');
       }
       return false;
     }
@@ -64,13 +85,14 @@ function logout() {
   localStorage.removeItem('currentUser');
   localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
   localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
-  window.location.href = '/index.html';
+  window.location.href = getAppPath('index.html');
 }
 
 // Attach to global window object
 if (typeof window !== 'undefined') {
   window.API_BASE_URL = API_BASE_URL;
   window.CONFIG = CONFIG;
+  window.getAppPath = getAppPath;
   window.getCurrentUser = getCurrentUser;
   window.checkAuth = checkAuth;
   window.logout = logout;
@@ -78,5 +100,5 @@ if (typeof window !== 'undefined') {
 
 // Support CommonJS/Node environments if needed
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { API_BASE_URL, CONFIG, getCurrentUser, checkAuth, logout };
+  module.exports = { API_BASE_URL, CONFIG, getAppPath, getCurrentUser, checkAuth, logout };
 }
