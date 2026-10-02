@@ -18,4 +18,6 @@ public interface VisitorRepository extends JpaRepository<Visitor, Long> {
     List<Visitor> findByVisitorNameContainingIgnoreCaseOrPhoneContainingOrVehicleNumberContainingIgnoreCase(String name, String phone, String vehicleNumber);
     Long countByStatus(String status);
     Long countByExpectedDateAndStatus(LocalDate date, String status);
+    List<Visitor> findByApprovalStatus(String approvalStatus);
+    List<Visitor> findByApprovalStatusOrderByExpectedDateDesc(String approvalStatus);
 }

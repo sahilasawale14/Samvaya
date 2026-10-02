@@ -70,16 +70,201 @@ const Api = {
       };
     }
 
-    // 2. Visitors Endpoint
-    if (endpoint.includes('/visitors')) {
-      if (isMutation) {
-        if (typeof Toast !== 'undefined') Toast.success('Visitor pre-approval pass generated (Offline Mode)!');
-        return { success: true, message: 'Visitor pass created' };
-      }
-      return [
-        { id: 1, visitorName: 'Ankit Gupta', numberOfVisitors: 2, phone: '+91 98765 43210', purpose: 'Dinner Guest', expectedDate: 'Today', expectedTime: '06:00 PM', vehicleNumber: 'MH 02 AB 1234', passCode: 'SAM-4821', status: 'EXPECTED', approvalStatus: 'APPROVED' },
-        { id: 2, visitorName: 'Karan Mehra', numberOfVisitors: 1, phone: '+91 98765 54321', purpose: 'Family Visit', expectedDate: 'Tomorrow', expectedTime: '11:30 AM', vehicleNumber: 'MH 01 CD 5678', passCode: 'SAM-9142', status: 'EXPECTED', approvalStatus: 'PENDING' }
+    // 2. Visitors & Pre-Approval Gate Pass Endpoints (Synced via LocalStorage for Offline & Vercel Resilience)
+    const getLocalPreapproved = () => {
+      try {
+        const stored = localStorage.getItem('samvaya_preapproved_visitors');
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      const defaultList = [
+        {
+          id: 101,
+          visitorName: 'Sanjay Deshmukh',
+          phone: '+91 98200 12345',
+          wing: 'A',
+          flatNumber: '101',
+          residentName: 'Rahul Sharma',
+          purpose: 'Family Guest',
+          expectedDate: 'Today',
+          expectedTime: '07:30 PM',
+          totalGuestCount: 3,
+          numberOfVisitors: 3,
+          primaryGuestPhoto: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%230d9488"/><circle cx="100" cy="80" r="45" fill="%23ffd166"/><circle cx="85" cy="75" r="5" fill="%23000"/><circle cx="115" cy="75" r="5" fill="%23000"/><path d="M 85 95 Q 100 110 115 95" stroke="%23000" stroke-width="4" fill="none"/><path d="M 40 180 Q 100 125 160 180 Z" fill="%23118ab2"/></svg>',
+          passCode: 'GP-7721',
+          status: 'EXPECTED',
+          approvalStatus: 'PRE_APPROVED',
+          entryTime: null,
+          exitTime: null
+        }
       ];
+      try {
+        localStorage.setItem('samvaya_preapproved_visitors', JSON.stringify(defaultList));
+      } catch(e) {}
+      return defaultList;
+    };
+
+    const saveLocalPreapproved = (list) => {
+      try {
+        localStorage.setItem('samvaya_preapproved_visitors', JSON.stringify(list));
+      } catch (e) {}
+    };
+
+    // Pre-Approve Pass Creation (Resident portal)
+    if (endpoint.includes('/pre-approve') || (endpoint.includes('/visitors') && options.method === 'POST' && !endpoint.includes('/check-in') && !endpoint.includes('/arrive') && !endpoint.includes('/entry'))) {
+      let body = {};
+      try {
+        body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+      } catch (e) {}
+
+      const newPass = {
+        id: Date.now(),
+        visitorName: body.visitorName || 'Guest Visitor',
+        phone: body.phone || '+91 98765 00000',
+        wing: body.wing || currentUser.wing || 'A',
+        flatNumber: body.flatNumber || currentUser.flatNumber || '101',
+        residentName: currentUser.fullName || 'Rahul Sharma',
+        purpose: body.purpose || 'Guest Visit',
+        expectedDate: body.expectedDate || 'Today',
+        expectedTime: body.expectedTime || '06:00 PM',
+        totalGuestCount: parseInt(body.totalGuestCount || body.numberOfVisitors || 1, 10),
+        numberOfVisitors: parseInt(body.totalGuestCount || body.numberOfVisitors || 1, 10),
+        primaryGuestPhoto: body.primaryGuestPhoto || null,
+        passCode: 'GP-' + Math.floor(1000 + Math.random() * 9000),
+        status: 'EXPECTED',
+        approvalStatus: 'PRE_APPROVED',
+        entryTime: null,
+        exitTime: null
+      };
+
+      const list = getLocalPreapproved();
+      list.unshift(newPass);
+      saveLocalPreapproved(list);
+
+      if (typeof Toast !== 'undefined') {
+        Toast.success('Face-Verified Pre-Approval Pass generated successfully!');
+      }
+      return newPass;
+    }
+
+    // Pre-Approved Passes Query (Security portal)
+    if (endpoint.includes('/pre-approved')) {
+      const list = getLocalPreapproved();
+      return list.filter(v => v.approvalStatus === 'PRE_APPROVED');
+    }
+
+    // Verify Pass & Record Entry (Security portal)
+    if (endpoint.includes('/verify-entry')) {
+      const list = getLocalPreapproved();
+      const match = endpoint.match(/visitors\/(\d+)\/verify-entry/);
+      const vId = match ? parseInt(match[1], 10) : null;
+      let verified = null;
+      const updated = list.map(v => {
+        if (!vId || v.id == vId) {
+          verified = {
+            ...v,
+            approvalStatus: 'VERIFIED_ENTRY',
+            status: 'INSIDE',
+            entryTime: new Date().toISOString()
+          };
+          return verified;
+        }
+        return v;
+      });
+      saveLocalPreapproved(updated);
+      return { success: true, message: 'Visitor entry verified and recorded', data: verified };
+    }
+
+    // Reject Pass & Deny Entry (Security portal)
+    if (endpoint.includes('/reject-entry')) {
+      const list = getLocalPreapproved();
+      const match = endpoint.match(/visitors\/(\d+)\/reject-entry/);
+      const vId = match ? parseInt(match[1], 10) : null;
+      let rejected = null;
+      const updated = list.map(v => {
+        if (!vId || v.id == vId) {
+          rejected = {
+            ...v,
+            approvalStatus: 'REJECTED',
+            status: 'REJECTED'
+          };
+          return rejected;
+        }
+        return v;
+      });
+      saveLocalPreapproved(updated);
+      return { success: true, message: 'Visitor pass rejected and entry denied', data: rejected };
+    }
+
+    // Active Visitors Query (Inside society premises)
+    if (endpoint.includes('/visitors/active') || endpoint.includes('/visitors/inside')) {
+      const list = getLocalPreapproved();
+      const activePreapproved = list.filter(v => v.status === 'INSIDE' && v.approvalStatus !== 'REJECTED');
+      const seedActive = [
+        {
+          id: 1,
+          visitorName: 'Rajesh Sen',
+          phone: '+91 98450 11223',
+          wing: 'B',
+          flatNumber: '204',
+          vehicleNumber: 'MH 02 XY 9988',
+          purpose: 'Maintenance / Plumber',
+          entryTime: new Date(Date.now() - 35 * 60000).toISOString(),
+          status: 'INSIDE',
+          approvalStatus: 'VERIFIED_ENTRY',
+          totalGuestCount: 1,
+          numberOfVisitors: 1,
+          primaryGuestPhoto: null
+        }
+      ];
+      return [...activePreapproved, ...seedActive];
+    }
+
+    // Walk-in Visitor Check-In
+    if (endpoint.includes('/check-in')) {
+      let body = {};
+      try {
+        body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+      } catch (e) {}
+      const newActive = {
+        id: Date.now(),
+        visitorName: body.visitorName || 'Walk-in Guest',
+        phone: body.phone || '',
+        wing: body.wing || 'A',
+        flatNumber: body.flatNumber || '101',
+        vehicleNumber: body.vehicleNo || body.vehicleNumber || '',
+        purpose: body.purpose || 'Guest',
+        entryTime: new Date().toISOString(),
+        status: 'INSIDE',
+        approvalStatus: 'VERIFIED_ENTRY',
+        totalGuestCount: 1,
+        numberOfVisitors: 1,
+        primaryGuestPhoto: null
+      };
+      const list = getLocalPreapproved();
+      list.unshift(newActive);
+      saveLocalPreapproved(list);
+      return newActive;
+    }
+
+    // Visitor Check-Out / Exit
+    if (endpoint.includes('/check-out')) {
+      const match = endpoint.match(/visitors\/(\d+)\/check-out/);
+      const vId = match ? parseInt(match[1], 10) : null;
+      const list = getLocalPreapproved();
+      const updated = list.map(v => {
+        if (!vId || v.id == vId) {
+          return { ...v, status: 'EXITED', approvalStatus: 'EXITED', exitTime: new Date().toISOString() };
+        }
+        return v;
+      });
+      saveLocalPreapproved(updated);
+      return { success: true, message: 'Visitor marked as EXITED' };
+    }
+
+    // All Visitors Query (For logs or resident visitor table)
+    if (endpoint.includes('/visitors')) {
+      const list = getLocalPreapproved();
+      return list;
     }
 
     // 3. Deliveries Endpoint

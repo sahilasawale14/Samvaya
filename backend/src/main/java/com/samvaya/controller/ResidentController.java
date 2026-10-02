@@ -15,6 +15,7 @@ public class ResidentController {
 
     private final ResidentService residentService;
     private final com.samvaya.service.PaymentService paymentService;
+    private final com.samvaya.service.VisitorService visitorService;
 
     @GetMapping("/dashboard/{residentId}")
     public ResponseEntity<ApiResponse<ResidentDashboardDTO>> getDashboard(@PathVariable Long residentId) {
@@ -35,5 +36,14 @@ public class ResidentController {
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
         java.util.List<com.samvaya.dto.BillDTO> bills = paymentService.getMyBills(flatId, residentId, headerUserId);
         return ResponseEntity.ok(ApiResponse.success(bills));
+    }
+
+    @PostMapping("/visitors/pre-approve")
+    public ResponseEntity<ApiResponse<com.samvaya.dto.VisitorDTO>> preApproveVisitor(
+            @RequestBody com.samvaya.dto.VisitorDTO.VisitorPreApprovalRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
+        com.samvaya.dto.VisitorDTO preApproved = visitorService.preApproveVisitor(request, headerUserId);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(ApiResponse.success("Visitor pre-approved successfully with face pass", preApproved));
     }
 }

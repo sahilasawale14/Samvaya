@@ -49,13 +49,24 @@ public class Visitor {
     @Builder.Default
     private Integer numberOfVisitors = 1;
 
+    @Column(name = "total_guest_count")
+    @Builder.Default
+    private Integer totalGuestCount = 1;
+
+    @Lob
+    @Column(name = "primary_guest_photo", columnDefinition = "LONGTEXT")
+    private String primaryGuestPhoto;
+
+    @Column(name = "pre_approved_by_resident_id")
+    private Long preApprovedByResidentId;
+
     @Column(length = 30)
     @Builder.Default
     private String status = "EXPECTED"; // 'EXPECTED', 'ARRIVED', 'INSIDE', 'EXITED', 'CANCELLED'
 
     @Column(name = "approval_status", length = 30)
     @Builder.Default
-    private String approvalStatus = "APPROVED"; // 'PENDING', 'APPROVED', 'DENIED'
+    private String approvalStatus = "APPROVED"; // 'PENDING', 'APPROVED', 'DENIED', 'PRE_APPROVED', 'VERIFIED_ENTRY', 'REJECTED'
 
     @Column(name = "pass_code", unique = true, length = 50)
     private String passCode;
@@ -70,10 +81,22 @@ public class Visitor {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.totalGuestCount == null) {
+            this.totalGuestCount = this.numberOfVisitors != null ? this.numberOfVisitors : 1;
+        }
+        if (this.numberOfVisitors == null) {
+            this.numberOfVisitors = this.totalGuestCount;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+        if (this.totalGuestCount == null) {
+            this.totalGuestCount = this.numberOfVisitors != null ? this.numberOfVisitors : 1;
+        }
+        if (this.numberOfVisitors == null) {
+            this.numberOfVisitors = this.totalGuestCount;
+        }
     }
 }

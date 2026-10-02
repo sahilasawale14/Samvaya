@@ -150,5 +150,149 @@ const SecurityPage = {
     } catch (e) {
       Toast.error(e.message || 'Failed to record visitor exit');
     }
+  },
+
+  preApprovedCache: [],
+
+  async openVerifyPassModal(visitorId) {
+    let visitor = null;
+    if (this.preApprovedCache && this.preApprovedCache.length) {
+      visitor = this.preApprovedCache.find(v => v.id == visitorId);
+    }
+    if (!visitor) {
+      try {
+        const list = await SecurityApi.getPreApprovedVisitors();
+        this.preApprovedCache = list || [];
+        visitor = this.preApprovedCache.find(v => v.id == visitorId);
+      } catch (err) {
+        console.error('Failed to fetch visitor detail for verification modal', err);
+      }
+    }
+
+    if (!visitor) {
+      Toast.error('Visitor pass details not found');
+      return;
+    }
+
+    const idInput = document.getElementById('modal-vis-id');
+    const nameEl = document.getElementById('modal-vis-name');
+    const phoneEl = document.getElementById('modal-vis-phone');
+    const unitEl = document.getElementById('modal-vis-unit');
+    const hostEl = document.getElementById('modal-vis-host');
+    const timeEl = document.getElementById('modal-vis-time');
+    const passcodeEl = document.getElementById('modal-vis-passcode');
+    const groupBadge = document.getElementById('modal-group-badge');
+    const photoImg = document.getElementById('modal-guest-photo');
+    const photoPlaceholder = document.getElementById('modal-guest-photo-placeholder');
+
+    if (idInput) idInput.value = visitor.id;
+    if (nameEl) nameEl.textContent = visitor.visitorName || 'Lead Visitor';
+    if (phoneEl) phoneEl.textContent = visitor.phone || 'N/A';
+    const wingVal = visitor.wing || (visitor.flat ? visitor.flat.wing : '');
+    const flatVal = visitor.flatNumber || (visitor.flat ? visitor.flat.flatNumber : '');
+    if (unitEl) unitEl.textContent = `Wing ${wingVal}-${flatVal}`;
+    if (hostEl) hostEl.textContent = visitor.residentName || (visitor.flat && visitor.flat.currentResidentName) || 'Resident Host';
+    if (timeEl) timeEl.textContent = `${visitor.expectedDate || 'Today'} ${visitor.expectedTime || ''}`;
+    if (passcodeEl) passcodeEl.textContent = visitor.passCode || 'N/A';
+
+    const count = visitor.totalGuestCount || visitor.numberOfVisitors || 1;
+    if (groupBadge) {
+      groupBadge.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px;">groups</span> Group of ${count} Person${count > 1 ? 's' : ''}`;
+    }
+
+    if (visitor.primaryGuestPhoto) {
+      if (photoImg) {
+        photoImg.src = visitor.primaryGuestPhoto;
+        photoImg.style.display = 'block';
+      }
+      if (photoPlaceholder) photoPlaceholder.style.display = 'none';
+    } else {
+      if (photoImg) {
+        photoImg.src = '';
+        photoImg.style.display = 'none';
+      }
+      if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
+    }
+
+    if (typeof Modal !== 'undefined') {
+      Modal.open('verify-pass-modal');
+    }
+  },
+
+  async approveCurrentPreApprovedEntry() {
+    const idInput = document.getElementById('modal-vis-id');
+    const id = idInput ? idInput.value : null;
+    if (!id) return;
+    await this.approvePreApprovedEntry(id);
+  },
+
+  async approvePreApprovedEntry(id) {
+    const approveBtn = document.getElementById('btn-modal-approve-entry');
+    if (approveBtn) {
+      approveBtn.disabled = true;
+      approveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">hourglass_top</span> Verifying...';
+    }
+
+    try {
+      await SecurityApi.verifyEntry(id, 'Main Gate 1', 'Physical face match verified against pre-approved pass');
+      Toast.success('Visitor face pass verified! Entry recorded into society.');
+      if (typeof Modal !== 'undefined') {
+        Modal.close('verify-pass-modal');
+      }
+      if (typeof loadPreApprovedVisitors === 'function') {
+        await loadPreApprovedVisitors();
+      }
+      if (typeof loadActiveVisitors === 'function') {
+        await loadActiveVisitors();
+      }
+      if (typeof loadAllVisitors === 'function') {
+        await loadAllVisitors();
+      }
+    } catch (e) {
+      Toast.error(e.message || 'Failed to verify visitor entry');
+    } finally {
+      if (approveBtn) {
+        approveBtn.disabled = false;
+        approveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> Approve Entry';
+      }
+    }
+  },
+
+  async rejectCurrentPreApprovedEntry() {
+    const idInput = document.getElementById('modal-vis-id');
+    const id = idInput ? idInput.value : null;
+    if (!id) return;
+
+    const reason = prompt('Please enter the reason for denying entry (e.g. Photo mismatch, unauthorized guests):', 'Photo mismatch or unauthorized entry');
+    if (reason === null) return; // User cancelled
+
+    await this.rejectPreApprovedEntry(id, reason);
+  },
+
+  async rejectPreApprovedEntry(id, reason = 'Photo mismatch or entry denied') {
+    const denyBtn = document.getElementById('btn-modal-deny-entry');
+    if (denyBtn) {
+      denyBtn.disabled = true;
+    }
+
+    try {
+      await SecurityApi.rejectEntry(id, reason);
+      Toast.warning('Gate pass rejected. Entry has been denied.');
+      if (typeof Modal !== 'undefined') {
+        Modal.close('verify-pass-modal');
+      }
+      if (typeof loadPreApprovedVisitors === 'function') {
+        await loadPreApprovedVisitors();
+      }
+      if (typeof loadAllVisitors === 'function') {
+        await loadAllVisitors();
+      }
+    } catch (e) {
+      Toast.error(e.message || 'Failed to reject visitor entry');
+    } finally {
+      if (denyBtn) {
+        denyBtn.disabled = false;
+      }
+    }
   }
 };

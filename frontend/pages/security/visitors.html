@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -19,7 +19,27 @@
 
       <div class="content-body">
         
-        <!-- Top Section: 2 Columns for Gate Check-In Form and Active Visitors Summary -->
+        <!-- Top Banner: Face-Verified Pre-Approved Entries Section -->
+        <div class="card-section" style="margin-bottom: 24px; border: 1px solid rgba(13, 148, 136, 0.3); background: linear-gradient(180deg, rgba(13, 148, 136, 0.03) 0%, var(--surface) 100%);">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="color:var(--primary);">face</span>
+                Pre-Approved Entries (Face Gate Pass)
+                <span id="preapproved-visitors-count" class="badge badge-primary" style="font-size:12px; margin-left:6px;">0</span>
+              </h2>
+              <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+                Pre-approved resident visitors awaiting physical identity and face match verification at the gate.
+              </p>
+            </div>
+            <button class="btn btn-ghost" onclick="loadPreApprovedVisitors()" style="padding:4px 8px;" title="Refresh pre-approved">
+              <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
+            </button>
+          </div>
+          <div id="preapproved-security-visitors-table"></div>
+        </div>
+
+        <!-- Middle Section: 2 Columns for Gate Check-In Form and Active Visitors Summary -->
         <div style="display: grid; grid-template-columns: 380px 1fr; gap: 24px; margin-bottom: 24px;">
           
           <!-- Gate Check-In Form -->
@@ -122,8 +142,90 @@
     </main>
   </div>
 
+  <!-- Face-Verified Pre-Approval Verification Modal -->
+  <div class="modal-backdrop" id="verify-pass-modal">
+    <div class="modal-container" style="max-width: 560px; padding: 0; overflow: hidden; border-radius: var(--radius-lg, 12px);">
+      <div class="modal-header" style="background: var(--surface); padding: 16px 20px; border-bottom: 1px solid var(--outline-variant); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="color:var(--primary); font-size:24px;">verified_user</span>
+          <h3 style="margin:0; font-size:16px; font-weight:700;">Face-Verified Gate Pass Verification</h3>
+        </div>
+        <button class="btn-ghost" onclick="Modal.close('verify-pass-modal')" style="background:none; border:none; cursor:pointer; color:var(--on-surface-variant); display:flex; align-items:center; justify-content:center; padding:4px;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px; max-height: 75vh; overflow-y: auto;">
+        
+        <!-- Photo and Group Highlight Section -->
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px;">
+          <div style="position: relative; width: 180px; height: 180px; border-radius: 50%; overflow: hidden; border: 4px solid var(--primary); box-shadow: 0 4px 14px rgba(0,0,0,0.15); background: var(--surface-variant); margin-bottom: 12px;">
+            <img id="modal-guest-photo" src="" alt="Primary Guest Headshot" style="width:100%; height:100%; object-fit:cover; display:none;">
+            <div id="modal-guest-photo-placeholder" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--on-surface-variant);">
+              <span class="material-symbols-outlined" style="font-size:64px;">person</span>
+              <span style="font-size:11px;">No Photo Uploaded</span>
+            </div>
+          </div>
+
+          <div id="modal-group-badge" class="badge badge-primary" style="font-size: 13px; font-weight: 700; padding: 4px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+            <span class="material-symbols-outlined" style="font-size:16px;">groups</span>
+            Group of 1 Person
+          </div>
+
+          <div style="margin-top: 10px; background: rgba(13, 148, 136, 0.08); border: 1px solid rgba(13, 148, 136, 0.25); border-radius: 8px; padding: 8px 14px; font-size: 12px; color: var(--on-surface); text-align: center; max-width: 440px;">
+            <span class="material-symbols-outlined" style="font-size: 15px; vertical-align: middle; color: var(--primary); margin-right: 4px;">security</span>
+            <strong>Gatekeeper Note:</strong> Ensure the lead visitor in front of you matches this headshot photo, and the entering group size does not exceed the approved count.
+          </div>
+        </div>
+
+        <!-- Visitor & Flat Detail Grid -->
+        <div style="background: var(--surface-variant); border-radius: 8px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+          <div>
+            <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Lead Visitor</span>
+            <strong id="modal-vis-name" style="font-size: 14px; color: var(--on-surface);">-</strong>
+          </div>
+          <div>
+            <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Phone Number</span>
+            <span id="modal-vis-phone">-</span>
+          </div>
+          <div>
+            <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Destination Flat</span>
+            <strong id="modal-vis-unit" style="color: var(--primary);">-</strong>
+          </div>
+          <div>
+            <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Resident Host</span>
+            <span id="modal-vis-host">-</span>
+          </div>
+          <div>
+            <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Expected Schedule</span>
+            <span id="modal-vis-time">-</span>
+          </div>
+          <div>
+            <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Gate Pass Code</span>
+            <code id="modal-vis-passcode" style="font-size: 13px; font-weight: 700; color: var(--secondary);">-</code>
+          </div>
+        </div>
+
+        <input type="hidden" id="modal-vis-id" value="">
+      </div>
+
+      <div class="modal-footer" style="padding: 16px 20px; background: var(--surface); border-top: 1px solid var(--outline-variant); display: flex; gap: 12px; justify-content: flex-end;">
+        <button type="button" class="btn btn-ghost" onclick="Modal.close('verify-pass-modal')" style="padding: 8px 16px;">Cancel</button>
+        <button type="button" id="btn-modal-deny-entry" class="btn btn-danger" style="background: #dc2626; color: white; display: flex; align-items: center; gap: 6px; padding: 8px 16px;" onclick="SecurityPage.rejectCurrentPreApprovedEntry()">
+          <span class="material-symbols-outlined" style="font-size: 18px;">block</span>
+          Deny Entry
+        </button>
+        <button type="button" id="btn-modal-approve-entry" class="btn btn-primary" style="background: var(--success); color: white; display: flex; align-items: center; gap: 6px; padding: 8px 18px; font-weight: 600;" onclick="SecurityPage.approveCurrentPreApprovedEntry()">
+          <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+          Approve Entry
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/config.js"></script>
   <script src="/js/components/toast.js"></script>
+  <script src="/js/components/modal.js"></script>
   <script src="/js/components/sidebar.js"></script>
   <script src="/js/components/navbar.js"></script>
   <script src="/js/components/table.js"></script>
@@ -131,6 +233,75 @@
   <script src="/js/api/securityApi.js"></script>
   <script src="/js/pages/security.js"></script>
   <script>
+    async function loadPreApprovedVisitors() {
+      try {
+        const preapproved = await SecurityApi.getPreApprovedVisitors();
+        SecurityPage.preApprovedCache = preapproved || [];
+        const countBadge = document.getElementById('preapproved-visitors-count');
+        if (countBadge) countBadge.textContent = (preapproved && preapproved.length) || 0;
+
+        Table.render('preapproved-security-visitors-table', [
+          {
+            label: 'Primary Guest Photo',
+            render: r => r.primaryGuestPhoto ? `
+              <img src="${r.primaryGuestPhoto}" alt="${r.visitorName}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid var(--primary); cursor:pointer;" onclick="SecurityPage.openVerifyPassModal(${r.id})" title="Click to inspect face photo">
+            ` : `
+              <div style="width:42px; height:42px; border-radius:50%; background:var(--surface-variant); display:flex; align-items:center; justify-content:center; color:var(--on-surface-variant); cursor:pointer;" onclick="SecurityPage.openVerifyPassModal(${r.id})">
+                <span class="material-symbols-outlined" style="font-size:22px;">person</span>
+              </div>
+            `
+          },
+          {
+            label: 'Lead Visitor & Phone',
+            render: r => `
+              <div>
+                <div style="font-weight:700; color:var(--on-surface); font-size:13px;">${r.visitorName}</div>
+                <div style="font-size:11px; color:var(--on-surface-variant);">${r.phone || '-'}</div>
+              </div>
+            `
+          },
+          {
+            label: 'Group Size',
+            render: r => {
+              const count = r.totalGuestCount || r.numberOfVisitors || 1;
+              return `<span class="badge ${count > 1 ? 'badge-primary' : 'badge-neutral'}" style="font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+                <span class="material-symbols-outlined" style="font-size:13px;">groups</span>
+                Group of ${count}
+              </span>`;
+            }
+          },
+          {
+            label: 'Destination & Host',
+            render: r => `
+              <div>
+                <b>Wing ${r.wing || (r.flat ? r.flat.wing : '')}-${r.flatNumber || (r.flat ? r.flat.flatNumber : '')}</b>
+                <div style="font-size:11px; color:var(--on-surface-variant);">Host: ${r.residentName || (r.flat && r.flat.currentResidentName) || 'Resident Host'}</div>
+              </div>
+            `
+          },
+          {
+            label: 'Expected Schedule',
+            render: r => `
+              <div>
+                <div style="font-size:12px; font-weight:600;">${r.expectedDate || 'Today'}</div>
+                <div style="font-size:11px; color:var(--on-surface-variant);">${r.expectedTime || 'Anytime'}</div>
+              </div>
+            `
+          },
+          {
+            label: 'Action',
+            render: r => `
+              <button class="btn btn-primary" style="padding:6px 14px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:6px;" onclick="SecurityPage.openVerifyPassModal(${r.id})">
+                <span class="material-symbols-outlined" style="font-size:16px;">verified</span> Verify Pass
+              </button>
+            `
+          }
+        ], preapproved || []);
+      } catch (err) {
+        console.error('Failed to load pre-approved visitors', err);
+      }
+    }
+
     async function loadActiveVisitors() {
       try {
         const active = await SecurityApi.getActiveVisitors();
@@ -138,7 +309,26 @@
         if (countBadge) countBadge.textContent = (active && active.length) || 0;
 
         Table.render('active-security-visitors-table', [
-          { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
+          {
+            label: 'Visitor',
+            render: r => `
+              <div style="display:flex; align-items:center; gap:10px;">
+                ${r.primaryGuestPhoto ? `
+                  <img src="${r.primaryGuestPhoto}" alt="${r.visitorName}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--success); flex-shrink:0;">
+                ` : `
+                  <div style="width:36px; height:36px; border-radius:50%; background:var(--surface-variant); display:flex; align-items:center; justify-content:center; color:var(--on-surface-variant); flex-shrink:0;">
+                    <span class="material-symbols-outlined" style="font-size:20px;">person</span>
+                  </div>
+                `}
+                <div>
+                  <div style="font-weight:600;">${r.visitorName}</div>
+                  ${(r.totalGuestCount && r.totalGuestCount > 1) || (r.numberOfVisitors && r.numberOfVisitors > 1) ? `
+                    <span class="badge badge-neutral" style="font-size:10px; padding:1px 6px;">Group of ${r.totalGuestCount || r.numberOfVisitors}</span>
+                  ` : ''}
+                </div>
+              </div>
+            `
+          },
           { label: 'Phone', render: r => r.phone || '-' },
           { label: 'Destination Unit', render: r => `<b>Wing ${r.wing || (r.flat ? r.flat.wing : '')}-${r.flatNumber || (r.flat ? r.flat.flatNumber : '')}</b>` },
           { label: 'Vehicle No', render: r => r.vehicleNumber || '-' },
@@ -165,12 +355,13 @@
           { label: 'Resident Host', render: r => r.residentName || (r.flat && r.flat.currentResidentName) || '-' },
           { label: 'Pass Code', render: r => r.passCode ? `<code>${r.passCode}</code>` : '-' },
           { label: 'Vehicle Number', render: r => r.vehicleNumber || '-' },
-          { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` },
+          { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : (r.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'))}">${r.status}</span>` },
           { label: 'Actions', render: r => `
             ${r.status === 'EXPECTED' ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorArrival(${r.id}); loadAllVisitors();">Arrived</button>` : ''}
             ${r.status === 'ARRIVED' ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.allowVisitorEntry(${r.id}); loadAllVisitors(); loadActiveVisitors();">Allow Entry</button>` : ''}
             ${r.status === 'INSIDE' ? `<button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorCheckOut(${r.id})">Log Exit</button>` : ''}
             ${r.status === 'EXITED' ? `<span style="color:var(--outline); font-size:12px;">Completed</span>` : ''}
+            ${r.status === 'REJECTED' ? `<span style="color:var(--danger); font-size:12px;">Entry Denied</span>` : ''}
           `}
         ], visitors || []);
       } catch (err) {
@@ -182,6 +373,7 @@
       if (checkAuth(['SECURITY_GUARD', 'ADMIN', 'SECURITY'])) {
         Sidebar.render('sidebar-container', 'visitors');
         Navbar.render('navbar-container', 'Visitor Gate Operations');
+        loadPreApprovedVisitors();
         loadActiveVisitors();
         loadAllVisitors();
       }

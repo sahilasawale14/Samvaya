@@ -19,6 +19,10 @@ const ResidentApi = {
     return Api.post('/visitors', visitorData);
   },
 
+  preApproveVisitor(visitorData) {
+    return Api.post('/resident/visitors/pre-approve', visitorData);
+  },
+
   approveVisitor(visitorId, approved) {
     return Api.post(`/visitors/${visitorId}/approve?approved=${approved}`);
   },

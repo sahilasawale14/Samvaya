@@ -229,6 +229,134 @@ public class VisitorService {
         return mapToDTO(visitor);
     }
 
+    @Transactional
+    public VisitorDTO preApproveVisitor(VisitorDTO.VisitorPreApprovalRequest request, Long residentId) {
+        if (request.getVisitorName() == null || request.getVisitorName().trim().isEmpty()) {
+            throw new BadRequestException("Visitor name is required");
+        }
+        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
+            throw new BadRequestException("Visitor phone is required");
+        }
+
+        Long targetResidentId = residentId != null ? residentId : request.getResidentId();
+        Resident resident = null;
+        if (targetResidentId != null) {
+            resident = residentRepository.findById(targetResidentId).orElse(null);
+        }
+
+        String wing = (request.getWing() != null && !request.getWing().trim().isEmpty()) ? request.getWing().trim().toUpperCase() : "A";
+        String flatNum = (request.getFlatNumber() != null && !request.getFlatNumber().trim().isEmpty()) ? request.getFlatNumber().trim() : "101";
+
+        Flat flat = null;
+        if (resident != null && resident.getFlat() != null) {
+            flat = resident.getFlat();
+        } else {
+            flat = flatRepository.findByWingAndFlatNumber(wing, flatNum).orElse(null);
+            if (flat == null) {
+                flat = flatRepository.findByFlatNumber(flatNum).orElse(null);
+            }
+        }
+
+        if (resident == null && flat != null && flat.getResidentId() != null) {
+            resident = residentRepository.findById(flat.getResidentId()).orElse(null);
+        }
+        if (resident == null) {
+            resident = residentRepository.findAll().stream().findFirst().orElse(null);
+        }
+
+        LocalDate expDate = LocalDate.now();
+        if (request.getExpectedDate() != null && !request.getExpectedDate().trim().isEmpty()) {
+            try {
+                expDate = LocalDate.parse(request.getExpectedDate().trim());
+            } catch (Exception ignored) {}
+        }
+
+        java.time.LocalTime expTime = java.time.LocalTime.now();
+        if (request.getExpectedTime() != null && !request.getExpectedTime().trim().isEmpty()) {
+            try {
+                String tStr = request.getExpectedTime().trim();
+                if (tStr.length() == 5) tStr += ":00";
+                expTime = java.time.LocalTime.parse(tStr);
+            } catch (Exception ignored) {}
+        }
+
+        String passCode = "VIS-PASS-" + (1000 + new Random().nextInt(9000));
+        Integer guestCount = request.getEffectiveGuestCount();
+
+        Visitor visitor = Visitor.builder()
+                .visitorName(request.getVisitorName().trim())
+                .phone(request.getPhone().trim())
+                .resident(resident)
+                .flat(flat)
+                .purpose(request.getPurpose() != null && !request.getPurpose().trim().isEmpty() ? request.getPurpose().trim() : "Pre-Approved Guest")
+                .expectedDate(expDate)
+                .expectedTime(expTime)
+                .vehicleNumber(request.getVehicleNumber())
+                .numberOfVisitors(guestCount)
+                .totalGuestCount(guestCount)
+                .primaryGuestPhoto(request.getPrimaryGuestPhoto())
+                .preApprovedByResidentId(resident != null ? resident.getId() : targetResidentId)
+                .status("EXPECTED")
+                .approvalStatus("PRE_APPROVED")
+                .passCode(passCode)
+                .build();
+
+        Visitor saved = visitorRepository.save(visitor);
+        return mapToDTO(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitorDTO> getPreApprovedVisitors() {
+        return visitorRepository.findByApprovalStatusOrderByExpectedDateDesc("PRE_APPROVED").stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public VisitorDTO verifyEntry(Long visitorId, String gateNumber, String notes) {
+        Visitor visitor = visitorRepository.findById(visitorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Visitor record not found"));
+
+        if ("REJECTED".equalsIgnoreCase(visitor.getApprovalStatus()) || "DENIED".equalsIgnoreCase(visitor.getApprovalStatus())) {
+            throw new BadRequestException("Cannot verify entry for a rejected visitor pass");
+        }
+
+        visitor.setApprovalStatus("VERIFIED_ENTRY");
+        visitor.setStatus("INSIDE");
+        Visitor saved = visitorRepository.save(visitor);
+
+        VisitorEntryExit log = VisitorEntryExit.builder()
+                .visitor(saved)
+                .entryTime(LocalDateTime.now())
+                .gateNumber(gateNumber != null && !gateNumber.trim().isEmpty() ? gateNumber.trim() : "Main Gate 1")
+                .verificationNotes(notes != null && !notes.trim().isEmpty() ? notes.trim() : "Face verified primary guest gate pass")
+                .build();
+        visitorEntryExitRepository.save(log);
+
+        return mapToDTO(saved);
+    }
+
+    @Transactional
+    public VisitorDTO rejectEntry(Long visitorId, String remarks) {
+        Visitor visitor = visitorRepository.findById(visitorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Visitor record not found"));
+
+        visitor.setApprovalStatus("REJECTED");
+        visitor.setStatus("CANCELLED");
+        Visitor saved = visitorRepository.save(visitor);
+
+        if (remarks != null && !remarks.trim().isEmpty()) {
+            VisitorEntryExit log = VisitorEntryExit.builder()
+                    .visitor(saved)
+                    .entryTime(LocalDateTime.now())
+                    .verificationNotes("Entry Rejected by Security: " + remarks.trim())
+                    .build();
+            visitorEntryExitRepository.save(log);
+        }
+
+        return mapToDTO(saved);
+    }
+
     private VisitorDTO mapToDTO(Visitor v) {
         VisitorEntryExit log = visitorEntryExitRepository.findTopByVisitorIdOrderByEntryTimeDesc(v.getId()).orElse(null);
 
@@ -246,6 +374,9 @@ public class VisitorService {
                 .expectedTime(v.getExpectedTime())
                 .vehicleNumber(v.getVehicleNumber())
                 .numberOfVisitors(v.getNumberOfVisitors())
+                .totalGuestCount(v.getTotalGuestCount() != null ? v.getTotalGuestCount() : v.getNumberOfVisitors())
+                .primaryGuestPhoto(v.getPrimaryGuestPhoto())
+                .preApprovedByResidentId(v.getPreApprovedByResidentId())
                 .status(v.getStatus())
                 .approvalStatus(v.getApprovalStatus())
                 .passCode(v.getPassCode())

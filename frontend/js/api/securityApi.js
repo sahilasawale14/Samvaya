@@ -71,6 +71,20 @@ const SecurityApi = {
     return Api.put(`/security/visitors/${visitorId}/check-out`);
   },
 
+  getPreApprovedVisitors() {
+    return Api.get('/security/visitors/pre-approved');
+  },
+
+  verifyEntry(visitorId, gateNumber = 'Main Gate 1', notes = 'Photo match verified by gate security') {
+    const params = new URLSearchParams({ gateNumber });
+    if (notes) params.append('notes', notes);
+    return Api.put(`/security/visitors/${visitorId}/verify-entry?${params.toString()}`);
+  },
+
+  rejectEntry(visitorId, remarks = 'Photo mismatch or entry denied') {
+    return Api.put(`/security/visitors/${visitorId}/reject-entry`, { remarks });
+  },
+
   // Gate Deliveries
   getAllDeliveries() {
     return Api.get('/deliveries');

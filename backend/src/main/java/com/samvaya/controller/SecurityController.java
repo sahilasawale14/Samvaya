@@ -47,4 +47,27 @@ public class SecurityController {
         java.util.List<com.samvaya.dto.VisitorDTO> active = visitorService.getActiveVisitors();
         return ResponseEntity.ok(ApiResponse.success(active));
     }
+
+    @GetMapping("/visitors/pre-approved")
+    public ResponseEntity<ApiResponse<java.util.List<com.samvaya.dto.VisitorDTO>>> getPreApprovedVisitors() {
+        return ResponseEntity.ok(ApiResponse.success(visitorService.getPreApprovedVisitors()));
+    }
+
+    @RequestMapping(value = "/visitors/{id}/verify-entry", method = {RequestMethod.PUT, RequestMethod.POST})
+    public ResponseEntity<ApiResponse<com.samvaya.dto.VisitorDTO>> verifyEntry(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "Main Gate 1") String gateNumber,
+            @RequestParam(required = false, defaultValue = "Face matched and verified by guard") String notes) {
+        com.samvaya.dto.VisitorDTO verified = visitorService.verifyEntry(id, gateNumber, notes);
+        return ResponseEntity.ok(ApiResponse.success("Visitor photo match verified. Entry allowed.", verified));
+    }
+
+    @RequestMapping(value = "/visitors/{id}/reject-entry", method = {RequestMethod.PUT, RequestMethod.POST})
+    public ResponseEntity<ApiResponse<com.samvaya.dto.VisitorDTO>> rejectEntry(
+            @PathVariable Long id,
+            @RequestBody(required = false) com.samvaya.dto.VisitorDTO.VisitorRejectRequest body) {
+        String remarks = body != null ? body.getRemarks() : "Photo mismatch or security concern";
+        com.samvaya.dto.VisitorDTO rejected = visitorService.rejectEntry(id, remarks);
+        return ResponseEntity.ok(ApiResponse.success("Visitor entry denied by security gate", rejected));
+    }
 }

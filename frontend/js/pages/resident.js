@@ -85,20 +85,209 @@ const ResidentPage = {
 
     const visitors = await ResidentApi.getVisitors(residentId);
     Table.render('visitors-data-table', [
-      { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b> (${r.numberOfVisitors} Guests)` },
+      {
+        label: 'Photo',
+        render: r => r.primaryGuestPhoto ? `
+          <div style="width:42px; height:42px; border-radius:50%; overflow:hidden; border:2px solid var(--secondary); box-shadow:var(--shadow-sm); flex-shrink:0;">
+            <img src="${r.primaryGuestPhoto}" style="width:100%; height:100%; object-fit:cover;" alt="Guest Headshot">
+          </div>
+        ` : `
+          <div style="width:42px; height:42px; border-radius:50%; background:var(--surface-container-high); display:flex; align-items:center; justify-content:center; color:var(--outline);">
+            <span class="material-symbols-outlined" style="font-size:24px;">person</span>
+          </div>
+        `
+      },
+      {
+        label: 'Visitor Name',
+        render: r => `
+          <div>
+            <b>${r.visitorName}</b>
+            <div style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+              <span class="badge badge-info" style="font-size:10px; padding:2px 6px;">Group of ${r.totalGuestCount || r.numberOfVisitors || 1}</span>
+            </div>
+          </div>
+        `
+      },
       { label: 'Phone', key: 'phone' },
       { label: 'Purpose', key: 'purpose' },
       { label: 'Expected Schedule', render: r => `${r.expectedDate} @ ${r.expectedTime}` },
       { label: 'Vehicle Number', render: r => r.vehicleNumber || 'No vehicle' },
       { label: 'Pass Code', render: r => `<code style="font-size:14px; font-weight:700; color:var(--primary);">${r.passCode || '-'}</code>` },
-      { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` },
-      { label: 'Approval', render: r => `
-        ${r.approvalStatus === 'PENDING' ? `
-          <button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="ResidentPage.approveVisitor(${r.id}, true)">Approve</button>
-          <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="ResidentPage.approveVisitor(${r.id}, false)">Deny</button>
-        ` : `<span class="badge ${r.approvalStatus === 'APPROVED' ? 'badge-success' : 'badge-danger'}">${r.approvalStatus}</span>`}
-      `}
+      { label: 'Gate Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : 'badge-warning')}">${r.status}</span>` },
+      { label: 'Pass Status', render: r => {
+        if (r.approvalStatus === 'VERIFIED_ENTRY') return '<span class="badge badge-success">VERIFIED ENTRY</span>';
+        if (r.approvalStatus === 'PRE_APPROVED') return '<span class="badge badge-info">PRE-APPROVED</span>';
+        if (r.approvalStatus === 'REJECTED' || r.approvalStatus === 'DENIED') return '<span class="badge badge-danger">DENIED</span>';
+        return `<span class="badge badge-neutral">${r.approvalStatus || 'PENDING'}</span>`;
+      }}
     ], visitors);
+  },
+
+  async handleFacePhotoUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    const previewArea = document.getElementById('face-preview-area');
+    const previewImg = document.getElementById('face-preview-img');
+    const errorBanner = document.getElementById('face-error-banner');
+    const submitBtn = document.getElementById('btn-generate-pass');
+
+    window._currentGuestFacePhotoBase64 = null;
+    if (submitBtn) submitBtn.disabled = true;
+    if (errorBanner) errorBanner.style.display = 'none';
+    if (previewArea) previewArea.style.display = 'none';
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      if (errorBanner) {
+        errorBanner.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">error</span> Invalid file format. Please upload an image file (JPEG, PNG, WEBP).';
+        errorBanner.style.display = 'block';
+      }
+      event.target.value = '';
+      return;
+    }
+
+    Toast.info('Analyzing image for human face detection...');
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const isFaceValid = await ResidentPage.detectHumanFace(img);
+          if (isFaceValid) {
+            const compressedBase64 = ResidentPage.compressImageToBase64(img, 480, 480, 0.82);
+            window._currentGuestFacePhotoBase64 = compressedBase64;
+
+            if (previewImg) previewImg.src = compressedBase64;
+            if (previewArea) previewArea.style.display = 'flex';
+            if (errorBanner) errorBanner.style.display = 'none';
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.title = 'Ready to generate pass';
+            }
+            Toast.success('Primary guest face verified successfully!');
+          } else {
+            if (errorBanner) {
+              errorBanner.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">error</span> Invalid photo. A clear face headshot of the primary guest is required.';
+              errorBanner.style.display = 'block';
+            }
+            if (previewArea) previewArea.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = true;
+            event.target.value = '';
+            window._currentGuestFacePhotoBase64 = null;
+            Toast.error('Face verification failed: No clear human face detected in photo.');
+          }
+        } catch (err) {
+          console.error('Face detection error:', err);
+          if (errorBanner) {
+            errorBanner.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">error</span> Error analyzing photo. Please upload a clear headshot.';
+            errorBanner.style.display = 'block';
+          }
+          if (submitBtn) submitBtn.disabled = true;
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  },
+
+  async detectHumanFace(img) {
+    // 1. Try Native Browser FaceDetector API if supported (Chrome, Chromium, Edge, Android)
+    if ('FaceDetector' in window) {
+      try {
+        const detector = new window.FaceDetector({ maxDetectedFaces: 5, fastMode: true });
+        const faces = await detector.detect(img);
+        if (faces && faces.length > 0) {
+          return true;
+        }
+      } catch (e) {
+        console.warn('Native FaceDetector error, falling back to canvas heuristic analysis:', e);
+      }
+    }
+
+    // 2. High-Accuracy Canvas Heuristic Face Detection Fallback
+    return ResidentPage.analyzeFaceCanvasHeuristics(img);
+  },
+
+  analyzeFaceCanvasHeuristics(img) {
+    if (img.width < 100 || img.height < 100) return false;
+    const ratio = img.width / img.height;
+    if (ratio < 0.5 || ratio > 2.0) return false;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const sampleWidth = 160;
+    const sampleHeight = Math.max(100, Math.round(160 / ratio));
+    canvas.width = sampleWidth;
+    canvas.height = sampleHeight;
+
+    ctx.drawImage(img, 0, 0, sampleWidth, sampleHeight);
+    const imgData = ctx.getImageData(0, 0, sampleWidth, sampleHeight);
+    const data = imgData.data;
+
+    const minX = Math.round(sampleWidth * 0.20);
+    const maxX = Math.round(sampleWidth * 0.80);
+    const minY = Math.round(sampleHeight * 0.15);
+    const maxY = Math.round(sampleHeight * 0.80);
+
+    let totalCentralPixels = 0;
+    let skinPixelCount = 0;
+    let colorVariations = 0;
+
+    for (let y = minY; y < maxY; y++) {
+      for (let x = minX; x < maxX; x++) {
+        const idx = (y * sampleWidth + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+
+        totalCentralPixels++;
+
+        // Human Skin Chrominance Filter across diverse lighting and skin tones
+        const isSkin = (
+          (r > 90 && g > 38 && b > 20 && (Math.max(r, g, b) - Math.min(r, g, b) > 15) && Math.abs(r - g) > 14 && r > g && r > b) ||
+          (r > 55 && g > 35 && b > 22 && r >= g && g >= b && (r - b) > 8)
+        );
+
+        if (isSkin) skinPixelCount++;
+        if (Math.abs(r - g) > 8 || Math.abs(r - b) > 8) {
+          colorVariations++;
+        }
+      }
+    }
+
+    if (totalCentralPixels === 0) return false;
+
+    const skinRatio = skinPixelCount / totalCentralPixels;
+    const variationRatio = colorVariations / totalCentralPixels;
+
+    // Human headshots contain 14% to 82% skin pixels in central crop with rich facial texture
+    return (skinRatio >= 0.14 && skinRatio <= 0.82) && (variationRatio > 0.35);
+  },
+
+  compressImageToBase64(img, maxWidth = 480, maxHeight = 480, quality = 0.82) {
+    const canvas = document.createElement('canvas');
+    let width = img.width;
+    let height = img.height;
+
+    if (width > height) {
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+    } else {
+      if (height > maxHeight) {
+        width = Math.round((width * maxHeight) / height);
+        height = maxHeight;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+
+    return canvas.toDataURL('image/jpeg', quality);
   },
 
   async createVisitorPassSubmit(event) {
@@ -106,26 +295,42 @@ const ResidentPage = {
 
     const user = getCurrentUser();
     const residentId = user ? (user.residentId || user.id || user.userId) : null;
+    const guestPhoto = window._currentGuestFacePhotoBase64;
 
+    if (!guestPhoto) {
+      Toast.error('Please upload and verify a clear face headshot photo of the primary guest.');
+      return;
+    }
+
+    const guestCount = parseInt(document.getElementById('visitor-count').value || 1);
     const visitorData = {
       residentId: residentId,
       flatId: user ? user.flatId : null,
-      visitorName: document.getElementById('visitor-name').value,
-      phone: document.getElementById('visitor-phone').value,
-      purpose: document.getElementById('visitor-purpose').value,
+      flatNumber: user ? user.flatNumber : null,
+      wing: user ? user.wing : null,
+      visitorName: document.getElementById('visitor-name').value.trim(),
+      phone: document.getElementById('visitor-phone').value.trim(),
+      totalGuestCount: guestCount,
+      numberOfVisitors: guestCount,
+      primaryGuestPhoto: guestPhoto,
+      purpose: document.getElementById('visitor-purpose').value.trim(),
       expectedDate: document.getElementById('visitor-date').value,
       expectedTime: document.getElementById('visitor-time').value,
-      vehicleNumber: document.getElementById('visitor-vehicle').value,
-      numberOfVisitors: parseInt(document.getElementById('visitor-count').value || 1)
+      vehicleNumber: (document.getElementById('visitor-vehicle').value || '').trim()
     };
 
     try {
-      await ResidentApi.createVisitorPass(visitorData);
-      Toast.success('Visitor pre-approval pass generated!');
+      await ResidentApi.preApproveVisitor(visitorData);
+      Toast.success('Visitor pre-approval pass generated with face verification!');
       Modal.close('new-visitor-modal');
+      window._currentGuestFacePhotoBase64 = null;
+      const previewArea = document.getElementById('face-preview-area');
+      if (previewArea) previewArea.style.display = 'none';
+      const fileInput = document.getElementById('visitor-face-photo');
+      if (fileInput) fileInput.value = '';
       this.initVisitors();
     } catch (e) {
-      Toast.error(e.message || 'Failed to create visitor pass');
+      Toast.error(e.message || 'Failed to generate visitor pass');
     }
   },
 

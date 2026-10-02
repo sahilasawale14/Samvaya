@@ -25,8 +25,11 @@ public class VisitorDTO {
     private LocalTime expectedTime;
     private String vehicleNumber;
     private Integer numberOfVisitors;
+    private Integer totalGuestCount;
+    private String primaryGuestPhoto;
+    private Long preApprovedByResidentId;
     private String status; // 'EXPECTED', 'ARRIVED', 'INSIDE', 'EXITED', 'CANCELLED'
-    private String approvalStatus; // 'PENDING', 'APPROVED', 'DENIED'
+    private String approvalStatus; // 'PENDING', 'APPROVED', 'DENIED', 'PRE_APPROVED', 'VERIFIED_ENTRY', 'REJECTED'
     private String passCode;
     private String entryTime;
     private String exitTime;
@@ -44,6 +47,8 @@ public class VisitorDTO {
         private String vehicleNumber;
         private String purpose;
         private Integer numberOfVisitors;
+        private Integer totalGuestCount;
+        private String primaryGuestPhoto;
         private String gateNumber;
 
         public String getEffectiveVehicleNumber() {
@@ -52,5 +57,44 @@ public class VisitorDTO {
             }
             return vehicleNo != null ? vehicleNo.trim() : null;
         }
+
+        public Integer getEffectiveGuestCount() {
+            if (totalGuestCount != null && totalGuestCount > 0) return totalGuestCount;
+            if (numberOfVisitors != null && numberOfVisitors > 0) return numberOfVisitors;
+            return 1;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class VisitorPreApprovalRequest {
+        private String visitorName;
+        private String phone;
+        private String flatNumber;
+        private String wing;
+        private Integer totalGuestCount;
+        private Integer numberOfVisitors;
+        private String primaryGuestPhoto;
+        private String expectedDate;
+        private String expectedTime;
+        private String purpose;
+        private String vehicleNumber;
+        private Long residentId;
+
+        public Integer getEffectiveGuestCount() {
+            if (totalGuestCount != null && totalGuestCount > 0) return totalGuestCount;
+            if (numberOfVisitors != null && numberOfVisitors > 0) return numberOfVisitors;
+            return 1;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class VisitorRejectRequest {
+        private String remarks;
     }
 }

@@ -197,8 +197,11 @@ CREATE TABLE `visitors` (
     `expected_time` TIME NOT NULL,
     `vehicle_number` VARCHAR(50),
     `number_of_visitors` INT DEFAULT 1,
+    `total_guest_count` INT DEFAULT 1,
+    `primary_guest_photo` LONGTEXT NULL,
+    `pre_approved_by_resident_id` BIGINT NULL,
     `status` VARCHAR(30) DEFAULT 'EXPECTED', -- 'EXPECTED', 'ARRIVED', 'INSIDE', 'EXITED', 'CANCELLED'
-    `approval_status` VARCHAR(30) DEFAULT 'APPROVED', -- 'PENDING', 'APPROVED', 'DENIED'
+    `approval_status` VARCHAR(30) DEFAULT 'APPROVED', -- 'PENDING', 'APPROVED', 'DENIED', 'PRE_APPROVED', 'VERIFIED_ENTRY', 'REJECTED'
     `pass_code` VARCHAR(50) UNIQUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
