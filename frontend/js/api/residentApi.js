@@ -31,6 +31,10 @@ const ResidentApi = {
     return Api.post(`/visitors/${visitorId}/approve?approved=${approved}`);
   },
 
+  deleteVisitor(visitorId) {
+    return Api.delete(`/resident/visitors/${visitorId}`).catch(() => Api.delete(`/visitors/${visitorId}`));
+  },
+
   getDeliveries(residentId) {
     return Api.get(`/deliveries?residentId=${residentId}`);
   },

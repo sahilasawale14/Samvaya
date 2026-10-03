@@ -9,5 +9,7 @@ import java.util.Optional;
 @Repository
 public interface VisitorEntryExitRepository extends JpaRepository<VisitorEntryExit, Long> {
     Optional<VisitorEntryExit> findTopByVisitorIdOrderByEntryTimeDesc(Long visitorId);
+    List<VisitorEntryExit> findByVisitorId(Long visitorId);
+    void deleteByVisitorId(Long visitorId);
     List<VisitorEntryExit> findByExitTimeIsNull();
 }

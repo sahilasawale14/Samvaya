@@ -77,4 +77,10 @@ public class SecurityController {
         com.samvaya.dto.VisitorDTO rejected = visitorService.rejectEntry(id, remarks);
         return ResponseEntity.ok(ApiResponse.success("Visitor entry denied by security gate", rejected));
     }
+
+    @DeleteMapping("/visitors/{id}")
+    public ResponseEntity<?> deleteVisitor(@PathVariable Long id) {
+        visitorService.deleteVisitor(id);
+        return ResponseEntity.ok(ApiResponse.success("Visitor record deleted", java.util.Map.of("id", id)));
+    }
 }

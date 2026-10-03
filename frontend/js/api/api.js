@@ -81,8 +81,9 @@ const Api = {
         }
       };
 
+      const hasInit = localStorage.getItem(KEY) !== null || sessionStorage.getItem(KEY) !== null;
       let list = parseList(localStorage.getItem(KEY));
-      if (!list.length) {
+      if (!list.length && !hasInit) {
         const fallbacks = [
           sessionStorage.getItem(KEY),
           localStorage.getItem('samvaya_preapproved_visitors'),
@@ -103,6 +104,9 @@ const Api = {
         });
         try { localStorage.setItem(KEY, JSON.stringify(deduped)); } catch (e) {}
         return deduped;
+      }
+      if (hasInit) {
+        return [];
       }
       const defaultList = [
         {
@@ -477,6 +481,21 @@ const Api = {
       });
       saveLocalPreapproved(updated);
       return { success: true, message: 'Visitor entry verified and recorded', data: verified };
+    }
+
+    // Delete Visitor Pass (Security or Resident portal)
+    if (options.method === 'DELETE' && endpoint.includes('/visitors/')) {
+      const match = endpoint.match(/visitors\/([^/?]+)/);
+      const vId = match ? match[1] : null;
+      const list = getLocalPreapproved();
+      const updated = list.filter(v => !vId || (String(v.id) !== String(vId) && String(v.passCode) !== String(vId)));
+      saveLocalPreapproved(updated);
+      try {
+        const deleted = JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]');
+        if (vId) deleted.push(String(vId));
+        localStorage.setItem('samvaya_deleted_visitor_ids', JSON.stringify(deleted));
+      } catch (e) {}
+      return { success: true, message: 'Visitor record deleted' };
     }
 
     // Reject Pass & Deny Entry (Security portal)

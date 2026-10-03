@@ -90,6 +90,10 @@ const SecurityApi = {
     return Api.put(`/security/visitors/${visitorId}/reject-entry`, { remarks });
   },
 
+  deleteVisitor(visitorId) {
+    return Api.delete(`/security/visitors/${visitorId}`).catch(() => Api.delete(`/visitors/${visitorId}`));
+  },
+
   // Gate Deliveries
   getAllDeliveries() {
     return Api.get('/deliveries');

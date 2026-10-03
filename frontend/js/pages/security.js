@@ -434,31 +434,20 @@ const SecurityPage = {
       approveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">hourglass_top</span> Verifying...';
     }
 
-    // 1. Immediately update localStorage and sessionStorage passes to 'INSIDE' status
-    const updateLocalStatus = (storageKey) => {
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const list = JSON.parse(stored);
-          if (Array.isArray(list)) {
-            const updated = list.map(v => {
-              if (String(v.id) === String(id) || String(v.passCode) === String(id)) {
-                return {
-                  ...v,
-                  status: 'INSIDE',
-                  approvalStatus: 'VERIFIED_ENTRY',
-                  entryTime: new Date().toISOString()
-                };
-              }
-              return v;
-            });
-            localStorage.setItem(storageKey, JSON.stringify(updated));
-          }
-        }
-      } catch (e) {}
-    };
-
-    updateLocalStatus('samvaya_visitor_passes');
+    // 1. Immediately update all storage keys using SecurityPage.writeVisitorPasses
+    const passes = SecurityPage.readVisitorPasses();
+    const updated = passes.map(v => {
+      if (String(v.id) === String(id) || String(v.passCode) === String(id)) {
+        return {
+          ...v,
+          status: 'INSIDE',
+          approvalStatus: 'VERIFIED_ENTRY',
+          entryTime: new Date().toISOString()
+        };
+      }
+      return v;
+    });
+    SecurityPage.writeVisitorPasses(updated);
 
     try {
       await SecurityApi.verifyEntry(id, 'Main Gate 1', 'Physical face match verified against pre-approved pass');
@@ -483,6 +472,50 @@ const SecurityPage = {
         approveBtn.disabled = false;
         approveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">check_circle</span> Approve Entry';
       }
+    }
+  },
+
+  async deleteVisitorPass(id, visitorName) {
+    const displayName = visitorName || 'this visitor pass';
+    if (!confirm(`Are you sure you want to permanently delete the pass for ${displayName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Track deleted ID so remote fetch doesn't resurrect it
+      try {
+        const delList = JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]');
+        delList.push(String(id));
+        localStorage.setItem('samvaya_deleted_visitor_ids', JSON.stringify(delList));
+      } catch (e) {}
+
+      // 1. Update local passes immediately
+      const passes = SecurityPage.readVisitorPasses();
+      const updated = passes.filter(v => String(v.id) !== String(id) && String(v.passCode) !== String(id));
+      SecurityPage.writeVisitorPasses(updated);
+
+      // 2. Call backend delete API (falls back gracefully)
+      try {
+        await SecurityApi.deleteVisitor(id);
+      } catch (e) {
+        console.warn('Backend delete visitor failed (purged locally):', e);
+      }
+
+      Toast.success(`Pass for ${displayName} deleted successfully.`);
+
+      // 3. Re-render UI immediately
+      if (typeof loadPreApprovedVisitors === 'function') {
+        await loadPreApprovedVisitors();
+      }
+      if (typeof loadActiveVisitors === 'function') {
+        await loadActiveVisitors();
+      }
+      if (typeof loadAllVisitors === 'function') {
+        await loadAllVisitors();
+      }
+    } catch (err) {
+      console.error('Failed to delete visitor pass:', err);
+      Toast.error('Failed to delete visitor pass');
     }
   },
 

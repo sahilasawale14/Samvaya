@@ -162,7 +162,15 @@ const ResidentPage = {
         if (r.approvalStatus === 'PRE_APPROVED' || r.status === 'PRE_APPROVED') return '<span class="badge badge-info">PRE-APPROVED</span>';
         if (r.approvalStatus === 'REJECTED' || r.approvalStatus === 'DENIED') return '<span class="badge badge-danger">DENIED</span>';
         return `<span class="badge badge-neutral">${r.approvalStatus || 'PENDING'}</span>`;
-      }}
+      }},
+      {
+        label: 'Actions',
+        render: r => `
+          <button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:12px; display:inline-flex; align-items:center; gap:4px;" onclick="ResidentPage.deleteVisitorPass('${r.id}', '${(r.visitorName || '').replace(/'/g, "\\'")}')" title="Delete Pass">
+            <span class="material-symbols-outlined" style="font-size:16px;">delete</span> Delete
+          </button>
+        `
+      }
     ];
   },
 
@@ -278,8 +286,9 @@ const ResidentPage = {
     if (!user) return;
     const residentId = user.residentId || user.id || user.userId;
 
+    const hasInitialized = localStorage.getItem('samvaya_visitor_passes') !== null || sessionStorage.getItem('samvaya_visitor_passes') !== null;
     let localList = ResidentPage.readVisitorPasses();
-    if (!localList.length) {
+    if (!hasInitialized && !localList.length) {
       localList = [
         {
           id: 'PASS-101',
@@ -314,11 +323,17 @@ const ResidentPage = {
     try {
       const remote = await ResidentApi.getVisitors(residentId, user.flatId);
       if (Array.isArray(remote) && remote.length) {
+        const deletedIds = new Set((() => {
+          try { return JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]'); } catch(e) { return []; }
+        })().map(String));
+
         const stored = ResidentPage.readVisitorPasses();
         const existingKeys = new Set(stored.map(v => (v.passCode || v.id || v.visitorName).toString()));
         let changed = false;
         remote.forEach(item => {
           const key = (item.passCode || item.id || item.visitorName).toString();
+          const idStr = item.id ? String(item.id) : null;
+          if (idStr && deletedIds.has(idStr)) return;
           if (!existingKeys.has(key)) {
             stored.push(item);
             existingKeys.add(key);
@@ -332,6 +347,40 @@ const ResidentPage = {
       }
     } catch (err) {
       console.error('Error fetching visitors:', err);
+    }
+  },
+
+  async deleteVisitorPass(id, visitorName) {
+    const displayName = visitorName || 'this visitor pass';
+    if (!confirm(`Are you sure you want to permanently delete the pass for ${displayName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // 1. Record deleted id to prevent resurrection
+      try {
+        const delList = JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]');
+        delList.push(String(id));
+        localStorage.setItem('samvaya_deleted_visitor_ids', JSON.stringify(delList));
+      } catch (e) {}
+
+      // 2. Filter from local passes and save atomically
+      const allPasses = ResidentPage.readVisitorPasses();
+      const updated = allPasses.filter(v => String(v.id) !== String(id) && String(v.passCode) !== String(id));
+      ResidentPage.writeVisitorPasses(updated);
+
+      // 3. Call backend delete API
+      try {
+        await ResidentApi.deleteVisitor(id);
+      } catch (e) {
+        console.warn('Backend delete visitor failed (purged locally):', e);
+      }
+
+      Toast.success(`Pass for ${displayName} deleted successfully.`);
+      ResidentPage.renderVisitorsTableFromStorage();
+    } catch (err) {
+      console.error('Failed to delete pass:', err);
+      Toast.error('Failed to delete pass');
     }
   },
 

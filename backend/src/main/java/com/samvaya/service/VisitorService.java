@@ -436,6 +436,18 @@ public class VisitorService {
         return mapToDTO(saved);
     }
 
+    @Transactional
+    public void deleteVisitor(Long id) {
+        if (id != null) {
+            try {
+                visitorEntryExitRepository.deleteByVisitorId(id);
+            } catch (Exception ignored) {}
+            if (visitorRepository.existsById(id)) {
+                visitorRepository.deleteById(id);
+            }
+        }
+    }
+
     private VisitorDTO mapToDTO(Visitor v) {
         VisitorEntryExit log = visitorEntryExitRepository.findTopByVisitorIdOrderByEntryTimeDesc(v.getId()).orElse(null);
 

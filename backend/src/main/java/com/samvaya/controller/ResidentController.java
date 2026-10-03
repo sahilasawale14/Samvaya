@@ -56,4 +56,10 @@ public class ResidentController {
         return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
                 .body(ApiResponse.success("Visitor pre-approved successfully with face pass", preApproved));
     }
+
+    @DeleteMapping("/visitors/{id}")
+    public ResponseEntity<?> deleteVisitor(@PathVariable Long id) {
+        visitorService.deleteVisitor(id);
+        return ResponseEntity.ok(ApiResponse.success("Visitor record deleted", java.util.Map.of("id", id)));
+    }
 }
