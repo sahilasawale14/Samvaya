@@ -38,6 +38,16 @@ public class ResidentController {
         return ResponseEntity.ok(ApiResponse.success(bills));
     }
 
+    @GetMapping("/visitors")
+    public ResponseEntity<ApiResponse<java.util.List<com.samvaya.dto.VisitorDTO>>> getMyVisitors(
+            @RequestParam(required = false) Long residentId,
+            @RequestParam(required = false) Long flatId,
+            @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
+        Long targetResidentId = residentId != null ? residentId : headerUserId;
+        java.util.List<com.samvaya.dto.VisitorDTO> visitors = visitorService.getVisitorsForResidentOrFlat(targetResidentId, flatId);
+        return ResponseEntity.ok(ApiResponse.success(visitors));
+    }
+
     @PostMapping("/visitors/pre-approve")
     public ResponseEntity<ApiResponse<com.samvaya.dto.VisitorDTO>> preApproveVisitor(
             @RequestBody com.samvaya.dto.VisitorDTO.VisitorPreApprovalRequest request,

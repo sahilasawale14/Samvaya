@@ -87,8 +87,8 @@ async function handleLoginSubmit(event) {
       flatNumber: isResident ? (user.flatNumber || 'A-101') : null,
       wing: isResident ? (user.wing || 'A') : null,
       residentType: isResident ? (user.residentType || 'OWNER') : null,
-      residentId: isResident ? (user.residentId || 1) : null,
-      flatId: isResident ? (user.flatId || 1) : null
+      residentId: isResident ? (user.residentId || user.id || null) : null,
+      flatId: isResident ? (user.flatId || null) : null
     };
 
     sessionStorage.setItem('currentUser', JSON.stringify(sessionUser));

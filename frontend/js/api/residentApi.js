@@ -11,8 +11,12 @@ const ResidentApi = {
     return Api.get(`/resident/profile/${residentId}`);
   },
 
-  getVisitors(residentId) {
-    return Api.get(`/visitors?residentId=${residentId}`);
+  getVisitors(residentId, flatId) {
+    const params = new URLSearchParams();
+    if (residentId) params.append('residentId', residentId);
+    if (flatId) params.append('flatId', flatId);
+    const qs = params.toString();
+    return Api.get(`/resident/visitors${qs ? `?${qs}` : ''}`);
   },
 
   createVisitorPass(visitorData) {

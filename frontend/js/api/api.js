@@ -68,28 +68,7 @@ const Api = {
     const isMutation = options.method && options.method !== 'GET';
     const currentUser = user || { fullName: 'Rahul Sharma', flatNumber: 'A-101', wing: 'A', residentType: 'OWNER' };
 
-    // 1. Dashboard Endpoint
-    if (endpoint.includes('/resident/dashboard/')) {
-      return {
-        residentName: currentUser.fullName || 'Rahul Sharma',
-        wing: currentUser.wing || 'A',
-        flatNumber: currentUser.flatNumber || '101',
-        residentType: currentUser.residentType || 'OWNER',
-        expectedVisitorsCount: 2,
-        activeDeliveriesCount: 1,
-        pendingComplaintsCount: 1,
-        pendingMaintenanceAmount: 5650,
-        upcomingVisitors: [
-          { id: 1, visitorName: 'Ankit Gupta', purpose: 'Guest', expectedDate: 'Today', expectedTime: '06:00 PM', passCode: 'SAM-4821', status: 'EXPECTED' },
-          { id: 2, visitorName: 'Karan Mehra', purpose: 'Family Visit', expectedDate: 'Tomorrow', expectedTime: '11:30 AM', passCode: 'SAM-9142', status: 'EXPECTED' }
-        ],
-        activeDeliveries: [
-          { id: 1, company: 'Amazon Express', deliveryPersonName: 'Sunil Kumar', phone: '+91 98111 00000', referenceNumber: 'AMZ-99881', status: 'ARRIVED' }
-        ]
-      };
-    }
-
-    // 2. Visitors & Pre-Approval Gate Pass Endpoints (Synced via LocalStorage for Offline & Vercel Resilience)
+    // Helper to read and write preapproved visitor passes (Synced via LocalStorage for Offline & Vercel Resilience)
     const getLocalPreapproved = () => {
       const KEY = 'samvaya_visitor_passes';
       const parseList = (raw) => {
@@ -132,7 +111,9 @@ const Api = {
           phone: '+91 98200 12345',
           wing: 'A',
           flatNumber: 'A-101',
-          residentName: 'Rahul Sharma',
+          flatId: 1,
+          residentId: 1,
+          residentName: 'Sahil (Flat A-101)',
           purpose: 'Family Guest',
           expectedDate: 'Today',
           expectedTime: '07:30 PM',
@@ -154,6 +135,41 @@ const Api = {
       } catch(e) {}
       return defaultList;
     };
+
+    // 1. Dashboard Endpoint with Strict Resident Isolation
+    if (endpoint.includes('/resident/dashboard/')) {
+      const match = endpoint.match(/resident\/dashboard\/(\d+)/);
+      const reqResId = match ? match[1] : null;
+      const allPre = getLocalPreapproved();
+      const myVisitors = allPre.filter(p => {
+        if (!p) return false;
+        if (reqResId && p.residentId != null) return String(p.residentId) === String(reqResId);
+        if (currentUser && currentUser.residentId && p.residentId != null) return String(p.residentId) === String(currentUser.residentId);
+        if (currentUser && currentUser.id && p.residentId != null) return String(p.residentId) === String(currentUser.id);
+        if (currentUser && currentUser.flatId && p.flatId != null) return String(p.flatId) === String(currentUser.flatId);
+        if (currentUser && currentUser.flatNumber && p.flatNumber) {
+          const pFlat = String(p.flatNumber).trim().toUpperCase();
+          const uFlat = String(currentUser.flatNumber).trim().toUpperCase();
+          if (pFlat === uFlat) return true;
+        }
+        return false;
+      });
+
+      return {
+        residentName: currentUser.fullName || 'Resident User',
+        wing: currentUser.wing || 'A',
+        flatNumber: currentUser.flatNumber || '101',
+        residentType: currentUser.residentType || 'OWNER',
+        expectedVisitorsCount: myVisitors.length,
+        activeDeliveriesCount: 1,
+        pendingComplaintsCount: 1,
+        pendingMaintenanceAmount: 5650,
+        upcomingVisitors: myVisitors.slice(0, 5),
+        activeDeliveries: [
+          { id: 1, company: 'Amazon Express', deliveryPersonName: 'Sunil Kumar', phone: '+91 98111 00000', referenceNumber: 'AMZ-99881', status: 'ARRIVED' }
+        ]
+      };
+    }
 
     const saveLocalPreapproved = (list) => {
       const clean = Array.isArray(list) ? list : [];
@@ -550,7 +566,48 @@ const Api = {
       return { success: true, message: 'Visitor marked as EXITED' };
     }
 
-    // All Visitors Query (For logs or resident visitor table)
+    // Tenant-isolated resident visitors query
+    if (endpoint.includes('/resident/visitors') || (endpoint.includes('/visitors') && (endpoint.includes('residentId') || endpoint.includes('flatId')))) {
+      const list = getLocalPreapproved();
+      let queryResId = null;
+      let queryFlatId = null;
+      try {
+        const urlStr = endpoint.startsWith('http') ? endpoint : ('http://dummy' + (endpoint.startsWith('/') ? endpoint : '/' + endpoint));
+        const u = new URL(urlStr);
+        queryResId = u.searchParams.get('residentId');
+        queryFlatId = u.searchParams.get('flatId');
+      } catch (e) {}
+
+      const effectiveResId = queryResId || (currentUser ? (currentUser.residentId || currentUser.id || currentUser.userId) : null);
+      const effectiveFlatId = queryFlatId || (currentUser ? currentUser.flatId : null);
+      const effectiveFlatNumber = currentUser ? currentUser.flatNumber : null;
+      const effectiveWing = currentUser ? currentUser.wing : null;
+
+      return list.filter(pass => {
+        if (!pass) return false;
+        if (effectiveResId && pass.residentId != null) {
+          return String(pass.residentId) === String(effectiveResId);
+        }
+        if (effectiveFlatId && pass.flatId != null) {
+          return String(pass.flatId) === String(effectiveFlatId);
+        }
+        if (effectiveFlatNumber && pass.flatNumber) {
+          const pFlat = String(pass.flatNumber).trim().toUpperCase();
+          const uFlat = String(effectiveFlatNumber).trim().toUpperCase();
+          if (pFlat === uFlat) return true;
+          const pWing = pass.wing || (pFlat.includes('-') ? pFlat.split('-')[0].replace(/[^A-Z]/g, '') : '');
+          const uWing = effectiveWing || (uFlat.includes('-') ? uFlat.split('-')[0].replace(/[^A-Z]/g, '') : '');
+          if (pWing && uWing && pWing === uWing) {
+            const cleanP = pFlat.replace(/[^0-9]/g, '');
+            const cleanU = uFlat.replace(/[^0-9]/g, '');
+            if (cleanP && cleanU && cleanP === cleanU) return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    // All Visitors Query (For gate security operations or admin overview)
     if (endpoint.includes('/visitors')) {
       const list = getLocalPreapproved();
       return list;

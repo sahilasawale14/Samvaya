@@ -10,6 +10,9 @@ import java.util.Optional;
 @Repository
 public interface VisitorRepository extends JpaRepository<Visitor, Long> {
     List<Visitor> findByResidentId(Long residentId);
+    List<Visitor> findByPreApprovedByResidentId(Long residentId);
+    List<Visitor> findByResidentIdOrPreApprovedByResidentId(Long residentId, Long preApprovedByResidentId);
+    List<Visitor> findByResidentIdOrPreApprovedByResidentIdOrFlatId(Long residentId, Long preApprovedByResidentId, Long flatId);
     List<Visitor> findByFlatId(Long flatId);
     List<Visitor> findByStatus(String status);
     List<Visitor> findByExpectedDate(LocalDate date);

@@ -29,6 +29,32 @@ const SEED_USERS = {
     residentId: 1,
     flatId: 1
   },
+  sahil: {
+    id: 2,
+    userId: 2,
+    username: 'sahil',
+    passwords: ['password123', 'sahil123'],
+    fullName: 'Sahil (Flat A-101)',
+    role: 'RESIDENT',
+    flatNumber: 'A-101',
+    wing: 'A',
+    residentType: 'OWNER',
+    residentId: 1,
+    flatId: 1
+  },
+  ameya: {
+    id: 3,
+    userId: 3,
+    username: 'ameya',
+    passwords: ['password123', 'ameya123'],
+    fullName: 'Ameya (Flat B-202)',
+    role: 'RESIDENT',
+    flatNumber: 'B-202',
+    wing: 'B',
+    residentType: 'TENANT',
+    residentId: 2,
+    flatId: 22
+  },
   tenant1: {
     id: 3,
     userId: 3,
@@ -40,7 +66,7 @@ const SEED_USERS = {
     wing: 'B',
     residentType: 'TENANT',
     residentId: 2,
-    flatId: 6
+    flatId: 22
   },
   admin: {
     id: 1,

@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -39,10 +40,49 @@ public class VisitorService {
     }
 
     @Transactional(readOnly = true)
-    public List<VisitorDTO> getVisitorsForResident(Long residentId) {
-        return visitorRepository.findByResidentId(residentId).stream()
+    public List<VisitorDTO> getVisitorsByResidentId(Long residentId) {
+        if (residentId == null) {
+            return Collections.emptyList();
+        }
+        return visitorRepository.findByResidentIdOrPreApprovedByResidentId(residentId, residentId).stream()
+                .distinct()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitorDTO> getVisitorsByFlatId(Long flatId) {
+        if (flatId == null) {
+            return Collections.emptyList();
+        }
+        return visitorRepository.findByFlatId(flatId).stream()
+                .distinct()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitorDTO> getVisitorsForResidentOrFlat(Long residentId, Long flatId) {
+        if (residentId == null && flatId == null) {
+            return Collections.emptyList();
+        }
+        List<Visitor> list;
+        if (residentId != null && flatId != null) {
+            list = visitorRepository.findByResidentIdOrPreApprovedByResidentIdOrFlatId(residentId, residentId, flatId);
+        } else if (residentId != null) {
+            list = visitorRepository.findByResidentIdOrPreApprovedByResidentId(residentId, residentId);
+        } else {
+            list = visitorRepository.findByFlatId(flatId);
+        }
+        return list.stream()
+                .distinct()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitorDTO> getVisitorsForResident(Long residentId) {
+        return getVisitorsByResidentId(residentId);
     }
 
     @Transactional(readOnly = true)

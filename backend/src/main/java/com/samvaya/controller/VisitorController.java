@@ -17,9 +17,11 @@ public class VisitorController {
     private final VisitorService visitorService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<VisitorDTO>>> getAllVisitors(@RequestParam(required = false) Long residentId) {
-        List<VisitorDTO> list = (residentId != null)
-                ? visitorService.getVisitorsForResident(residentId)
+    public ResponseEntity<ApiResponse<List<VisitorDTO>>> getAllVisitors(
+            @RequestParam(required = false) Long residentId,
+            @RequestParam(required = false) Long flatId) {
+        List<VisitorDTO> list = (residentId != null || flatId != null)
+                ? visitorService.getVisitorsForResidentOrFlat(residentId, flatId)
                 : visitorService.getAllVisitors();
         return ResponseEntity.ok(ApiResponse.success(list));
     }

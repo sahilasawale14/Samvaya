@@ -94,27 +94,33 @@ const ResidentPage = {
     if (!Array.isArray(list) || list.length === 0) return [];
     const currentUser = user || (typeof getCurrentUser === 'function' ? getCurrentUser() : null) || {};
     const residentId = currentUser.residentId || currentUser.id || currentUser.userId;
+    const flatId = currentUser.flatId;
     const userFlat = String(currentUser.flatNumber || '').trim().toUpperCase();
+    const userWing = String(currentUser.wing || '').trim().toUpperCase();
 
     const filtered = list.filter((p) => {
       if (!p) return false;
-      // Match 1: residentId match
-      if (residentId && p.residentId != null && String(p.residentId) === String(residentId)) return true;
-      // Match 2: residentName match
-      if (currentUser.fullName && p.residentName && p.residentName.trim().toLowerCase() === currentUser.fullName.trim().toLowerCase()) return true;
-      // Match 3: Flat number match
-      const pFlat = String(p.flatNumber || '').trim().toUpperCase();
-      if (userFlat && pFlat) {
-        if (userFlat === pFlat) return true;
-        const cleanP = pFlat.replace(/[^0-9]/g, '');
-        const cleanUser = userFlat.replace(/[^0-9]/g, '');
-        if (cleanP && cleanUser && cleanP === cleanUser) return true;
+      // Match 1: residentId match (strict)
+      if (residentId && p.residentId != null) {
+        return String(p.residentId) === String(residentId);
+      }
+      // Match 2: flatId match (strict)
+      if (flatId && p.flatId != null) {
+        return String(p.flatId) === String(flatId);
+      }
+      // Match 3: Flat and Wing match
+      if (userFlat && p.flatNumber) {
+        const pFlat = String(p.flatNumber).trim().toUpperCase();
+        if (pFlat === userFlat) return true;
+        const pNormalized = ResidentPage.normalizeFlatUnit(pFlat, p.wing);
+        const userNormalized = ResidentPage.normalizeFlatUnit(userFlat, userWing);
+        if (pNormalized && userNormalized && pNormalized === userNormalized) return true;
       }
       return false;
     });
 
-    // Fallback: If filtering resulted in 0 rows but list contains passes, return full list so passes never disappear
-    return filtered.length > 0 ? filtered : list;
+    // Strict tenant isolation: return only matching records (never leak other residents' passes)
+    return filtered;
   },
 
   getVisitorTableColumns() {
@@ -224,10 +230,11 @@ const ResidentPage = {
       const duesCountEl = document.getElementById('stat-dues-amount');
       if (duesCountEl) duesCountEl.innerText = `₹${(stats.pendingMaintenanceAmount || 0).toLocaleString('en-IN')}`;
 
-      // Render Visitors
-      let upcoming = stats.upcomingVisitors || [];
+      // Render Visitors with strict resident isolation
+      let upcoming = ResidentPage.filterPassesForResident(stats.upcomingVisitors || [], user);
       try {
-        const localList = ResidentPage.readVisitorPasses();
+        const rawLocal = ResidentPage.readVisitorPasses();
+        const localList = ResidentPage.filterPassesForResident(rawLocal, user);
         if (localList.length > 0) {
           const existingKeys = new Set(upcoming.map(v => (v.passCode || v.id).toString()));
           localList.forEach(v => {
@@ -240,7 +247,7 @@ const ResidentPage = {
         }
       } catch (e) {}
 
-      if (visCountEl) visCountEl.innerText = upcoming.length || stats.expectedVisitorsCount || 0;
+      if (visCountEl) visCountEl.innerText = upcoming.length;
 
       Table.render('upcoming-visitors-table', [
         { label: 'Visitor Name', key: 'visitorName' },
@@ -278,9 +285,11 @@ const ResidentPage = {
           id: 'PASS-101',
           visitorName: 'Sanjay Deshmukh',
           phone: '+91 98200 12345',
-          wing: user.wing || 'A',
-          flatNumber: user.flatNumber || 'A-101',
-          residentName: user.fullName || 'Rahul Sharma',
+          wing: 'A',
+          flatNumber: 'A-101',
+          flatId: 1,
+          residentId: 1,
+          residentName: 'Sahil (Flat A-101)',
           purpose: 'Family Guest',
           expectedDate: 'Today',
           expectedTime: '07:30 PM',
@@ -303,7 +312,7 @@ const ResidentPage = {
     ResidentPage.renderVisitorsTableFromStorage(user);
 
     try {
-      const remote = await ResidentApi.getVisitors(residentId);
+      const remote = await ResidentApi.getVisitors(residentId, user.flatId);
       if (Array.isArray(remote) && remote.length) {
         const stored = ResidentPage.readVisitorPasses();
         const existingKeys = new Set(stored.map(v => (v.passCode || v.id || v.visitorName).toString()));
