@@ -72,6 +72,7 @@ public class VisitorDTO {
     public static class VisitorPreApprovalRequest {
         private String visitorName;
         private String phone;
+        private Long flatId;
         private String flatNumber;
         private String wing;
         private Integer totalGuestCount;

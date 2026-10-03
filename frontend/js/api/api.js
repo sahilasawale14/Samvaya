@@ -45,6 +45,14 @@ const Api = {
         }
       }
 
+      // Intelligent Fallback: If remote backend database has 0 visitors or empty array
+      if (endpoint.includes('/visitors') && (!options.method || options.method === 'GET')) {
+        if (Array.isArray(data) && data.length === 0) {
+          console.warn(`[API] Remote ${endpoint} returned 0 visitors; merging localized pre-approved dataset.`);
+          return this.getFallbackData(endpoint, options, user, null);
+        }
+      }
+
       return data;
     } catch (err) {
       clearTimeout(timeoutId);
@@ -83,41 +91,92 @@ const Api = {
 
     // 2. Visitors & Pre-Approval Gate Pass Endpoints (Synced via LocalStorage for Offline & Vercel Resilience)
     const getLocalPreapproved = () => {
-      try {
-        const stored = localStorage.getItem('samvaya_preapproved_visitors');
-        if (stored) return JSON.parse(stored);
-      } catch (e) {}
+      const KEY = 'samvaya_visitor_passes';
+      const parseList = (raw) => {
+        if (!raw) return [];
+        try {
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      };
+
+      let list = parseList(localStorage.getItem(KEY));
+      if (!list.length) {
+        const fallbacks = [
+          sessionStorage.getItem(KEY),
+          localStorage.getItem('samvaya_preapproved_visitors'),
+          sessionStorage.getItem('samvaya_preapproved_visitors')
+        ];
+        for (const raw of fallbacks) {
+          list = parseList(raw);
+          if (list.length) break;
+        }
+      }
+      if (list.length > 0) {
+        const seen = new Set();
+        const deduped = list.filter(item => {
+          const key = (item.passCode || item.id || (item.visitorName + (item.phone || ''))).toString();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        try { localStorage.setItem(KEY, JSON.stringify(deduped)); } catch (e) {}
+        return deduped;
+      }
       const defaultList = [
         {
-          id: 101,
+          id: 'PASS-101',
           visitorName: 'Sanjay Deshmukh',
           phone: '+91 98200 12345',
           wing: 'A',
-          flatNumber: '101',
+          flatNumber: 'A-101',
           residentName: 'Rahul Sharma',
           purpose: 'Family Guest',
           expectedDate: 'Today',
           expectedTime: '07:30 PM',
+          totalGuests: 3,
           totalGuestCount: 3,
           numberOfVisitors: 3,
+          photo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%230d9488"/><circle cx="100" cy="80" r="45" fill="%23ffd166"/><circle cx="85" cy="75" r="5" fill="%23000"/><circle cx="115" cy="75" r="5" fill="%23000"/><path d="M 85 95 Q 100 110 115 95" stroke="%23000" stroke-width="4" fill="none"/><path d="M 40 180 Q 100 125 160 180 Z" fill="%23118ab2"/></svg>',
           primaryGuestPhoto: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%230d9488"/><circle cx="100" cy="80" r="45" fill="%23ffd166"/><circle cx="85" cy="75" r="5" fill="%23000"/><circle cx="115" cy="75" r="5" fill="%23000"/><path d="M 85 95 Q 100 110 115 95" stroke="%23000" stroke-width="4" fill="none"/><path d="M 40 180 Q 100 125 160 180 Z" fill="%23118ab2"/></svg>',
-          passCode: 'GP-7721',
-          status: 'EXPECTED',
+          passCode: '772190',
+          status: 'PRE_APPROVED',
           approvalStatus: 'PRE_APPROVED',
+          createdAt: new Date().toISOString(),
           entryTime: null,
           exitTime: null
         }
       ];
       try {
-        localStorage.setItem('samvaya_preapproved_visitors', JSON.stringify(defaultList));
+        localStorage.setItem('samvaya_visitor_passes', JSON.stringify(defaultList));
       } catch(e) {}
       return defaultList;
     };
 
     const saveLocalPreapproved = (list) => {
+      const clean = Array.isArray(list) ? list : [];
       try {
-        localStorage.setItem('samvaya_preapproved_visitors', JSON.stringify(list));
-      } catch (e) {}
+        localStorage.setItem('samvaya_visitor_passes', JSON.stringify(clean));
+        localStorage.setItem('samvaya_preapproved_visitors', JSON.stringify(clean));
+        sessionStorage.setItem('samvaya_visitor_passes', JSON.stringify(clean));
+      } catch (e) {
+        try {
+          const compact = clean.map(item => {
+            if (item.photo && item.photo.length > 20000) {
+              const initial = (item.visitorName ? item.visitorName[0] : 'G').toUpperCase();
+              return {
+                ...item,
+                photo: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" fill="%230d9488" rx="80"/><text x="50%" y="54%" font-size="64" font-family="sans-serif" font-weight="bold" fill="%23ffffff" dominant-baseline="middle" text-anchor="middle">${initial}</text></svg>`,
+                primaryGuestPhoto: null
+              };
+            }
+            return item;
+          });
+          localStorage.setItem('samvaya_visitor_passes', JSON.stringify(compact));
+        } catch (e2) {}
+      }
     };
 
     // Helpers for Residents & Flats state persistence (Vercel & Offline Resilience)
@@ -327,29 +386,44 @@ const Api = {
         body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
       } catch (e) {}
 
+      const vName = body.visitorName || 'Guest Visitor';
+      const initial = (vName[0] || 'V').toUpperCase();
+      const defaultPhoto = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><rect width="160" height="160" fill="%230d9488" rx="80"/><text x="50%" y="54%" font-size="64" font-family="sans-serif" font-weight="bold" fill="%23ffffff" dominant-baseline="middle" text-anchor="middle">${initial}</text></svg>`;
+
+      const flatNum = body.flatNumber || currentUser.flatNumber || 'A-101';
+      const wingVal = body.wing || currentUser.wing || (flatNum.includes('-') ? flatNum.split('-')[0].replace(/[^A-Za-z]/g, '') : 'A');
+
       const newPass = {
-        id: Date.now(),
-        visitorName: body.visitorName || 'Guest Visitor',
+        id: body.id || ('PASS-' + Date.now()),
+        visitorName: vName,
         phone: body.phone || '+91 98765 00000',
-        wing: body.wing || currentUser.wing || 'A',
-        flatNumber: body.flatNumber || currentUser.flatNumber || '101',
-        residentName: currentUser.fullName || 'Rahul Sharma',
+        residentId: body.residentId || currentUser.residentId || 1,
+        residentName: body.residentName || currentUser.fullName || 'Rahul Sharma',
+        flatId: body.flatId || currentUser.flatId || 1,
+        wing: wingVal,
+        flatNumber: flatNum,
         purpose: body.purpose || 'Guest Visit',
         expectedDate: body.expectedDate || 'Today',
         expectedTime: body.expectedTime || '06:00 PM',
+        totalGuests: parseInt(body.totalGuests || body.totalGuestCount || body.numberOfVisitors || 1, 10),
         totalGuestCount: parseInt(body.totalGuestCount || body.numberOfVisitors || 1, 10),
         numberOfVisitors: parseInt(body.totalGuestCount || body.numberOfVisitors || 1, 10),
-        primaryGuestPhoto: body.primaryGuestPhoto || null,
-        passCode: 'GP-' + Math.floor(1000 + Math.random() * 9000),
-        status: 'EXPECTED',
-        approvalStatus: 'PRE_APPROVED',
+        photo: body.photo || body.primaryGuestPhoto || defaultPhoto,
+        primaryGuestPhoto: body.primaryGuestPhoto || body.photo || defaultPhoto,
+        vehicleNumber: body.vehicleNumber || body.vehicleNo || '',
+        passCode: body.passCode || ('GP-' + Math.floor(1000 + Math.random() * 9000)),
+        status: body.status || 'PRE_APPROVED',
+        approvalStatus: body.approvalStatus || 'PRE_APPROVED',
         entryTime: null,
         exitTime: null
       };
 
       const list = getLocalPreapproved();
-      list.unshift(newPass);
-      saveLocalPreapproved(list);
+      const exists = list.some(v => String(v.id) === String(newPass.id) || String(v.passCode) === String(newPass.passCode));
+      if (!exists) {
+        list.unshift(newPass);
+        saveLocalPreapproved(list);
+      }
 
       if (typeof Toast !== 'undefined') {
         Toast.success('Face-Verified Pre-Approval Pass generated successfully!');
@@ -360,17 +434,21 @@ const Api = {
     // Pre-Approved Passes Query (Security portal)
     if (endpoint.includes('/pre-approved')) {
       const list = getLocalPreapproved();
-      return list.filter(v => v.approvalStatus === 'PRE_APPROVED');
+      return list.filter(v => {
+        const status = v.status || v.approvalStatus;
+        const approved = v.approvalStatus === 'PRE_APPROVED' || v.status === 'PRE_APPROVED' || v.status === 'EXPECTED';
+        return approved && status !== 'INSIDE' && status !== 'EXITED' && status !== 'REJECTED';
+      });
     }
 
     // Verify Pass & Record Entry (Security portal)
     if (endpoint.includes('/verify-entry')) {
       const list = getLocalPreapproved();
-      const match = endpoint.match(/visitors\/(\d+)\/verify-entry/);
-      const vId = match ? parseInt(match[1], 10) : null;
+      const match = endpoint.match(/visitors\/([^/]+)\/verify-entry/);
+      const vId = match ? match[1] : null;
       let verified = null;
       const updated = list.map(v => {
-        if (!vId || v.id == vId) {
+        if (!vId || String(v.id) === String(vId) || String(v.passCode) === String(vId)) {
           verified = {
             ...v,
             approvalStatus: 'VERIFIED_ENTRY',
@@ -388,11 +466,11 @@ const Api = {
     // Reject Pass & Deny Entry (Security portal)
     if (endpoint.includes('/reject-entry')) {
       const list = getLocalPreapproved();
-      const match = endpoint.match(/visitors\/(\d+)\/reject-entry/);
-      const vId = match ? parseInt(match[1], 10) : null;
+      const match = endpoint.match(/visitors\/([^/]+)\/reject-entry/);
+      const vId = match ? match[1] : null;
       let rejected = null;
       const updated = list.map(v => {
-        if (!vId || v.id == vId) {
+        if (!vId || String(v.id) === String(vId) || String(v.passCode) === String(vId)) {
           rejected = {
             ...v,
             approvalStatus: 'REJECTED',
@@ -787,14 +865,19 @@ const Api = {
       const pBikesOcc = pBikes.filter(s => s.isOccupied).length;
       const pTotalOcc = pSlots.filter(s => s.isOccupied).length;
 
+      const localVisitors = getLocalPreapproved();
+      const expectedCount = localVisitors.filter(v => v.status === 'EXPECTED' || v.status === 'PRE_APPROVED').length;
+      const insideCount = localVisitors.filter(v => v.status === 'INSIDE').length;
+
       return {
-        expectedVisitorsToday: 5,
-        visitorsCurrentlyInside: 2,
+        expectedVisitorsToday: Math.max(expectedCount, 5),
+        visitorsCurrentlyInside: insideCount + 2,
         expectedDeliveriesToday: 8,
         deliveriesPendingAtGate: 3,
         temporaryWorkersInside: 4,
         activeIncidentsCount: 0,
         staffPresentToday: 8,
+        recentGateVisitors: localVisitors,
         totalParkingSlots: pSlots.length,
         occupiedParkingSlots: pTotalOcc,
         availableParkingSlots: pSlots.length - pTotalOcc,
