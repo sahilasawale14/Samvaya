@@ -126,7 +126,7 @@ const ResidentPage = {
   getVisitorTableColumns() {
     return [
       {
-        label: 'Photo',
+        label: 'Photo Avatar',
         render: r => {
           const imgUrl = r.photo || r.primaryGuestPhoto;
           return imgUrl ? `
@@ -134,40 +134,56 @@ const ResidentPage = {
               <img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Guest Headshot">
             </div>
           ` : `
-            <div style="width:42px; height:42px; border-radius:50%; background:var(--surface-container-high); display:flex; align-items:center; justify-content:center; color:var(--outline);">
-              <span class="material-symbols-outlined" style="font-size:24px;">person</span>
+            <div style="width:42px; height:42px; border-radius:50%; background:var(--surface-container-high); display:flex; align-items:center; justify-content:center; color:var(--primary); font-weight:700;">
+              ${(r.visitorName || 'V').charAt(0).toUpperCase()}
             </div>
           `;
         }
       },
       {
-        label: 'Visitor Name',
+        label: 'Visitor Name & Phone',
         render: r => `
           <div>
-            <b>${r.visitorName}</b>
-            <div style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
-              <span class="badge badge-info" style="font-size:10px; padding:2px 6px;">Group of ${r.totalGuests || r.totalGuestCount || r.numberOfVisitors || 1}</span>
-            </div>
+            <div style="font-weight:700; color:var(--on-surface); font-size:13px;">${r.visitorName}</div>
+            <div style="font-size:11px; color:var(--on-surface-variant); margin-top:2px;">${r.phone || '-'}</div>
           </div>
         `
       },
-      { label: 'Phone', key: 'phone' },
-      { label: 'Purpose', key: 'purpose' },
-      { label: 'Expected Schedule', render: r => `${r.expectedDate || 'Today'} @ ${r.expectedTime || '18:00'}` },
-      { label: 'Vehicle Number', render: r => r.vehicleNumber || 'No vehicle' },
-      { label: 'Pass Code', render: r => `<code style="font-size:14px; font-weight:700; color:var(--primary); letter-spacing:1px;">${r.passCode || '-'}</code>` },
-      { label: 'Gate Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : (r.status === 'PRE_APPROVED' ? 'badge-info' : 'badge-warning'))}">${r.status || 'EXPECTED'}</span>` },
-      { label: 'Pass Status', render: r => {
-        if (r.approvalStatus === 'VERIFIED_ENTRY' || r.status === 'INSIDE') return '<span class="badge badge-success">VERIFIED ENTRY</span>';
-        if (r.approvalStatus === 'PRE_APPROVED' || r.status === 'PRE_APPROVED') return '<span class="badge badge-info">PRE-APPROVED</span>';
-        if (r.approvalStatus === 'REJECTED' || r.approvalStatus === 'DENIED') return '<span class="badge badge-danger">DENIED</span>';
-        return `<span class="badge badge-neutral">${r.approvalStatus || 'PENDING'}</span>`;
-      }},
+      {
+        label: 'Total Guests',
+        render: r => {
+          const count = r.totalGuestCount || r.totalGuests || r.numberOfVisitors || 1;
+          return `<span class="badge ${count > 1 ? 'badge-primary' : 'badge-neutral'}" style="font-size:11px; display:inline-flex; align-items:center; gap:4px;">
+            <span class="material-symbols-outlined" style="font-size:14px;">groups</span>
+            ${count} Person${count > 1 ? 's' : ''}
+          </span>`;
+        }
+      },
+      {
+        label: 'Pass Code',
+        render: r => `<code style="font-size:14px; font-weight:700; color:var(--primary); letter-spacing:1px; background:var(--surface-container-low); padding:3px 8px; border-radius:4px; border:1px solid var(--outline-variant);">${r.passCode || '-'}</code>`
+      },
+      {
+        label: 'Status',
+        render: r => {
+          const st = (r.status || 'EXPECTED').toUpperCase();
+          if (st === 'CHECKED_IN' || st === 'INSIDE' || r.approvalStatus === 'VERIFIED_ENTRY') {
+            return '<span class="badge badge-success">CHECKED IN</span>';
+          }
+          if (st === 'CHECKED_OUT' || st === 'EXITED') {
+            return '<span class="badge badge-neutral">CHECKED OUT</span>';
+          }
+          if (st === 'REVOKED' || st === 'CANCELLED' || r.approvalStatus === 'REJECTED') {
+            return '<span class="badge badge-danger">REVOKED</span>';
+          }
+          return '<span class="badge badge-warning">EXPECTED</span>';
+        }
+      },
       {
         label: 'Actions',
         render: r => `
-          <button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:12px; display:inline-flex; align-items:center; gap:4px;" onclick="ResidentPage.deleteVisitorPass('${r.id}', '${(r.visitorName || '').replace(/'/g, "\\'")}')" title="Delete Pass">
-            <span class="material-symbols-outlined" style="font-size:16px;">delete</span> Delete
+          <button class="btn btn-ghost" style="color:var(--danger); border:1px solid var(--danger); padding:4px 10px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px;" onclick="ResidentPage.deleteVisitorPass('${r.id}', '${(r.visitorName || '').replace(/'/g, "\\'")}')" title="Revoke & Delete Pass">
+            <span class="material-symbols-outlined" style="font-size:15px;">delete</span> Revoke / Delete
           </button>
         `
       }
@@ -179,6 +195,16 @@ const ResidentPage = {
     const allPasses = Array.isArray(passesOverride) ? passesOverride : ResidentPage.readVisitorPasses();
     const rows = ResidentPage.filterPassesForResident(allPasses, currentUser);
     Table.render('visitors-data-table', ResidentPage.getVisitorTableColumns(), rows);
+
+    const countEl = document.getElementById('stat-resident-expected-count') || document.getElementById('stat-visitors-count');
+    if (countEl) {
+      const activeExpected = rows.filter(r => {
+        const st = (r.status || 'EXPECTED').toUpperCase();
+        return (st === 'EXPECTED' || st === 'PRE_APPROVED' || st === 'PENDING')
+          && st !== 'CHECKED_IN' && st !== 'INSIDE' && st !== 'CHECKED_OUT' && st !== 'EXITED' && st !== 'REVOKED';
+      }).length;
+      countEl.innerText = activeExpected;
+    }
     return rows;
   },
 
@@ -694,7 +720,7 @@ const ResidentPage = {
         photo: photoDataUrl,
         primaryGuestPhoto: photoDataUrl,
         vehicleNumber: vehicleNumber,
-        status: 'PRE_APPROVED',
+        status: 'EXPECTED',
         approvalStatus: 'PRE_APPROVED',
         createdAt: new Date().toISOString(),
         entryTime: null,

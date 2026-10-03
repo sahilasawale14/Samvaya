@@ -43,10 +43,26 @@ public class SecurityController {
                 .body(ApiResponse.success("Visitor gate entry logged successfully", checkedIn));
     }
 
+    @RequestMapping(value = "/visitors/{id}/check-in", method = {RequestMethod.PUT, RequestMethod.POST})
+    public ResponseEntity<ApiResponse<com.samvaya.dto.VisitorDTO>> checkInPass(@PathVariable Long id) {
+        com.samvaya.dto.VisitorDTO checkedIn = visitorService.checkInPass(id);
+        return ResponseEntity.ok(ApiResponse.success("Visitor checked in successfully", checkedIn));
+    }
+
     @RequestMapping(value = "/visitors/{id}/check-out", method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<ApiResponse<com.samvaya.dto.VisitorDTO>> checkOutVisitor(@PathVariable Long id) {
         com.samvaya.dto.VisitorDTO checkedOut = visitorService.checkOutVisitor(id);
         return ResponseEntity.ok(ApiResponse.success("Visitor exit recorded successfully", checkedOut));
+    }
+
+    @GetMapping("/visitors/expected")
+    public ResponseEntity<ApiResponse<java.util.List<com.samvaya.dto.VisitorDTO>>> getExpectedVisitors() {
+        return ResponseEntity.ok(ApiResponse.success(visitorService.getExpectedVisitors()));
+    }
+
+    @GetMapping("/visitors/inside")
+    public ResponseEntity<ApiResponse<java.util.List<com.samvaya.dto.VisitorDTO>>> getInsideVisitors() {
+        return ResponseEntity.ok(ApiResponse.success(visitorService.getVisitorsInside()));
     }
 
     @GetMapping("/visitors/active")

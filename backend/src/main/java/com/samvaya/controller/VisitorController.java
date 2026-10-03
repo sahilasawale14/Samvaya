@@ -20,10 +20,16 @@ public class VisitorController {
     public ResponseEntity<ApiResponse<List<VisitorDTO>>> getAllVisitors(
             @RequestParam(required = false) Long residentId,
             @RequestParam(required = false) Long flatId) {
-        List<VisitorDTO> list = (residentId != null || flatId != null)
-                ? visitorService.getVisitorsForResidentOrFlat(residentId, flatId)
-                : visitorService.getAllVisitors();
+        List<VisitorDTO> list = (residentId != null)
+                ? visitorService.getVisitorsByResidentId(residentId)
+                : (flatId != null ? visitorService.getVisitorsByFlatId(flatId) : visitorService.getAllVisitors());
         return ResponseEntity.ok(ApiResponse.success(list));
+    }
+
+    @RequestMapping(value = "/{id}/check-in", method = {RequestMethod.PUT, RequestMethod.POST})
+    public ResponseEntity<ApiResponse<VisitorDTO>> checkInPass(@PathVariable Long id) {
+        VisitorDTO checkedIn = visitorService.checkInPass(id);
+        return ResponseEntity.ok(ApiResponse.success("Visitor checked in successfully", checkedIn));
     }
 
     @GetMapping("/expected")

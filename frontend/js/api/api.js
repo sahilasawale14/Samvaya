@@ -452,35 +452,37 @@ const Api = {
     }
 
     // Pre-Approved Passes Query (Security portal)
-    if (endpoint.includes('/pre-approved')) {
+    if (endpoint.includes('/visitors/expected') || endpoint.includes('/pre-approved')) {
       const list = getLocalPreapproved();
       return list.filter(v => {
-        const status = v.status || v.approvalStatus;
-        const approved = v.approvalStatus === 'PRE_APPROVED' || v.status === 'PRE_APPROVED' || v.status === 'EXPECTED';
-        return approved && status !== 'INSIDE' && status !== 'EXITED' && status !== 'REJECTED';
+        const st = (v.status || v.approvalStatus || 'EXPECTED').toUpperCase();
+        return (st === 'EXPECTED' || st === 'PRE_APPROVED' || st === 'PENDING')
+          && st !== 'CHECKED_IN' && st !== 'INSIDE' && st !== 'CHECKED_OUT' && st !== 'EXITED' && st !== 'REVOKED' && st !== 'CANCELLED' && st !== 'REJECTED';
       });
     }
 
-    // Verify Pass & Record Entry (Security portal)
-    if (endpoint.includes('/verify-entry')) {
-      const list = getLocalPreapproved();
-      const match = endpoint.match(/visitors\/([^/]+)\/verify-entry/);
-      const vId = match ? match[1] : null;
-      let verified = null;
-      const updated = list.map(v => {
-        if (!vId || String(v.id) === String(vId) || String(v.passCode) === String(vId)) {
-          verified = {
-            ...v,
-            approvalStatus: 'VERIFIED_ENTRY',
-            status: 'INSIDE',
-            entryTime: new Date().toISOString()
-          };
-          return verified;
-        }
-        return v;
-      });
-      saveLocalPreapproved(updated);
-      return { success: true, message: 'Visitor entry verified and recorded', data: verified };
+    // Verify Pass & Record Entry / Check-In (Security portal)
+    if (endpoint.includes('/verify-entry') || (endpoint.includes('/check-in') && (options.method === 'PUT' || !options.method || options.method === 'POST') && endpoint.includes('/visitors/'))) {
+      const match = endpoint.match(/visitors\/([^/?]+)\/(?:verify-entry|check-in)/);
+      if (match) {
+        const vId = match[1];
+        const list = getLocalPreapproved();
+        let verified = null;
+        const updated = list.map(v => {
+          if (!vId || String(v.id) === String(vId) || String(v.passCode) === String(vId)) {
+            verified = {
+              ...v,
+              approvalStatus: 'VERIFIED_ENTRY',
+              status: 'CHECKED_IN',
+              entryTime: new Date().toISOString()
+            };
+            return verified;
+          }
+          return v;
+        });
+        saveLocalPreapproved(updated);
+        return { success: true, message: 'Visitor entry verified and checked in', data: verified };
+      }
     }
 
     // Delete Visitor Pass (Security or Resident portal)
@@ -519,32 +521,15 @@ const Api = {
       return { success: true, message: 'Visitor pass rejected and entry denied', data: rejected };
     }
 
-    // Active Visitors Query (Inside society premises)
+    // Active / Inside Visitors Query (Inside society premises)
     if (endpoint.includes('/visitors/active') || endpoint.includes('/visitors/inside')) {
       const list = getLocalPreapproved();
-      const activePreapproved = list.filter(v => v.status === 'INSIDE' && v.approvalStatus !== 'REJECTED');
-      const seedActive = [
-        {
-          id: 1,
-          visitorName: 'Rajesh Sen',
-          phone: '+91 98450 11223',
-          wing: 'B',
-          flatNumber: '204',
-          vehicleNumber: 'MH 02 XY 9988',
-          purpose: 'Maintenance / Plumber',
-          entryTime: new Date(Date.now() - 35 * 60000).toISOString(),
-          status: 'INSIDE',
-          approvalStatus: 'VERIFIED_ENTRY',
-          totalGuestCount: 1,
-          numberOfVisitors: 1,
-          primaryGuestPhoto: null
-        }
-      ];
-      return [...activePreapproved, ...seedActive];
+      const activePreapproved = list.filter(v => (v.status === 'CHECKED_IN' || v.status === 'INSIDE') && v.approvalStatus !== 'REJECTED' && v.status !== 'CHECKED_OUT' && v.status !== 'EXITED' && v.status !== 'REVOKED');
+      return activePreapproved;
     }
 
-    // Walk-in Visitor Check-In
-    if (endpoint.includes('/check-in')) {
+    // Walk-in Visitor Check-In (POST)
+    if (endpoint.includes('/check-in') && options.method === 'POST' && !endpoint.match(/visitors\/[^/]+\/check-in/)) {
       let body = {};
       try {
         body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
@@ -558,7 +543,7 @@ const Api = {
         vehicleNumber: body.vehicleNo || body.vehicleNumber || '',
         purpose: body.purpose || 'Guest',
         entryTime: new Date().toISOString(),
-        status: 'INSIDE',
+        status: 'CHECKED_IN',
         approvalStatus: 'VERIFIED_ENTRY',
         totalGuestCount: 1,
         numberOfVisitors: 1,
@@ -571,18 +556,20 @@ const Api = {
     }
 
     // Visitor Check-Out / Exit
-    if (endpoint.includes('/check-out')) {
-      const match = endpoint.match(/visitors\/(\d+)\/check-out/);
-      const vId = match ? parseInt(match[1], 10) : null;
+    if (endpoint.includes('/check-out') || endpoint.includes('/exit')) {
+      const match = endpoint.match(/visitors\/([^/?]+)\/(?:check-out|exit)/);
+      const vId = match ? match[1] : null;
       const list = getLocalPreapproved();
+      let exited = null;
       const updated = list.map(v => {
-        if (!vId || v.id == vId) {
-          return { ...v, status: 'EXITED', approvalStatus: 'EXITED', exitTime: new Date().toISOString() };
+        if (!vId || String(v.id) === String(vId) || String(v.passCode) === String(vId)) {
+          exited = { ...v, status: 'CHECKED_OUT', approvalStatus: 'CHECKED_OUT', exitTime: new Date().toISOString() };
+          return exited;
         }
         return v;
       });
       saveLocalPreapproved(updated);
-      return { success: true, message: 'Visitor marked as EXITED' };
+      return { success: true, message: 'Visitor marked as CHECKED_OUT', data: exited };
     }
 
     // Tenant-isolated resident visitors query

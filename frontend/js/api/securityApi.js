@@ -55,11 +55,15 @@ const SecurityApi = {
   },
 
   getExpectedVisitors() {
-    return Api.get('/visitors/expected');
+    return Api.get('/security/visitors/expected').catch(() => Api.get('/visitors/expected')).catch(() => Api.get('/security/visitors/pre-approved'));
   },
 
   getVisitorsInside() {
-    return Api.get('/security/visitors/active');
+    return Api.get('/security/visitors/inside').catch(() => Api.get('/security/visitors/active'));
+  },
+
+  checkInPass(visitorId) {
+    return Api.put(`/security/visitors/${visitorId}/check-in`).catch(() => Api.put(`/security/visitors/${visitorId}/verify-entry`));
   },
 
   recordVisitorArrival(visitorId) {

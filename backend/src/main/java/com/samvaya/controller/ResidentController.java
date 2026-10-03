@@ -44,7 +44,9 @@ public class ResidentController {
             @RequestParam(required = false) Long flatId,
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
         Long targetResidentId = residentId != null ? residentId : headerUserId;
-        java.util.List<com.samvaya.dto.VisitorDTO> visitors = visitorService.getVisitorsForResidentOrFlat(targetResidentId, flatId);
+        java.util.List<com.samvaya.dto.VisitorDTO> visitors = targetResidentId != null
+                ? visitorService.getVisitorsByResidentId(targetResidentId)
+                : (flatId != null ? visitorService.getVisitorsByFlatId(flatId) : java.util.Collections.emptyList());
         return ResponseEntity.ok(ApiResponse.success(visitors));
     }
 
@@ -58,8 +60,11 @@ public class ResidentController {
     }
 
     @DeleteMapping("/visitors/{id}")
-    public ResponseEntity<?> deleteVisitor(@PathVariable Long id) {
-        visitorService.deleteVisitor(id);
+    public ResponseEntity<?> deleteVisitor(@PathVariable Long id,
+                                          @RequestParam(required = false) Long residentId,
+                                          @RequestHeader(value = "X-User-Id", required = false) Long headerUserId) {
+        Long targetResidentId = residentId != null ? residentId : headerUserId;
+        visitorService.revokeOrDeleteVisitorByResident(id, targetResidentId);
         return ResponseEntity.ok(ApiResponse.success("Visitor record deleted", java.util.Map.of("id", id)));
     }
 }

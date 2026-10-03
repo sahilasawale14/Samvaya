@@ -17,6 +17,20 @@
       <header class="app-topbar" id="navbar-container"></header>
 
       <div class="content-body">
+        <!-- Header Metric Cards -->
+        <div class="stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:20px;">
+          <div class="card" style="padding:16px 20px; display:flex; align-items:center; gap:16px; background:var(--surface); border:1px solid var(--outline-variant); border-radius:var(--radius-lg);">
+            <div style="width:48px; height:48px; border-radius:12px; background:rgba(13, 148, 136, 0.12); color:var(--primary); display:flex; align-items:center; justify-content:center;">
+              <span class="material-symbols-outlined" style="font-size:28px;">badge</span>
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--on-surface-variant);">Expected Visitors</div>
+              <div id="stat-resident-expected-count" style="font-size:26px; font-weight:800; color:var(--on-surface); line-height:1.2;">0</div>
+              <div style="font-size:12px; color:var(--outline); margin-top:2px;">Active passes for this residence</div>
+            </div>
+          </div>
+        </div>
+
         <div class="card-section">
           <div class="card-header-flex">
             <div>

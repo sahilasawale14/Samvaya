@@ -71,6 +71,12 @@ public class Visitor {
     @Column(name = "pass_code", unique = true, length = 50)
     private String passCode;
 
+    @Column(name = "entry_time")
+    private LocalDateTime entryTime;
+
+    @Column(name = "exit_time")
+    private LocalDateTime exitTime;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

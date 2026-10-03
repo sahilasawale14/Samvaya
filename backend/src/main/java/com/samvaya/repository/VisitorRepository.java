@@ -23,4 +23,7 @@ public interface VisitorRepository extends JpaRepository<Visitor, Long> {
     Long countByExpectedDateAndStatus(LocalDate date, String status);
     List<Visitor> findByApprovalStatus(String approvalStatus);
     List<Visitor> findByApprovalStatusOrderByExpectedDateDesc(String approvalStatus);
+    List<Visitor> findByResidentIdAndStatusNot(Long residentId, String status);
+    List<Visitor> findByStatusIn(List<String> statuses);
+    List<Visitor> findByStatusInOrderByCreatedAtDesc(List<String> statuses);
 }

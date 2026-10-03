@@ -19,136 +19,158 @@
 
       <div class="content-body">
         
-        <!-- Top Banner: Face-Verified Pre-Approved Entries Section -->
-        <div class="card-section" style="margin-bottom: 24px; border: 1px solid rgba(13, 148, 136, 0.3); background: linear-gradient(180deg, rgba(13, 148, 136, 0.03) 0%, var(--surface) 100%);">
-          <div class="card-header-flex">
+        <!-- Header Actions Bar -->
+        <div class="card-section" style="margin-bottom: 20px; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h1 style="font-size: 20px; font-weight: 800; color: var(--on-surface); margin: 0; display: flex; align-items: center; gap: 10px;">
+              <span class="material-symbols-outlined" style="color: var(--primary); font-size: 28px;">badge</span>
+              Visitor Gate Operations & Access Control
+            </h1>
+            <p style="font-size: 13px; color: var(--on-surface-variant); margin: 4px 0 0 0;">
+              Verify pre-approved resident guest passes, monitor campus visitors, and log entries/exits
+            </p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="btn btn-primary" onclick="SecurityPage.openWalkInModal()" style="display: flex; align-items: center; gap: 6px; padding: 10px 18px; font-weight: 600;">
+              <span class="material-symbols-outlined" style="font-size: 18px;">person_add</span>
+              Walk-In Check-In
+            </button>
+            <button class="btn btn-ghost" onclick="SecurityPage.renderAllTables()" style="padding: 10px 12px;" title="Refresh Visitor Tables">
+              <span class="material-symbols-outlined" style="font-size: 20px;">refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Distinct Navigation Tabs -->
+        <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--outline-variant); padding-bottom: 12px;">
+          <button id="tab-btn-expected" class="btn" onclick="SecurityPage.switchTab('expected')" style="padding: 10px 22px; font-size: 14px; font-weight: 700; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px; border: 2px solid var(--primary); background: var(--primary); color: #ffffff; cursor: pointer; transition: all 0.2s ease;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">schedule</span>
+            Expected Gate Passes
+            <span id="tab-expected-badge" class="badge" style="background: #ffffff; color: var(--primary); font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 12px;">0</span>
+            <span id="preapproved-visitors-count" style="display:none;">0</span>
+          </button>
+          <button id="tab-btn-inside" class="btn" onclick="SecurityPage.switchTab('inside')" style="padding: 10px 22px; font-size: 14px; font-weight: 700; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px; border: 2px solid var(--outline-variant); background: var(--surface); color: var(--on-surface-variant); cursor: pointer; transition: all 0.2s ease;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">verified_user</span>
+            Currently Inside Campus
+            <span id="tab-inside-badge" class="badge" style="background: var(--success); color: #ffffff; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 12px;">0</span>
+            <span id="active-visitors-count" style="display:none;">0</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Expected Gate Passes Panel -->
+        <div class="card-section" id="tab-panel-expected" style="display: block;">
+          <div class="card-header-flex" style="margin-bottom: 16px;">
             <div>
               <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
                 <span class="material-symbols-outlined" style="color:var(--primary);">face</span>
-                Pre-Approved Entries (Face Gate Pass)
-                <span id="preapproved-visitors-count" class="badge badge-primary" style="font-size:12px; margin-left:6px;">0</span>
+                Expected Visitor Gate Passes
               </h2>
               <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
-                Pre-approved resident visitors awaiting physical identity and face match verification at the gate.
+                Pre-approved resident visitors awaiting physical identity confirmation at the security gate
               </p>
             </div>
-            <button class="btn btn-ghost" onclick="loadPreApprovedVisitors()" style="padding:4px 8px;" title="Refresh pre-approved">
-              <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
-            </button>
           </div>
-          <div id="preapproved-security-visitors-table"></div>
+          <div id="expected-visitors-table"></div>
+          <div id="preapproved-security-visitors-table" style="display:none;"></div>
         </div>
 
-        <!-- Middle Section: 2 Columns for Gate Check-In Form and Active Visitors Summary -->
-        <div style="display: grid; grid-template-columns: 380px 1fr; gap: 24px; margin-bottom: 24px;">
-          
-          <!-- Gate Check-In Form -->
-          <div class="card-section">
-            <div class="card-header-flex">
-              <div>
-                <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
-                  <span class="material-symbols-outlined" style="color:var(--secondary);">person_add</span>
-                  Gate Visitor Check-In
-                </h2>
-                <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">Record walk-in guest or service personnel entry</p>
-              </div>
-            </div>
-
-            <form id="sec-checkin-form" onsubmit="SecurityPage.checkInVisitorSubmit(event)">
-              <div style="margin-bottom:12px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Visitor Full Name *</label>
-                <input type="text" id="sec-vis-name" required placeholder="e.g. Rahul Sharma" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
-              </div>
-
-              <div style="margin-bottom:12px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Phone Number *</label>
-                <input type="tel" id="sec-vis-phone" required placeholder="e.g. 9876543210" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
-              </div>
-
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
-                <div>
-                  <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Visiting Wing *</label>
-                  <select id="sec-vis-wing" required style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
-                    <option value="A">Wing A</option>
-                    <option value="B">Wing B</option>
-                    <option value="C">Wing C</option>
-                    <option value="D">Wing D</option>
-                  </select>
-                </div>
-                <div>
-                  <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Flat Number *</label>
-                  <input type="text" id="sec-vis-flat" required placeholder="e.g. 101" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
-                </div>
-              </div>
-
-              <div style="margin-bottom:12px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Vehicle Number (Optional)</label>
-                <input type="text" id="sec-vis-vehicle" placeholder="e.g. MH 02 AB 1234" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
-              </div>
-
-              <div style="margin-bottom:16px;">
-                <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Purpose of Visit</label>
-                <select id="sec-vis-purpose" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
-                  <option value="Guest">Guest / Friend / Family</option>
-                  <option value="Delivery">Delivery / Courier</option>
-                  <option value="Maintenance / Repair">Maintenance / Electrician / Plumber</option>
-                  <option value="Cab / Transport">Cab Pickup / Drop</option>
-                  <option value="Other">Other Official Visit</option>
-                </select>
-              </div>
-
-              <button type="submit" class="btn btn-primary" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px;">
-                <span class="material-symbols-outlined" style="font-size:18px;">login</span>
-                Record Gate Entry (INSIDE)
-              </button>
-            </form>
-          </div>
-
-          <!-- Active Visitors Inside Campus -->
-          <div class="card-section">
-            <div class="card-header-flex">
-              <div>
-                <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
-                  <span class="material-symbols-outlined" style="color:var(--success);">verified_user</span>
-                  Active Visitors (Inside Campus)
-                  <span id="active-visitors-count" class="badge badge-success" style="font-size:12px; margin-left:6px;">0</span>
-                </h2>
-                <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">Currently inside society premises. Click 'Mark Exit' when leaving gate.</p>
-              </div>
-              <button class="btn btn-ghost" onclick="loadActiveVisitors()" style="padding:4px 8px;" title="Refresh list">
-                <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
-              </button>
-            </div>
-            <div id="active-security-visitors-table"></div>
-          </div>
-
-        </div>
-
-        <!-- All Visitors Log -->
-        <div class="card-section">
-          <div class="card-header-flex">
+        <!-- Tab 2: Currently Inside Campus Panel -->
+        <div class="card-section" id="tab-panel-inside" style="display: none;">
+          <div class="card-header-flex" style="margin-bottom: 16px;">
             <div>
-              <h2 class="card-title">Society Gate Passcode & Complete Visitor History</h2>
-              <p style="font-size:13px; color:var(--on-surface-variant); margin-top:2px;">Scan passcodes, verify pre-approved guest entries, and review past visits</p>
+              <h2 class="card-title" style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="color:var(--success);">how_to_reg</span>
+                Currently Inside Society Premises
+              </h2>
+              <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+                Visitors verified and currently active inside the campus. Click 'Mark Exit' upon departure.
+              </p>
             </div>
-            <button class="btn btn-ghost" onclick="loadAllVisitors()" style="padding:4px 8px;" title="Refresh log">
-              <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
-            </button>
           </div>
-          <div id="all-security-visitors-table"></div>
+          <div id="inside-visitors-table"></div>
+          <div id="active-security-visitors-table" style="display:none;"></div>
         </div>
 
       </div>
     </main>
   </div>
 
+  <!-- Walk-In Gate Check-In Modal -->
+  <div class="modal-backdrop" id="walkin-checkin-modal">
+    <div class="modal-container" style="max-width: 480px; padding: 0; overflow: hidden; border-radius: var(--radius-lg, 12px);">
+      <div class="modal-header" style="background: var(--surface); padding: 16px 20px; border-bottom: 1px solid var(--outline-variant); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="color:var(--secondary); font-size:24px;">person_add</span>
+          <h3 style="margin:0; font-size:16px; font-weight:700;">Record Walk-In Visitor Entry</h3>
+        </div>
+        <button class="btn-ghost" onclick="Modal.close('walkin-checkin-modal')" style="background:none; border:none; cursor:pointer; color:var(--on-surface-variant); display:flex; align-items:center; justify-content:center; padding:4px;">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form id="sec-checkin-form" onsubmit="SecurityPage.checkInVisitorSubmit(event)">
+        <div class="modal-body" style="padding: 20px;">
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Visitor Full Name *</label>
+            <input type="text" id="sec-vis-name" required placeholder="e.g. Rahul Sharma" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Phone Number *</label>
+            <input type="tel" id="sec-vis-phone" required placeholder="e.g. 9876543210" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Visiting Wing *</label>
+              <select id="sec-vis-wing" required style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+                <option value="A">Wing A</option>
+                <option value="B">Wing B</option>
+                <option value="C">Wing C</option>
+                <option value="D">Wing D</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Flat Number *</label>
+              <input type="text" id="sec-vis-flat" required placeholder="e.g. 101" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Vehicle Number (Optional)</label>
+            <input type="text" id="sec-vis-vehicle" placeholder="e.g. MH 02 AB 1234" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px;">Purpose of Visit</label>
+            <select id="sec-vis-purpose" style="width:100%; padding:8px 12px; border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:13px;">
+              <option value="Guest">Guest / Friend / Family</option>
+              <option value="Delivery">Delivery / Courier</option>
+              <option value="Maintenance / Repair">Maintenance / Electrician / Plumber</option>
+              <option value="Cab / Transport">Cab Pickup / Drop</option>
+              <option value="Other">Other Official Visit</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 14px 20px; background: var(--surface); border-top: 1px solid var(--outline-variant); display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-ghost" onclick="Modal.close('walkin-checkin-modal')" style="padding: 8px 16px;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="display:flex; align-items:center; gap:6px; padding:8px 18px; font-weight:600;">
+            <span class="material-symbols-outlined" style="font-size:18px;">login</span>
+            Record Entry (INSIDE)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Face-Verified Pre-Approval Verification Modal -->
   <div class="modal-backdrop" id="verify-pass-modal">
-    <div class="modal-container" style="max-width: 560px; padding: 0; overflow: hidden; border-radius: var(--radius-lg, 12px);">
+    <div class="modal-container" style="max-width: 540px; padding: 0; overflow: hidden; border-radius: var(--radius-lg, 12px);">
       <div class="modal-header" style="background: var(--surface); padding: 16px 20px; border-bottom: 1px solid var(--outline-variant); display: flex; justify-content: space-between; align-items: center;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="material-symbols-outlined" style="color:var(--primary); font-size:24px;">verified_user</span>
-          <h3 style="margin:0; font-size:16px; font-weight:700;">Face-Verified Gate Pass Verification</h3>
+          <h3 style="margin:0; font-size:16px; font-weight:700;">Face-Verified Gate Pass Details</h3>
         </div>
         <button class="btn-ghost" onclick="Modal.close('verify-pass-modal')" style="background:none; border:none; cursor:pointer; color:var(--on-surface-variant); display:flex; align-items:center; justify-content:center; padding:4px;">
           <span class="material-symbols-outlined">close</span>
@@ -159,7 +181,7 @@
         
         <!-- Photo and Group Highlight Section -->
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px;">
-          <div style="position: relative; width: 180px; height: 180px; border-radius: 50%; overflow: hidden; border: 4px solid var(--primary); box-shadow: 0 4px 14px rgba(0,0,0,0.15); background: var(--surface-variant); margin-bottom: 12px;">
+          <div style="position: relative; width: 170px; height: 170px; border-radius: 50%; overflow: hidden; border: 4px solid var(--primary); box-shadow: 0 4px 14px rgba(0,0,0,0.15); background: var(--surface-variant); margin-bottom: 12px;">
             <img id="modal-guest-photo" src="" alt="Primary Guest Headshot" style="width:100%; height:100%; object-fit:cover; display:none;">
             <div id="modal-guest-photo-placeholder" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--on-surface-variant);">
               <span class="material-symbols-outlined" style="font-size:64px;">person</span>
@@ -174,7 +196,7 @@
 
           <div style="margin-top: 10px; background: rgba(13, 148, 136, 0.08); border: 1px solid rgba(13, 148, 136, 0.25); border-radius: 8px; padding: 8px 14px; font-size: 12px; color: var(--on-surface); text-align: center; max-width: 440px;">
             <span class="material-symbols-outlined" style="font-size: 15px; vertical-align: middle; color: var(--primary); margin-right: 4px;">security</span>
-            <strong>Gatekeeper Note:</strong> Ensure the lead visitor in front of you matches this headshot photo, and the entering group size does not exceed the approved count.
+            <strong>Gatekeeper Note:</strong> Confirm lead visitor identity matches this photo before granting entry.
           </div>
         </div>
 
@@ -202,7 +224,7 @@
           </div>
           <div>
             <span style="color: var(--on-surface-variant); font-size: 11px; text-transform: uppercase; font-weight: 600; display:block;">Gate Pass Code</span>
-            <code id="modal-vis-passcode" style="font-size: 13px; font-weight: 700; color: var(--secondary);">-</code>
+            <code id="modal-vis-passcode" style="font-size: 14px; font-weight: 700; color: var(--secondary);">-</code>
           </div>
         </div>
 
@@ -210,14 +232,14 @@
       </div>
 
       <div class="modal-footer" style="padding: 16px 20px; background: var(--surface); border-top: 1px solid var(--outline-variant); display: flex; gap: 12px; justify-content: flex-end;">
-        <button type="button" class="btn btn-ghost" onclick="Modal.close('verify-pass-modal')" style="padding: 8px 16px;">Cancel</button>
+        <button type="button" class="btn btn-ghost" onclick="Modal.close('verify-pass-modal')" style="padding: 8px 16px;">Close</button>
         <button type="button" id="btn-modal-deny-entry" class="btn btn-danger" style="background: #dc2626; color: white; display: flex; align-items: center; gap: 6px; padding: 8px 16px;" onclick="SecurityPage.rejectCurrentPreApprovedEntry()">
           <span class="material-symbols-outlined" style="font-size: 18px;">block</span>
           Deny Entry
         </button>
         <button type="button" id="btn-modal-approve-entry" class="btn btn-primary" style="background: var(--success); color: white; display: flex; align-items: center; gap: 6px; padding: 8px 18px; font-weight: 600;" onclick="SecurityPage.approveCurrentPreApprovedEntry()">
           <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
-          Approve Entry
+          Verify & Check-In
         </button>
       </div>
     </div>
@@ -233,321 +255,28 @@
   <script src="/js/api/securityApi.js"></script>
   <script src="/js/pages/security.js"></script>
   <script>
-    async function loadPreApprovedVisitors() {
-      try {
-        let preapproved = [];
-
-        const localList = (typeof SecurityPage !== 'undefined' && SecurityPage.readVisitorPasses)
-          ? SecurityPage.readVisitorPasses()
-          : (() => {
-              try {
-                const raw = localStorage.getItem('samvaya_visitor_passes');
-                const parsed = raw ? JSON.parse(raw) : [];
-                return Array.isArray(parsed) ? parsed : [];
-              } catch (e) {
-                return [];
-              }
-            })();
-
-        const deletedIds = new Set((() => {
-          try { return JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]'); } catch(e) { return []; }
-        })().map(String));
-
-        // Track statuses recorded in local storage
-        const localStatusMap = new Map();
-        localList.forEach(v => {
-          const status = v.status || v.approvalStatus;
-          if (v.id) localStatusMap.set(String(v.id), status);
-          if (v.passCode) localStatusMap.set(String(v.passCode), status);
-          const key = (v.passCode || v.id || v.visitorName).toString();
-          localStatusMap.set(key, status);
-
-          const isPending = (status === 'PRE_APPROVED' || status === 'EXPECTED')
-            && status !== 'INSIDE' && status !== 'EXITED' && status !== 'REJECTED';
-          if (isPending && !deletedIds.has(String(v.id)) && !deletedIds.has(String(v.passCode))) {
-            preapproved.push(v);
-          }
-        });
-
-        try {
-          const remote = await SecurityApi.getPreApprovedVisitors();
-          if (Array.isArray(remote) && remote.length) {
-            const existingKeys = new Set(preapproved.map(v => (v.passCode || v.id || v.visitorName).toString()));
-            remote.forEach(v => {
-              const key = (v.passCode || v.id || v.visitorName).toString();
-              const idStr = v.id ? String(v.id) : null;
-              const passCodeStr = v.passCode ? String(v.passCode) : null;
-
-              if (idStr && deletedIds.has(idStr)) return;
-              if (passCodeStr && deletedIds.has(passCodeStr)) return;
-
-              // Check if locally marked as INSIDE, EXITED, or REJECTED
-              const localSt = localStatusMap.get(key) || (idStr ? localStatusMap.get(idStr) : null) || (passCodeStr ? localStatusMap.get(passCodeStr) : null);
-              const effectiveStatus = localSt || v.status || v.approvalStatus;
-
-              const isPending = (effectiveStatus === 'PRE_APPROVED' || effectiveStatus === 'EXPECTED')
-                && effectiveStatus !== 'INSIDE' && effectiveStatus !== 'EXITED' && effectiveStatus !== 'REJECTED';
-
-              if (isPending && !existingKeys.has(key)) {
-                existingKeys.add(key);
-                preapproved.push(v);
-              }
-            });
-          }
-        } catch (e) {}
-
-        SecurityPage.preApprovedCache = preapproved || [];
-        const countBadge = document.getElementById('preapproved-visitors-count');
-        if (countBadge) countBadge.textContent = (preapproved && preapproved.length) || 0;
-
-        Table.render('preapproved-security-visitors-table', [
-          {
-            label: 'Primary Guest Photo',
-            render: r => {
-              const photo = r.photo || r.primaryGuestPhoto;
-              return photo ? `
-                <img src="${photo}" alt="${r.visitorName}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid var(--primary); cursor:pointer;" onclick="SecurityPage.openVerifyPassModal('${r.id}')" title="Click to inspect face photo">
-              ` : `
-                <div style="width:42px; height:42px; border-radius:50%; background:var(--surface-variant); display:flex; align-items:center; justify-content:center; color:var(--on-surface-variant); cursor:pointer;" onclick="SecurityPage.openVerifyPassModal('${r.id}')">
-                  <span class="material-symbols-outlined" style="font-size:22px;">person</span>
-                </div>
-              `;
-            }
-          },
-          {
-            label: 'Lead Visitor & Phone',
-            render: r => `
-              <div>
-                <div style="font-weight:700; color:var(--on-surface); font-size:13px;">${r.visitorName}</div>
-                <div style="font-size:11px; color:var(--on-surface-variant);">${r.phone || '-'}</div>
-              </div>
-            `
-          },
-          {
-            label: 'Pass Code',
-            render: r => `<code style="font-size:13px; font-weight:700; color:var(--primary); letter-spacing:1px;">${r.passCode || '-'}</code>`
-          },
-          {
-            label: 'Group Size',
-            render: r => {
-              const count = r.totalGuests || r.totalGuestCount || r.numberOfVisitors || 1;
-              return `<span class="badge ${count > 1 ? 'badge-primary' : 'badge-neutral'}" style="font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
-                <span class="material-symbols-outlined" style="font-size:13px;">groups</span>
-                Group of ${count}
-              </span>`;
-            }
-          },
-          {
-            label: 'Destination & Host',
-            render: r => {
-              const wing = r.wing || (r.flat ? r.flat.wing : '');
-              const flat = r.flatNumber || (r.flat ? r.flat.flatNumber : '');
-              let destStr = 'Unit';
-              if (flat) {
-                const fStr = String(flat);
-                if (fStr.toUpperCase().includes('WING') || fStr.includes('-')) {
-                  destStr = fStr;
-                } else if (wing) {
-                  destStr = `Wing ${wing}-${fStr}`;
-                } else {
-                  destStr = `Flat ${fStr}`;
-                }
-              }
-              const hostStr = r.residentName || (r.flat && r.flat.currentResidentName) || 'Resident Host';
-              return `<div>
-                <b style="color:var(--primary); font-size:13px;">${destStr}</b>
-                <div style="font-size:11px; color:var(--on-surface-variant); margin-top:2px;">Host: <b>${hostStr}</b></div>
-              </div>`;
-            }
-          },
-          {
-            label: 'Expected Schedule',
-            render: r => `
-              <div>
-                <div style="font-size:12px; font-weight:600;">${r.expectedDate || 'Today'}</div>
-                <div style="font-size:11px; color:var(--on-surface-variant);">${r.expectedTime || 'Anytime'}</div>
-              </div>
-            `
-          },
-          {
-            label: 'Action',
-            render: r => `
-              <div style="display:flex; align-items:center; gap:6px;">
-                <button class="btn btn-primary" style="padding:6px 12px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:4px;" onclick="SecurityPage.allowPreApprovedEntryDirect('${r.id}')" title="Verify & Allow Entry into Society">
-                  <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span> Verify & Allow Entry
-                </button>
-                <button class="btn btn-ghost" style="padding:6px 8px; font-size:12px;" onclick="SecurityPage.openVerifyPassModal('${r.id}')" title="Inspect Photo & Pass Details">
-                  <span class="material-symbols-outlined" style="font-size:16px;">visibility</span>
-                </button>
-                <button class="btn btn-ghost" style="color:var(--danger); padding:6px 8px; font-size:12px; display:inline-flex; align-items:center;" onclick="SecurityPage.deleteVisitorPass('${r.id}', '${(r.visitorName || '').replace(/'/g, "\\'")}')" title="Delete Pre-Approved Pass">
-                  <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                </button>
-              </div>
-            `
-          }
-        ], preapproved || []);
-      } catch (err) {
-        console.error('Failed to load pre-approved visitors', err);
+    // Global wrapper functions for backward compatibility & event dispatching
+    function switchSecurityTab(tab) {
+      if (typeof SecurityPage !== 'undefined' && SecurityPage.switchTab) {
+        SecurityPage.switchTab(tab);
       }
     }
 
-    async function loadActiveVisitors() {
-      try {
-        let active = [];
-        const localList = (typeof SecurityPage !== 'undefined' && SecurityPage.readVisitorPasses)
-          ? SecurityPage.readVisitorPasses()
-          : [];
-
-        const deletedIds = new Set((() => {
-          try { return JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]'); } catch(e) { return []; }
-        })().map(String));
-
-        // Read local passes marked INSIDE
-        localList.forEach(v => {
-          const status = v.status || v.approvalStatus;
-          if (status === 'INSIDE' || status === 'VERIFIED_ENTRY') {
-            if (!deletedIds.has(String(v.id)) && !deletedIds.has(String(v.passCode))) {
-              active.push(v);
-            }
-          }
-        });
-
-        try {
-          const remote = await SecurityApi.getActiveVisitors();
-          if (Array.isArray(remote) && remote.length) {
-            const existingKeys = new Set(active.map(v => (v.passCode || v.id || v.visitorName).toString()));
-            // Also check if any local pass marked it EXITED
-            const exitedInLocal = new Set(
-              localList.filter(v => (v.status === 'EXITED' || v.approvalStatus === 'EXITED'))
-                .map(v => (v.passCode || v.id || v.visitorName).toString())
-            );
-            remote.forEach(v => {
-              const key = (v.passCode || v.id || v.visitorName).toString();
-              const idStr = v.id ? String(v.id) : null;
-              if (idStr && deletedIds.has(idStr)) return;
-              if (!existingKeys.has(key) && !exitedInLocal.has(key) && (!v.id || !exitedInLocal.has(String(v.id)))) {
-                existingKeys.add(key);
-                active.push(v);
-              }
-            });
-          }
-        } catch (e) {}
-
-        const countBadge = document.getElementById('active-visitors-count');
-        if (countBadge) countBadge.textContent = (active && active.length) || 0;
-
-        Table.render('active-security-visitors-table', [
-          {
-            label: 'Visitor',
-            render: r => `
-              <div style="display:flex; align-items:center; gap:10px;">
-                ${(r.primaryGuestPhoto || r.photo) ? `
-                  <img src="${r.primaryGuestPhoto || r.photo}" alt="${r.visitorName}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--success); flex-shrink:0;">
-                ` : `
-                  <div style="width:36px; height:36px; border-radius:50%; background:var(--surface-variant); display:flex; align-items:center; justify-content:center; color:var(--on-surface-variant); flex-shrink:0;">
-                    <span class="material-symbols-outlined" style="font-size:20px;">person</span>
-                  </div>
-                `}
-                <div>
-                  <div style="font-weight:600;">${r.visitorName}</div>
-                  ${(r.totalGuestCount && r.totalGuestCount > 1) || (r.numberOfVisitors && r.numberOfVisitors > 1) || (r.totalGuests && r.totalGuests > 1) ? `
-                    <span class="badge badge-neutral" style="font-size:10px; padding:1px 6px;">Group of ${r.totalGuestCount || r.numberOfVisitors || r.totalGuests}</span>
-                  ` : ''}
-                </div>
-              </div>
-            `
-          },
-          { label: 'Phone', render: r => r.phone || '-' },
-          { label: 'Destination Unit', render: r => {
-            const wing = r.wing || (r.flat ? r.flat.wing : '');
-            const flat = r.flatNumber || (r.flat ? r.flat.flatNumber : '');
-            let destStr = 'Unit';
-            if (flat) {
-              const fStr = String(flat);
-              if (fStr.toUpperCase().includes('WING') || fStr.includes('-')) {
-                destStr = fStr;
-              } else if (wing) {
-                destStr = `Wing ${wing}-${fStr}`;
-              } else {
-                destStr = `Flat ${fStr}`;
-              }
-            }
-            return `<b>${destStr}</b>`;
-          }},
-          { label: 'Vehicle No', render: r => r.vehicleNumber || r.vehicleNo || '-' },
-          { label: 'Purpose', render: r => `<span class="badge badge-info">${r.purpose || 'Visit'}</span>` },
-          { label: 'Entry Time', render: r => r.entryTime ? new Date(r.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now' },
-          { label: 'Status', render: () => `<span class="badge badge-success">INSIDE</span>` },
-          { label: 'Action', render: r => `
-            <div style="display:flex; align-items:center; gap:6px;">
-              <button class="btn btn-ghost" style="color:var(--danger); border:1px solid var(--danger); padding:4px 10px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px;" onclick="SecurityPage.markVisitorCheckOut(${r.id})">
-                <span class="material-symbols-outlined" style="font-size:14px;">logout</span> Mark Exit
-              </button>
-              <button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:11px; display:inline-flex; align-items:center;" onclick="SecurityPage.deleteVisitorPass('${r.id}', '${(r.visitorName || '').replace(/'/g, "\\'")}')" title="Delete Visitor Record">
-                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-              </button>
-            </div>
-          `}
-        ], active || []);
-      } catch (err) {
-        console.error('Failed to load active visitors', err);
+    function loadPreApprovedVisitors() {
+      if (typeof SecurityPage !== 'undefined' && SecurityPage.loadExpectedVisitors) {
+        return SecurityPage.loadExpectedVisitors();
       }
     }
 
-    async function loadAllVisitors() {
-      try {
-        let visitors = [];
-        const localList = (typeof SecurityPage !== 'undefined' && SecurityPage.readVisitorPasses)
-          ? SecurityPage.readVisitorPasses()
-          : [];
-        const deletedIds = new Set((() => {
-          try { return JSON.parse(localStorage.getItem('samvaya_deleted_visitor_ids') || '[]'); } catch(e) { return []; }
-        })().map(String));
+    function loadActiveVisitors() {
+      if (typeof SecurityPage !== 'undefined' && SecurityPage.loadInsideVisitors) {
+        return SecurityPage.loadInsideVisitors();
+      }
+    }
 
-        localList.forEach(v => {
-          if (!deletedIds.has(String(v.id)) && !deletedIds.has(String(v.passCode))) {
-            visitors.push(v);
-          }
-        });
-
-        try {
-          const remote = await SecurityApi.getAllVisitors();
-          if (Array.isArray(remote) && remote.length) {
-            const existingKeys = new Set(visitors.map(v => (v.passCode || v.id || v.visitorName).toString()));
-            remote.forEach(v => {
-              const key = (v.passCode || v.id || v.visitorName).toString();
-              const idStr = v.id ? String(v.id) : null;
-              if (idStr && deletedIds.has(idStr)) return;
-              if (!existingKeys.has(key)) {
-                visitors.push(v);
-                existingKeys.add(key);
-              }
-            });
-          }
-        } catch (e) {}
-
-        Table.render('all-security-visitors-table', [
-          { label: 'Visitor Name', render: r => `<b>${r.visitorName}</b>` },
-          { label: 'Destination Flat', render: r => `<b>Wing ${r.wing || (r.flat ? r.flat.wing : '')}-${r.flatNumber || (r.flat ? r.flat.flatNumber : '')}</b>` },
-          { label: 'Resident Host', render: r => r.residentName || (r.flat && r.flat.currentResidentName) || '-' },
-          { label: 'Pass Code', render: r => r.passCode ? `<code>${r.passCode}</code>` : '-' },
-          { label: 'Vehicle Number', render: r => r.vehicleNumber || '-' },
-          { label: 'Status', render: r => `<span class="badge ${r.status === 'INSIDE' ? 'badge-success' : (r.status === 'EXITED' ? 'badge-neutral' : (r.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'))}">${r.status}</span>` },
-          { label: 'Actions', render: r => `
-            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-              ${r.status === 'EXPECTED' ? `<button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorArrival(${r.id}); loadAllVisitors();">Arrived</button>` : ''}
-              ${r.status === 'ARRIVED' ? `<button class="btn btn-primary" style="padding:4px 8px; font-size:11px;" onclick="SecurityPage.allowVisitorEntry(${r.id}); loadAllVisitors(); loadActiveVisitors();">Allow Entry</button>` : ''}
-              ${r.status === 'INSIDE' ? `<button class="btn btn-ghost" style="color:var(--danger); padding:4px 8px; font-size:11px;" onclick="SecurityPage.markVisitorCheckOut(${r.id})">Log Exit</button>` : ''}
-              ${r.status === 'EXITED' ? `<span style="color:var(--outline); font-size:12px;">Completed</span>` : ''}
-              ${r.status === 'REJECTED' ? `<span style="color:var(--danger); font-size:12px;">Entry Denied</span>` : ''}
-              <button class="btn btn-ghost" style="color:var(--danger); padding:4px 6px; font-size:11px; display:inline-flex; align-items:center;" onclick="SecurityPage.deleteVisitorPass('${r.id}', '${(r.visitorName || '').replace(/'/g, "\\'")}')" title="Delete Record">
-                <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-              </button>
-            </div>
-          `}
-        ], visitors || []);
-      } catch (err) {
-        console.error('Failed to load all visitors', err);
+    function loadAllVisitors() {
+      if (typeof SecurityPage !== 'undefined' && SecurityPage.renderAllTables) {
+        return SecurityPage.renderAllTables();
       }
     }
 
@@ -566,24 +295,26 @@
       if (checkAuth(['SECURITY', 'SECURITY_GUARD'])) {
         Sidebar.render('sidebar-container', 'visitors');
         Navbar.render('navbar-container', 'Visitor Gate Operations');
-        loadPreApprovedVisitors();
-        loadActiveVisitors();
-        loadAllVisitors();
+        if (typeof SecurityPage !== 'undefined' && SecurityPage.initVisitorsPage) {
+          SecurityPage.initVisitorsPage();
+        } else if (typeof SecurityPage !== 'undefined' && SecurityPage.renderAllTables) {
+          SecurityPage.renderAllTables();
+        }
       }
     });
 
     window.addEventListener('storage', (event) => {
       if (event.key === 'samvaya_visitor_passes' || event.key === 'samvaya_preapproved_visitors') {
-        loadPreApprovedVisitors();
-        loadActiveVisitors();
-        loadAllVisitors();
+        if (typeof SecurityPage !== 'undefined' && SecurityPage.renderAllTables) {
+          SecurityPage.renderAllTables();
+        }
       }
     });
 
     window.addEventListener('samvaya:passes-updated', () => {
-      loadPreApprovedVisitors();
-      loadActiveVisitors();
-      loadAllVisitors();
+      if (typeof SecurityPage !== 'undefined' && SecurityPage.renderAllTables) {
+        SecurityPage.renderAllTables();
+      }
     });
   </script>
 </body>
